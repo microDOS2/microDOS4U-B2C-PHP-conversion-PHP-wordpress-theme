@@ -99,5 +99,20 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </section>
 
+
+<!-- Hide Rewards floating button -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Find and hide any button/link containing "Rewards" text
+    var allElements = document.querySelectorAll('button, a, div, span');
+    allElements.forEach(function(el) {
+        if (el.textContent.trim() === 'Rewards' || el.innerHTML.trim() === 'Rewards') {
+            el.style.display = 'none';
+            el.style.visibility = 'hidden';
+        }
+    });
+});
+</script>
+
 <?php
 get_footer();
