@@ -366,7 +366,7 @@ if (function_exists('wc_get_product_id_by_sku')) {
                     <svg class="faq-arrow w-5 h-5 shrink-0 transition-transform duration-200 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                 </button>
                 <div id="faq3-answer" class="faq-answer hidden p-6 pt-0 text-slate-300 leading-relaxed">
-                    <p>Yes. Our product is formulated for safety and consistency. We always recommend responsible consumption. Please consult a healthcare professional if you have pre-existing conditions.</p>
+                    <p>Yes. Our product is formulated for safety and consistency.</p>
                 </div>
             </div>
         </div>
