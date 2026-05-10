@@ -464,7 +464,7 @@ function microdos4u_checkout_checkbox_validation() {
 
 // ============================================
 // AUTO-CREATE CUSTOMER ACCOUNT ON ORDER
-n// ============================================
+// ============================================
 
 /**
  * Automatically create a customer account when any order is placed.
