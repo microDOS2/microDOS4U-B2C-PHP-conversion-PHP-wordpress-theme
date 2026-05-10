@@ -3103,3 +3103,14 @@ form[id^="affwp-login-form"] .form-row {
     opacity: 0 !important;
     pointer-events: none !important;
 }
+
+/* ============================================
+   PASSWORD EYE TOGGLE STYLES
+   ============================================ */
+.password-toggle-wrapper {
+    position: relative;
+}
+.password-toggle-wrapper input[type="password"],
+.password-toggle-wrapper input[type="text"] {
+    padding-right: 40px !important;
+}
