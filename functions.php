@@ -403,7 +403,8 @@ remove_action('wp_print_styles', 'print_emoji_styles');
 add_action('woocommerce_review_order_before_submit', 'microdos4u_legal_acknowledgment_checkbox', 10);
 
 function microdos4u_legal_acknowledgment_checkbox() {
-    $terms_url = esc_url(get_permalink(get_page_by_path('legal-disclaimer')));
+    $terms_page = get_page_by_path('legal-disclaimer');
+    $terms_url = $terms_page ? esc_url(get_permalink($terms_page)) : '#';
     echo '<div class="legal-acknowledgment-wrap" style="margin: 20px 0; padding: 16px; background: #150f24; border: 1px solid #9a02d0; border-radius: 8px;">';
     echo '<label for="legal_acknowledgment" style="display: flex; align-items: flex-start; cursor: pointer;">';
     echo '<input type="checkbox" name="legal_acknowledgment" id="legal_acknowledgment" style="margin-right: 12px; margin-top: 4px; min-width: 18px; min-height: 18px; cursor: pointer;" required />';

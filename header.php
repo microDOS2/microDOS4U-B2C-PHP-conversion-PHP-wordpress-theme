@@ -95,14 +95,16 @@
         <a href="#how-it-works" class="block text-slate-300 hover:text-white py-2">How It Works</a>
         <a href="#reviews" class="block text-slate-300 hover:text-white py-2">Reviews</a>
         <a href="#faq" class="block text-slate-300 hover:text-white py-2">FAQ</a>
+        <a href="<?php echo esc_url(home_url('/articles-studies')); ?>" class="block text-slate-300 hover:text-white py-2">Articles & Studies</a>
+        <a href="<?php echo esc_url(home_url('/metocin-info')); ?>" class="block text-slate-300 hover:text-white py-2">Metocin Info</a>
+        <a href="<?php echo esc_url(home_url('/dosage-guide')); ?>" class="block text-slate-300 hover:text-white py-2">Dosage Guide</a>
         <a href="<?php echo esc_url(home_url('/affiliate-area')); ?>" class="block text-slate-300 hover:text-white py-2">Affiliates</a>
         <a href="<?php echo esc_url(home_url('/contact')); ?>" class="block text-slate-300 hover:text-white py-2">Contact</a>
+        <a href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>" class="block py-2 text-base font-medium text-green-400">My Account</a>
         <a href="#pricing" class="block mt-4 w-full text-center px-6 py-3 text-white font-semibold rounded-lg shadow-md btn-primary">
             Get Started
         </a>
-    
-            <a href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>" class="block py-2 text-base font-medium text-green-400">My Account</a>
-            </div>
+    </div>
 </header>
 
 <!-- Age Verification Modal -->

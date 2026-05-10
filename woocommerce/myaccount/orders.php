@@ -9,8 +9,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-defined('ABSPATH') || exit;
-
 $orders = wc_get_orders([
     'customer_id' => get_current_user_id(),
     'limit' => -1,

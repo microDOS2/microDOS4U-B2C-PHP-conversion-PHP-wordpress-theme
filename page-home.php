@@ -36,14 +36,6 @@ if (function_exists('wc_get_product_id_by_sku')) {
     border-radius: 0.75rem;
     overflow: hidden;
 }
-#video-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    background-color: #150f24 !important;
-    border-radius: 0.75rem;
-    overflow: hidden;
-}
 .video-player {
     width: 100%;
     height: 100%;

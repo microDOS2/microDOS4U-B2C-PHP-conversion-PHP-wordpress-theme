@@ -9,6 +9,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Guard: WooCommerce Subscriptions must be active
+if (!function_exists('wcs_get_subscription')) {
+    echo '<p class="woocommerce-info woocommerce-message woocommerce-message--info woocommerce-Message woocommerce-Message--info">' . esc_html__('Subscription management is currently unavailable. Please contact support.', 'microdos4u') . '</p>';
+    return;
+}
+
 wc_print_notices();
 
 $subscription = wcs_get_subscription($subscription_id);

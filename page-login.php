@@ -9,7 +9,8 @@
 
 // If already logged in, redirect to My Account
 if (is_user_logged_in()) {
-    wp_redirect(wc_get_account_endpoint_url('dashboard'));
+    $redirect_url = function_exists('wc_get_account_endpoint_url') ? wc_get_account_endpoint_url('dashboard') : home_url('/');
+    wp_redirect($redirect_url);
     exit;
 }
 
@@ -30,11 +31,14 @@ get_header();
 
             <?php
             // Show any WooCommerce notices
-            wc_print_notices();
+            if (function_exists('wc_print_notices')) {
+                wc_print_notices();
+            }
 
             // WordPress login form
+            $account_redirect = function_exists('wc_get_account_endpoint_url') ? wc_get_account_endpoint_url('dashboard') : home_url('/');
             wp_login_form([
-                'redirect'       => wc_get_account_endpoint_url('dashboard'),
+                'redirect'       => $account_redirect,
                 'form_id'        => 'customer-login',
                 'label_username' => __('Username or Email Address', 'woocommerce'),
                 'label_password' => __('Password', 'woocommerce'),
