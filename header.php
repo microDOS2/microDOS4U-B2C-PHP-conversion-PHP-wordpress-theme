@@ -30,6 +30,7 @@
                 <a href="#pricing" class="text-slate-300 hover:text-white transition">Pricing</a>
                 <a href="#faq" class="text-slate-300 hover:text-white transition">FAQ</a>
                 <a href="<?php echo esc_url(home_url('/contact')); ?>" class="text-slate-300 hover:text-white transition">Contact</a>
+                <a href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>" class="font-semibold hover:text-white transition" style="color: #44f80c;">My Account</a>
             <?php elseif (is_page('articles-studies') || is_page_template('page-articles.php')) : ?>
                 <a href="<?php echo esc_url(home_url('/')); ?>" class="text-slate-300 hover:text-white transition">Home</a>
                 <a href="<?php echo esc_url(home_url('/user-stories')); ?>" class="text-slate-300 hover:text-white transition">User Experiences</a>
