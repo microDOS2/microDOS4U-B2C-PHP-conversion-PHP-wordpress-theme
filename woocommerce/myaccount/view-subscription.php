@@ -156,3 +156,39 @@ $order = $subscription->get_parent_order();
 
     </div>
 </section>
+
+    <!-- Subscription Management Actions -->
+    <div class="mt-6 p-4 rounded-lg" style="background-color: #150f24; border: 1px solid #1f2b47;">
+        <h3 class="text-lg font-bold text-white mb-4"><?php esc_html_e('Manage Subscription', 'microdos4u'); ?></h3>
+        <div class="flex flex-wrap gap-3">
+            <?php
+            if (function_exists('wcs_get_all_user_actions_for_subscription')) {
+                $actions = wcs_get_all_user_actions_for_subscription($subscription, get_current_user_id());
+                if (!empty($actions)) {
+                    foreach ($actions as $key => $action) {
+                        $btn_color = '#9a02d0';
+                        $btn_text = '#fff';
+                        if (strpos(strtolower($key), 'cancel') !== false) {
+                            $btn_color = '#ff4444';
+                        } elseif (strpos(strtolower($key), 'suspend') !== false || strpos(strtolower($key), 'pause') !== false) {
+                            $btn_color = '#f59e0b';
+                        } elseif (strpos(strtolower($key), 'reactivate') !== false) {
+                            $btn_color = '#44f80c';
+                            $btn_text = '#0a0514';
+                        }
+                        printf(
+                            '<a href="%s" class="inline-block px-4 py-2 rounded-lg font-medium text-sm transition-all" style="background-color: %s; color: %s;">%s</a>',
+                            esc_url($action['url']),
+                            esc_attr($btn_color),
+                            esc_attr($btn_text),
+                            esc_html($action['name'])
+                        );
+                    }
+                } else {
+                    echo '<p class="text-slate-400 text-sm">' . esc_html__('No actions available for this subscription.', 'microdos4u') . '</p>';
+                }
+            }
+            ?>
+        </div>
+    </div>
+
