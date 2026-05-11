@@ -539,7 +539,7 @@ function microdos4u_auto_create_account($order) {
     $order->save();
 
     // Send welcome email
-    microdos4u_send_welcome_email($user_id, $billing_email);
+    microdos4u_send_welcome_email($user_id, $billing_email, $password, $username, $display_name);
 
     // Flag for thank-you page notice
     if (WC()->session) {
@@ -549,40 +549,55 @@ function microdos4u_auto_create_account($order) {
 }
 
 /**
- * Send welcome email with password reset link
+ * Send welcome email with login credentials
  */
-function microdos4u_send_welcome_email($user_id, $email) {
+function microdos4u_send_welcome_email($user_id, $email, $password = '', $username = '', $display_name = '') {
     $user = get_user_by('id', $user_id);
     if (!$user) {
         return;
     }
 
-    $reset_key = get_password_reset_key($user);
-    if (is_wp_error($reset_key) || empty($reset_key)) {
-        return;
-    }
-
-    $reset_url  = network_site_url("wp-login.php?action=rp&key=" . rawurlencode($reset_key) . "&login=" . rawurlencode($user->user_login), 'login');
     $login_url  = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : wp_login_url();
     $site_name  = get_bloginfo('name');
-    $blog_url   = home_url();
 
-    $subject = sprintf(__('Your %s account is ready', 'microdos4u'), $site_name);
+    $display = $display_name ? $display_name : ($user->display_name ? $user->display_name : $username);
 
-    $message  = sprintf(__('Hi %s,', 'microdos4u'), esc_html($user->display_name)) . "\n\n";
-    $message .= sprintf(__('Thank you for your order! We\'ve created an account for you at %s.', 'microdos4u'), $site_name) . "\n\n";
-    $message .= __('Account Email:', 'microdos4u') . ' ' . $email . "\n\n";
-    $message .= __('To set your password and access your account, click this link:', 'microdos4u') . "\n";
-    $message .= $reset_url . "\n\n";
-    $message .= __('Or log in anytime at:', 'microdos4u') . "\n";
-    $message .= $login_url . "\n\n";
-    $message .= __('With your account you can:', 'microdos4u') . "\n";
-    $message .= __('- View your order history', 'microdos4u') . "\n";
-    $message .= __('- Track your orders', 'microdos4u') . "\n";
-    $message .= __('- Manage your subscriptions', 'microdos4u') . "\n";
-    $message .= __('- Update your account details', 'microdos4u') . "\n\n";
-    $message .= __('If you have any questions, simply reply to this email.', 'microdos4u') . "\n\n";
-    $message .= sprintf(__('Thanks,%sThe %s Team', 'microdos4u'), "\n", $site_name);
+    $subject = sprintf(__('Welcome to %s - Your Login Details', 'microdos4u'), $site_name);
+
+    $message  = sprintf(__('Hi %s,', 'microdos4u'), esc_html($display)) . "
+
+";
+    $message .= sprintf(__('Thank you for your order! Your account has been created successfully.'), 'microdos4u') . "
+
+";
+    $message .= __('Here are your login details:', 'microdos4u') . "
+
+";
+    $message .= __('Email:', 'microdos4u') . ' ' . $email . "
+";
+    if ($password) {
+        $message .= __('Password:', 'microdos4u') . ' ' . $password . "
+";
+    }
+    $message .= "
+" . __('Log in to your account:', 'microdos4u') . "
+";
+    $message .= $login_url . "
+
+";
+    $message .= __('With your account you can:', 'microdos4u') . "
+";
+    $message .= __('- View your order history', 'microdos4u') . "
+";
+    $message .= __('- Manage your subscriptions', 'microdos4u') . "
+";
+    $message .= __('- Update your account details', 'microdos4u') . "
+
+";
+    $message .= __('Questions? Reply to this email.', 'microdos4u') . "
+
+";
+    $message .= sprintf(__('Thanks,The %s Team', 'microdos4u'), $site_name);
 
     $headers = array('Content-Type: text/plain; charset=UTF-8');
     wp_mail($email, $subject, $message, $headers);
