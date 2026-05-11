@@ -46,13 +46,13 @@ $is_dashboard = empty($current_endpoint);
                 </h2>
                 <p class="text-slate-400 text-sm"><?php echo esc_html($current_user->user_email); ?></p>
             </div>
-            <a href="<?php echo esc_url(home_url()); ?>" 
+            <a href="<?php echo esc_url(wp_logout_url(wc_get_page_permalink('myaccount'))); ?>" 
                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200"
                style="background-color: transparent; color: #ff4444; border: 1px solid #ff4444;"
                onmouseover="this.style.backgroundColor='#ff4444'; this.style.color='#fff';"
                onmouseout="this.style.backgroundColor='transparent'; this.style.color='#ff4444';">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                <?php esc_html_e('End Session', 'microdos4u'); ?>
+                <?php esc_html_e('Log Out', 'microdos4u'); ?>
             </a>
         </div>
     </div>
