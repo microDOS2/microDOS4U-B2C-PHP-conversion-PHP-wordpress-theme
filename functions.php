@@ -669,3 +669,96 @@ function microdos4u_enforce_password_length_update($errors, $update, $user) {
     }
     return $errors;
 }
+
+// ============================================
+// CUSTOM WELCOME EMAIL FOR ALL NEW ACCOUNTS
+// ============================================
+
+/**
+ * Send custom welcome email with actual password when account is created
+ * This fires for BOTH checkout auto-creation AND registration form
+ */
+add_action('woocommerce_created_customer', 'microdos4u_custom_welcome_email', 10, 3);
+
+function microdos4u_custom_welcome_email($customer_id, $new_customer_data, $password_generated) {
+    // Prevent WooCommerce from sending its default email
+    add_filter('woocommerce_email_enabled_customer_new_account', '__return_false');
+
+    $user = get_user_by('id', $customer_id);
+    if (!$user || is_wp_error($user)) {
+        return;
+    }
+
+    $email = $user->user_email;
+    $username = $user->user_login;
+    $display_name = $user->display_name;
+
+    // Get the actual password if available
+    $password = '';
+    if (!empty($new_customer_data['user_pass'])) {
+        $password = $new_customer_data['user_pass'];
+    } else if (!empty($password_generated)) {
+        $password = $password_generated;
+    }
+
+    $login_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : wp_login_url();
+    $site_name = get_bloginfo('name');
+
+    $subject = sprintf(__('Welcome to %s - Your Account Details', 'microdos4u'), $site_name);
+
+    $message = sprintf(__('Hi %s,', 'microdos4u'), esc_html($display_name)) . "
+
+";
+    $message .= __('Your account has been created successfully!', 'microdos4u') . "
+
+";
+    $message .= __('Here are your login details:', 'microdos4u') . "
+
+";
+    $message .= __('Username:', 'microdos4u') . ' ' . $username . "
+";
+    $message .= __('Email:', 'microdos4u') . ' ' . $email . "
+";
+    if ($password) {
+        $message .= __('Password:', 'microdos4u') . ' ' . $password . "
+";
+    }
+    $message .= "
+" . __('Log in to your account:', 'microdos4u') . "
+";
+    $message .= $login_url . "
+
+";
+    $message .= __('With your account you can:', 'microdos4u') . "
+";
+    $message .= __('- View your order history', 'microdos4u') . "
+";
+    $message .= __('- Manage your subscriptions', 'microdos4u') . "
+";
+    $message .= __('- Update your account details', 'microdos4u') . "
+
+";
+    $message .= __('Questions? Reply to this email.', 'microdos4u') . "
+
+";
+    $message .= sprintf(__('Thanks,%sThe %s Team', 'microdos4u'), "
+", $site_name);
+
+    $headers = array('Content-Type: text/plain; charset=UTF-8');
+    wp_mail($email, $subject, $message, $headers);
+}
+
+/**
+ * Also disable the WordPress new user notification email
+ */
+add_filter('wp_new_user_notification_email', 'microdos4u_disable_wp_new_user_email', 10, 3);
+
+function microdos4u_disable_wp_new_user_email($wp_email, $user, $blogname) {
+    // Return empty to prevent WordPress from sending its default email
+    // Our custom email above handles everything
+    $wp_email['to'] = '';
+    $wp_email['subject'] = '';
+    $wp_email['message'] = '';
+    $wp_email['headers'] = '';
+    return $wp_email;
+}
