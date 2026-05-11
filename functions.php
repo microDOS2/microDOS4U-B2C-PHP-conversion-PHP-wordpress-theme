@@ -534,6 +534,10 @@ function microdos4u_auto_create_account($order) {
         return;
     }
 
+    // Explicitly save first/last name to user profile
+    update_user_meta($user_id, 'first_name', sanitize_text_field($billing_first));
+    update_user_meta($user_id, 'last_name', sanitize_text_field($billing_last));
+
     // Associate order with new user
     $order->set_customer_id($user_id);
     $order->save();
