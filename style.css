@@ -3114,3 +3114,59 @@ form[id^="affwp-login-form"] .form-row {
 .password-toggle-wrapper input[type="text"] {
     padding-right: 40px !important;
 }
+
+
+/* ============================================
+   PASSWORD EYE TOGGLE + LOGIN FORM FIXES
+   ============================================ */
+
+/* Password toggle button */
+.password-toggle-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #ffffff !important;
+    border: 2px solid #1f2b47 !important;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    transition: all 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+    background: #44f80c !important;
+    border-color: #44f80c !important;
+}
+
+.password-toggle-btn svg {
+    display: block;
+    pointer-events: none;
+}
+
+/* Ensure password field has right padding */
+input[type="password"],
+input[type="text"] {
+    padding-right: 48px;
+}
+
+/* HIDE REMEMBER ME CHECKBOX ON LOGIN FORM */
+.woocommerce-form-login .woocommerce-form__label-for-checkbox,
+.woocommerce-form-login input[name="rememberme"],
+.woocommerce-form-login .woocommerce-form__input-checkbox,
+.woocommerce-form-login .form-row:nth-child(3) {
+    display: none !important;
+}
+
+/* Also hide via the rememberme container */
+.woocommerce-form-login p.woocommerce-LostPassword,
+.woocommerce-form-login .woocommerce-form__label[for="rememberme"] {
+    display: none !important;
+}
