@@ -1101,7 +1101,6 @@ input::placeholder, textarea::placeholder {
 
 
 
-
 /* ============================================
    WOOCOMMERCE DARK THEME OVERRIDES
    ============================================ */
@@ -1616,7 +1615,6 @@ input::placeholder, textarea::placeholder {
    END WOOCOMMERCE OVERRIDES
    ============================================ */
 
-
 /* ============================================
    BUTTON SPACING FIX
    ============================================ */
@@ -1641,7 +1639,6 @@ form.cart {
 .pricing-card > div:last-child {
     margin-top: 1rem;
 }
-
 
 /* ============================================
    CHECKOUT FIXES
@@ -1716,7 +1713,6 @@ form.cart {
 .woocommerce-checkout .shop_table.woocommerce-checkout-review-order-table + .shop_table {
     display: none !important;
 }
-
 
 /* ============================================
    CART PAGE FIXES
@@ -1829,7 +1825,6 @@ form.cart {
     text-align: center !important;
     margin-top: 16px !important;
 }
-
 
 /* ============================================
    CART PAGE LAYOUT FIXES
@@ -2141,7 +2136,6 @@ form.cart {
     }
 }
 
-
 /* ============================================
    SINGLE PRODUCT PAGE FIXES
    ============================================ */
@@ -2236,7 +2230,6 @@ form.cart {
 .woocommerce div.product .woocommerce-tabs {
     margin-top: 2rem;
 }
-
 
 /* ============================================
    AGGRESSIVE CART TABLE FIXES
@@ -2433,7 +2426,6 @@ form.cart {
     color: var(--brand-dos) !important;
 }
 
-
 /* ============================================
    SINGLE PRODUCT PAGE - IMAGE & BUTTON SIZE
    ============================================ */
@@ -2529,7 +2521,6 @@ form.cart {
     display: block !important;
 }
 
-
 /* ============================================
    ULTRA-AGGRESSIVE CART FIXES
    ============================================ */
@@ -2604,7 +2595,6 @@ form.cart {
     object-fit: cover !important;
     display: block !important;
 }
-
 
 /* ============================================
    CART SHIPMENT ADDRESS - FIX LINE WRAPPING
@@ -2725,7 +2715,6 @@ form.cart {
     display: table !important;
     clear: both !important;
 }
-
 
 /* ============================================
    CART LAYOUT - WIDER TOTALS, NO WRAP
@@ -2853,7 +2842,6 @@ form.cart {
     object-fit: cover !important;
 }
 
-
 /* ============================================
    CART PANEL WIDTH FIX
    ============================================ */
@@ -2913,7 +2901,6 @@ form.cart {
     }
 }
 
-
 /* ============================================
    CHECKOUT - HIDE DUPLICATE ORDER REVIEW TABLE
    ============================================ */
@@ -2940,7 +2927,6 @@ form.cart {
 .woocommerce-checkout .woocommerce-checkout-review-order:first-of-type {
     display: block !important;
 }
-
 
 /* ============================================
    AFFILIATEWP FORM STYLING
@@ -3081,7 +3067,6 @@ form[id^="affwp-login-form"] .form-row {
     margin-bottom: 16px !important;
 }
 
-
 /* ============================================
    HIDE REWARDS FLOATING WIDGET
    ============================================ */
@@ -3114,7 +3099,6 @@ form[id^="affwp-login-form"] .form-row {
 .password-toggle-wrapper input[type="text"] {
     padding-right: 40px !important;
 }
-
 
 /* ============================================
    PASSWORD EYE TOGGLE + LOGIN FORM FIXES
@@ -3157,45 +3141,66 @@ input[type="text"] {
     padding-right: 48px;
 }
 
-/* HIDE REMEMBER ME CHECKBOX ON LOGIN FORM */
-.woocommerce-form-login .woocommerce-form__label-for-checkbox,
-.woocommerce-form-login input[name="rememberme"],
+
+
+/* ============================================
+   LOGIN FORM FIXES - Remember Me + Log In Button
+   ============================================ */
+
+/* Hide ONLY the Remember Me checkbox input */
 .woocommerce-form-login .woocommerce-form__input-checkbox,
-.woocommerce-form-login .form-row:nth-child(3) {
+.woocommerce-form-login input[name="rememberme"],
+.woocommerce-form-login input[type="checkbox"][name="rememberme"] {
     display: none !important;
 }
 
-/* Also hide via the rememberme container */
-.woocommerce-form-login p.woocommerce-LostPassword,
+/* Hide ONLY the Remember Me label text */
+.woocommerce-form-login .woocommerce-form__label-for-checkbox,
 .woocommerce-form-login .woocommerce-form__label[for="rememberme"] {
     display: none !important;
 }
 
-.woocommerce-form-login .woocommerce-form__label-for-checkbox,
-.woocommerce-form-login .woocommerce-form__input-checkbox,
-.woocommerce-form-login input[name="rememberme"] {
-    display: none !important;
-}
-
-/* Login/Register button styling */
+/* FORCE Log In button to show and be styled */
 .woocommerce-form-login .woocommerce-Button,
-.woocommerce-form-register .woocommerce-Button,
-.woocommerce-form-login button[type="submit"],
-.woocommerce-form-register button[type="submit"] {
+.woocommerce-form-login .woocommerce-form-login__submit,
+.woocommerce-form-login button[type="submit"] {
+    display: inline-block !important;
+    visibility: visible !important;
+    background-color: #9a02d0 !important;
+    color: #ffffff !important;
+    border: 2px solid #9a02d0 !important;
+    border-radius: 0.5rem !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    width: 100% !important;
+    text-align: center !important;
     transition: all 0.2s ease !important;
 }
+
+/* Log In button hover */
 .woocommerce-form-login .woocommerce-Button:hover,
-.woocommerce-form-register .woocommerce-Button:hover,
-.woocommerce-form-login button[type="submit"]:hover,
-.woocommerce-form-register button[type="submit"]:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+.woocommerce-form-login .woocommerce-form-login__submit:hover,
+.woocommerce-form-login button[type="submit"]:hover {
+    opacity: 0.9 !important;
+    transform: translateY(-1px) !important;
 }
 
 /* Form input focus states */
 .woocommerce-form-login .input-text:focus,
 .woocommerce-form-register .input-text:focus {
     border-color: #9a02d0 !important;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(154, 2, 208, 0.2);
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(154, 2, 208, 0.2) !important;
+}
+
+/* Lost your password link styling */
+.woocommerce-LostPassword a {
+    color: #ff66c4 !important;
+    font-size: 0.875rem !important;
+    transition: color 0.2s ease;
+}
+.woocommerce-LostPassword a:hover {
+    color: #ffffff !important;
 }
