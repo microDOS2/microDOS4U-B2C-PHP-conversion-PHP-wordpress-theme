@@ -538,6 +538,26 @@ function microdos4u_auto_create_account($order) {
     update_user_meta($user_id, 'first_name', sanitize_text_field($billing_first));
     update_user_meta($user_id, 'last_name', sanitize_text_field($billing_last));
 
+    // Save billing and shipping addresses from order to user profile
+    $customer = new WC_Customer($user_id);
+    $customer->set_billing_first_name($order->get_billing_first_name());
+    $customer->set_billing_last_name($order->get_billing_last_name());
+    $customer->set_billing_address_1($order->get_billing_address_1());
+    $customer->set_billing_city($order->get_billing_city());
+    $customer->set_billing_state($order->get_billing_state());
+    $customer->set_billing_postcode($order->get_billing_postcode());
+    $customer->set_billing_country($order->get_billing_country());
+    $customer->set_billing_phone($order->get_billing_phone());
+    $customer->set_billing_email($order->get_billing_email());
+    $customer->set_shipping_first_name($order->get_shipping_first_name());
+    $customer->set_shipping_last_name($order->get_shipping_last_name());
+    $customer->set_shipping_address_1($order->get_shipping_address_1());
+    $customer->set_shipping_city($order->get_shipping_city());
+    $customer->set_shipping_state($order->get_shipping_state());
+    $customer->set_shipping_postcode($order->get_shipping_postcode());
+    $customer->set_shipping_country($order->get_shipping_country());
+    $customer->save();
+
     // Associate order with new user
     $order->set_customer_id($user_id);
     $order->save();
