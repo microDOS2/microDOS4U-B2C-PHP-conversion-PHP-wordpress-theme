@@ -290,3 +290,5 @@ $is_dashboard = empty($current_endpoint);
     <?php endif; ?>
 
 </div>
+
+<?php endif; ?>
