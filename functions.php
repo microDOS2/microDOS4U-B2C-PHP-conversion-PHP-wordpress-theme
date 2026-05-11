@@ -709,6 +709,9 @@ function microdos4u_enforce_password_length_update($errors, $update, $user) {
 // FIX 1: Custom welcome email + disable defaults
 // ============================================
 
+add_filter('woocommerce_email_enabled_customer_new_account', '__return_false');
+add_filter('wp_new_user_notification_email', 'microdos4u_disable_wp_notification', 10, 3);
+
 function microdos4u_disable_wp_notification($wp_email) {
     $wp_email['to'] = '';
     return $wp_email;
