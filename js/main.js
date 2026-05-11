@@ -545,46 +545,56 @@ function initCheckout() {
 
 // Password Eye Toggle (Global - works on all pages)
 function initPasswordToggle() {
-    const pwdFields = document.querySelectorAll('input[type="password"]');
+    var pwdFields = document.querySelectorAll('input[type="password"]');
     if (!pwdFields.length) return;
 
-    // SVG icons
-    const eyeOpenSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-    const eyeClosedSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    // SVG eye icons - visible on dark backgrounds
+    var eyeOpenSVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0a0514" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    var eyeClosedSVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0a0514" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 
     pwdFields.forEach(function(field) {
-        // Skip if already processed
         if (field.dataset.eyeToggle === 'initialized') return;
         field.dataset.eyeToggle = 'initialized';
 
+        // Find or create wrapper
         var wrapper = field.parentNode;
         if (!wrapper) return;
 
-        // Ensure wrapper has relative positioning
-        var computedStyle = window.getComputedStyle(wrapper);
-        if (computedStyle.position === 'static') {
+        // For WooCommerce forms: wrap the field if it's in a <p> tag
+        var isWooField = field.classList.contains('woocommerce-Input') || wrapper.classList.contains('form-row');
+        if (isWooField && wrapper.tagName === 'P') {
+            wrapper.style.position = 'relative';
+        } else if (window.getComputedStyle(wrapper).position === 'static') {
             wrapper.style.position = 'relative';
         }
 
+        // Add right padding to password field so text doesn't go under the button
+        field.style.paddingRight = '48px';
+
         var btn = document.createElement('button');
         btn.type = 'button';
+        btn.className = 'password-toggle-btn';
         btn.innerHTML = eyeOpenSVG;
         btn.setAttribute('aria-label', 'Show password');
-        btn.setAttribute('tabindex', '-1');
-        btn.style.cssText = 'position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;z-index:5;display:flex;align-items:center;justify-content:center;opacity:0.9;background-color:rgba(255,255,255,0.1);border-radius:50%;width:36px;height:36px;padding:6px;transition:all 0.2s;';
-        btn.onmouseover = function() { btn.style.opacity = '1'; };
-        btn.onmouseout = function() { btn.style.opacity = '0.7'; };
+        btn.title = 'Show/Hide password';
+        btn.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);background:#ffffff;border:2px solid #1f2b47;border-radius:50%;width:32px;height:32px;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 2px 4px rgba(0,0,0,0.3);';
+
+        btn.onmouseenter = function() { btn.style.background = '#44f80c'; btn.style.borderColor = '#44f80c'; };
+        btn.onmouseleave = function() { btn.style.background = '#ffffff'; btn.style.borderColor = '#1f2b47'; };
 
         btn.onclick = function(e) {
             e.preventDefault();
+            e.stopPropagation();
             if (field.type === 'password') {
                 field.type = 'text';
                 btn.innerHTML = eyeClosedSVG;
                 btn.setAttribute('aria-label', 'Hide password');
+                btn.title = 'Hide password';
             } else {
                 field.type = 'password';
                 btn.innerHTML = eyeOpenSVG;
                 btn.setAttribute('aria-label', 'Show password');
+                btn.title = 'Show password';
             }
         };
 
