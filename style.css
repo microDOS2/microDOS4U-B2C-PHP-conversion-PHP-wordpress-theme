@@ -3170,3 +3170,32 @@ input[type="text"] {
 .woocommerce-form-login .woocommerce-form__label[for="rememberme"] {
     display: none !important;
 }
+
+.woocommerce-form-login .woocommerce-form__label-for-checkbox,
+.woocommerce-form-login .woocommerce-form__input-checkbox,
+.woocommerce-form-login input[name="rememberme"] {
+    display: none !important;
+}
+
+/* Login/Register button styling */
+.woocommerce-form-login .woocommerce-Button,
+.woocommerce-form-register .woocommerce-Button,
+.woocommerce-form-login button[type="submit"],
+.woocommerce-form-register button[type="submit"] {
+    transition: all 0.2s ease !important;
+}
+.woocommerce-form-login .woocommerce-Button:hover,
+.woocommerce-form-register .woocommerce-Button:hover,
+.woocommerce-form-login button[type="submit"]:hover,
+.woocommerce-form-register button[type="submit"]:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Form input focus states */
+.woocommerce-form-login .input-text:focus,
+.woocommerce-form-register .input-text:focus {
+    border-color: #9a02d0 !important;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(154, 2, 208, 0.2);
+}
