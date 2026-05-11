@@ -690,15 +690,4 @@ function microdos4u_enforce_password_length_update($errors, $update, $user) {
     return $errors;
 }
 
-// ============================================
-// CUSTOM WELCOME EMAIL FOR ALL NEW ACCOUNTS
-// ============================================
-    // Return empty to prevent WordPress from sending its default email
-    // Our custom email above handles everything
-    $wp_email['to'] = '';
-    $wp_email['subject'] = '';
-    $wp_email['message'] = '';
-    $wp_email['headers'] = '';
-    return $wp_email;
-}
-
+?>
