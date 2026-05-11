@@ -37,83 +37,14 @@ $is_dashboard = empty($current_endpoint);
 
 <?php if (!is_user_logged_in()) : ?>
 
-<!-- LOGIN / REGISTER PAGE FOR LOGGED-OUT USERS -->
+<!-- Logged Out: Let WooCommerce handle login/register natively -->
 <div class="py-8" style="color: #94a3b8;">
-
-    <div class="max-w-md mx-auto">
-        <!-- Logo/Header -->
+    <div class="max-w-lg mx-auto">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-white mb-2"><?php esc_html_e('Account Access', 'microdos4u'); ?></h1>
-            <p class="text-slate-400"><?php esc_html_e('Log in to view orders, manage subscriptions, and update your details.', 'microdos4u'); ?></p>
+            <h1 class="text-3xl font-bold text-white mb-2"><?php esc_html_e('My Account', 'microdos4u'); ?></h1>
+            <p class="text-slate-400"><?php esc_html_e('Log in or create an account to manage your orders and subscriptions.', 'microdos4u'); ?></p>
         </div>
-
-        <!-- Login Form Section -->
-        <div class="p-6 rounded-lg mb-6" style="background-color: #150f24; border: 1px solid #1f2b47;">
-            <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#44f80c" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                <?php esc_html_e('Existing Customer? Log In', 'microdos4u'); ?>
-            </h2>
-            <?php
-            wc_print_notices();
-            woocommerce_login_form(array(
-                'redirect' => wc_get_page_permalink('myaccount'),
-            ));
-            ?>
-        </div>
-
-        <!-- Divider -->
-        <div class="flex items-center gap-4 mb-6">
-            <div class="flex-1 h-px" style="background-color: #1f2b47;"></div>
-            <span class="text-slate-500 text-sm"><?php esc_html_e('or', 'microdos4u'); ?></span>
-            <div class="flex-1 h-px" style="background-color: #1f2b47;"></div>
-        </div>
-
-        <!-- Register Section -->
-        <div class="p-6 rounded-lg" style="background-color: #150f24; border: 1px solid #1f2b47;">
-            <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9a02d0" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                <?php esc_html_e('New Customer? Create Account', 'microdos4u'); ?>
-            </h2>
-            <p class="text-slate-400 text-sm mb-4">
-                <?php esc_html_e('Create an account to track orders, manage subscriptions, and get faster checkout next time.', 'microdos4u'); ?>
-            </p>
-            <form method="post" class="woocommerce-form woocommerce-form-register register" <?php do_action('woocommerce_register_form_tag'); ?>>
-                <?php do_action('woocommerce_register_form_start'); ?>
-
-                <?php if ('no' === get_option('woocommerce_registration_generate_username')) : ?>
-                    <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide mb-4">
-                        <label for="reg_username" class="text-slate-300 text-sm"><?php esc_html_e('Username', 'microdos4u'); ?> <span class="required" style="color: #ff4444;">*</span></label>
-                        <input type="text" class="woocommerce-Input woocommerce-Input--text input-text w-full mt-1 px-4 py-3 rounded-lg text-white" style="background-color: #0a0514; border: 1px solid #1f2b47;" name="username" id="reg_username" autocomplete="username" value="<?php echo (!empty($_POST['username'])) ? esc_attr(wp_unslash($_POST['username'])) : ''; ?>" />
-                    </p>
-                <?php endif; ?>
-
-                <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide mb-4">
-                    <label for="reg_email" class="text-slate-300 text-sm"><?php esc_html_e('Email address', 'microdos4u'); ?> <span class="required" style="color: #ff4444;">*</span></label>
-                    <input type="email" class="woocommerce-Input woocommerce-Input--text input-text w-full mt-1 px-4 py-3 rounded-lg text-white" style="background-color: #0a0514; border: 1px solid #1f2b47;" name="email" id="reg_email" autocomplete="email" value="<?php echo (!empty($_POST['email'])) ? esc_attr(wp_unslash($_POST['email'])) : ''; ?>" />
-                </p>
-
-                <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide mb-4">
-                    <label for="reg_password" class="text-slate-300 text-sm"><?php esc_html_e('Password', 'microdos4u'); ?> <span class="required" style="color: #ff4444;">*</span></label>
-                    <input type="password" class="woocommerce-Input woocommerce-Input--text input-text w-full mt-1 px-4 py-3 rounded-lg text-white" style="background-color: #0a0514; border: 1px solid #1f2b47;" name="password" id="reg_password" autocomplete="new-password" />
-                </p>
-
-                <?php do_action('woocommerce_register_form'); ?>
-                <?php wp_nonce_field('woocommerce-register', 'woocommerce-register-nonce'); ?>
-
-                <p class="woocommerce-form-row form-row mb-0">
-                    <button type="submit" class="woocommerce-Button woocommerce-button button woocommerce-form-register__submit w-full px-6 py-3 rounded-lg font-semibold text-center" style="background-color: #9a02d0; color: #fff;" name="register" value="<?php esc_attr_e('Create Account', 'microdos4u'); ?>"><?php esc_html_e('Create Account', 'microdos4u'); ?></button>
-                </p>
-
-                <?php do_action('woocommerce_register_form_end'); ?>
-            </form>
-        </div>
-
-        <!-- Lost Password Link -->
-        <div class="text-center mt-6">
-            <a href="<?php echo esc_url(wp_lostpassword_url()); ?>" class="text-sm" style="color: #ff66c4;">
-                <?php esc_html_e('Lost your password?', 'microdos4u'); ?>
-            </a>
-        </div>
+        <?php do_action('woocommerce_account_content'); ?>
     </div>
 </div>
 
