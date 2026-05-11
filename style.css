@@ -3204,3 +3204,24 @@ input[type="text"] {
 .woocommerce-LostPassword a:hover {
     color: #ffffff !important;
 }
+
+/* ============================================
+   FIXES 3 & 4: Hide temporary password notice + gift option
+   ============================================ */
+
+/* Hide "Your account is using a temporary password" admin notice */
+.woocommerce-info.woocommerce-info--account-pwd,
+.woocommerce-account .woocommerce-NoticeGroup .woocommerce-message:contains("temporary password"),
+.woocommerce-info:contains("temporary password"),
+.woocommerce-MyAccount-content .woocommerce-info {
+    display: none !important;
+}
+
+/* Hide "This is a gift" checkbox on checkout */
+.woocommerce-field-wrapper:has([for="is_gift"]),
+.woocommerce-shipping-fields .woocommerce-form__label[for="is_gift"],
+.woocommerce-form__label[for="is_gift"],
+input#is_gift,
+input[name="is_gift"] {
+    display: none !important;
+}
