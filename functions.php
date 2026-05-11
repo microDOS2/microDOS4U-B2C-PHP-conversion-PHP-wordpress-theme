@@ -693,9 +693,12 @@ function microdos4u_custom_welcome_email($customer_id, $new_customer_data, $pass
     $username = $user->user_login;
     $display_name = $user->display_name;
 
-    // Get the actual password if available
+    // Get the password - user-chosen from form, or auto-generated
     $password = '';
-    if (!empty($new_customer_data['user_pass'])) {
+    if (!empty($_POST['password'])) {
+        // User chose their own password during registration
+        $password = sanitize_text_field($_POST['password']);
+    } else if (!empty($new_customer_data['user_pass'])) {
         $password = $new_customer_data['user_pass'];
     } else if (!empty($password_generated)) {
         $password = $password_generated;
@@ -761,4 +764,16 @@ function microdos4u_disable_wp_new_user_email($wp_email, $user, $blogname) {
     $wp_email['message'] = '';
     $wp_email['headers'] = '';
     return $wp_email;
+}
+
+// ============================================
+// DISABLE AUTO-PASSWORD GENERATION
+// Users choose their own password during registration
+// ============================================
+
+add_filter('woocommerce_registration_generate_password', '__return_false');
+add_filter('woocommerce_register_post_type_account', 'microdos4u_disable_auto_password');
+
+function microdos4u_disable_auto_password($args) {
+    return $args;
 }
