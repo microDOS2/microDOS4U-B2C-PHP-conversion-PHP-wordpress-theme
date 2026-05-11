@@ -558,6 +558,19 @@ function microdos4u_auto_create_account($order) {
     $customer->set_shipping_country($order->get_shipping_country());
     $customer->save();
 
+    // Link any pending subscriptions to this user
+    if (function_exists('wcs_get_users_subscriptions') && function_exists('wcs_get_subscription')) {
+        $pending_subs = wcs_get_subscriptions(array(
+            'customer_id' => 0,
+            'order_id' => $order->get_id(),
+            'status' => 'pending',
+        ));
+        foreach ($pending_subs as $sub) {
+            $sub->set_customer_id($user_id);
+            $sub->save();
+        }
+    }
+
     // Associate order with new user
     $order->set_customer_id($user_id);
     $order->save();
@@ -690,4 +703,73 @@ function microdos4u_enforce_password_length_update($errors, $update, $user) {
     return $errors;
 }
 
-?>
+
+
+// ============================================
+// FIX 1: Custom welcome email + disable defaults
+// ============================================
+
+add_action('woocommerce_created_customer', 'microdos4u_on_customer_created', 10, 3);
+
+function microdos4u_on_customer_created($customer_id, $new_customer_data, $password_generated) {
+    // Disable WooCommerce default new account email
+    add_filter('woocommerce_email_enabled_customer_new_account', '__return_false');
+
+    $user = get_user_by('id', $customer_id);
+    if (!$user || is_wp_error($user)) return;
+
+    $email = $user->user_email;
+    $username = $user->user_login;
+    $display_name = $user->display_name;
+
+    // Get the plain text password
+    $password = '';
+    if (!empty($_POST['password'])) {
+        $password = sanitize_text_field($_POST['password']);
+    } elseif (!empty($password_generated)) {
+        $password = $password_generated;
+    }
+
+    $login_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : wp_login_url();
+    $site_name = get_bloginfo('name');
+
+    $subject = sprintf(__('Welcome to %s - Your Login Details', 'microdos4u'), $site_name);
+    $message = sprintf(__('Hi %s,', 'microdos4u'), esc_html($display_name)) . "
+
+";
+    $message .= __('Your account has been created. Here are your login details:', 'microdos4u') . "
+
+";
+    $message .= __('Email:', 'microdos4u') . ' ' . $email . "
+";
+    $message .= __('Password:', 'microdos4u') . ' ' . $password . "
+
+";
+    $message .= __('Log in here:', 'microdos4u') . "
+" . $login_url . "
+
+";
+    $message .= __('Thanks,', 'microdos4u') . "
+" . $site_name;
+
+    wp_mail($email, $subject, $message);
+}
+
+// Disable WordPress new user notification
+add_filter('wp_new_user_notification_email', 'microdos4u_disable_wp_notification', 10, 3);
+function microdos4u_disable_wp_notification($wp_email) {
+    $wp_email['to'] = '';
+    return $wp_email;
+}
+
+
+// ============================================
+// FIX 6: Change nav label "My Subscription" → "Subscriptions"
+// ============================================
+add_filter('woocommerce_account_menu_items', 'microdos4u_fix_nav_labels');
+function microdos4u_fix_nav_labels($items) {
+    if (isset($items['subscriptions'])) {
+        $items['subscriptions'] = __('Subscriptions', 'microdos4u');
+    }
+    return $items;
+}
