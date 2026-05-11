@@ -619,3 +619,34 @@ function microdos4u_thankyou_account_notice($order_id) {
     WC()->session->set('microdos_new_account_created', null);
     WC()->session->set('microdos_new_account_email', null);
 }
+
+// ============================================
+// PASSWORD HINT + MINIMUM LENGTH ENFORCEMENT
+// ============================================
+
+/**
+ * Change password hint from "twelve characters" to "six characters"
+ */
+add_filter('password_hint', function($hint) {
+    return str_replace('twelve', 'six', $hint);
+});
+
+/**
+ * Enforce minimum 6-character password on reset and account update
+ */
+add_action('validate_password_reset', 'microdos4u_enforce_password_length', 10, 2);
+add_action('user_profile_update_errors', 'microdos4u_enforce_password_length_update', 10, 3);
+
+function microdos4u_enforce_password_length($errors, $user) {
+    if (!empty($_POST['pass1']) && strlen($_POST['pass1']) < 6) {
+        $errors->add('password_too_short', '<strong>ERROR</strong>: Password must be at least 6 characters long.');
+    }
+    return $errors;
+}
+
+function microdos4u_enforce_password_length_update($errors, $update, $user) {
+    if (!empty($_POST['pass1']) && strlen($_POST['pass1']) < 6) {
+        $errors->add('password_too_short', '<strong>ERROR</strong>: Password must be at least 6 characters long.');
+    }
+    return $errors;
+}
