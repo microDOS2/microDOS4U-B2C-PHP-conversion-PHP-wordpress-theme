@@ -70,17 +70,31 @@ if (!defined('ABSPATH')) {
         <!-- Account Created Notice -->
         <?php if (WC()->session && WC()->session->get('microdos_new_account_created')) : 
             $new_email = WC()->session->get('microdos_new_account_email');
+            $new_password = WC()->session->get('microdos_new_account_password');
         ?>
         <div class="mb-6 p-5 rounded-lg" style="background-color: #150f24; border: 1px solid #44f80c;">
             <div class="flex items-start gap-3">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#44f80c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 mt-0.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                 <div>
-                    <p class="text-white font-medium mb-1"><?php esc_html_e('Account Created Successfully!', 'microdos4u'); ?></p>
+                    <p class="text-white font-medium mb-1"><?php esc_html_e('Account Created - Save Your Login Details!', 'microdos4u'); ?></p>
                     <p class="text-slate-400 text-sm">
                         <?php 
                         printf(
                             esc_html__('We\'ve created an account for you. Check your email at %s for login details and a link to set your password.', 'microdos4u'),
-                            '<strong style="color: #44f80c;">' . esc_html($new_email) . '</strong>'
+                            '<strong style="color: #44f80c;">' . esc_html($new_email) . '</strong>
+                    </p>
+                    <div class="p-3 rounded mb-3" style="background-color: #0a0514; border: 1px solid #1f2b47;">
+                        <div class="text-slate-400 text-xs mb-1"><?php esc_html_e('Email:', 'microdos4u'); ?></div>
+                        <div class="text-white font-mono text-sm mb-2"><?php echo esc_html($new_email); ?></div>
+                        <?php if (!empty($new_password)) : ?>
+                        <div class="text-slate-400 text-xs mb-1"><?php esc_html_e('Password:', 'microdos4u'); ?></div>
+                        <div class="text-white font-mono text-sm"><?php echo esc_html($new_password); ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <a href="<?php echo esc_url(wc_get_page_permalink("myaccount")); ?>" class="inline-block px-4 py-2 rounded-lg text-sm font-medium" style="background-color: #44f80c; color: #0a0514;">
+                        <?php esc_html_e('Log In to My Account', 'microdos4u'); ?>
+                    </a>
+                    <p style="display:none;">'
                         ); 
                         ?>
                     </p>
