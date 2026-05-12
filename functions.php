@@ -509,6 +509,24 @@ function microdos4u_auto_create_account($order) {
         // Associate order with existing account
         $order->set_customer_id($existing_user->ID);
         $order->save();
+
+        // If account was just created (within last 2 minutes), show notice on thank-you page
+        // This handles cases where WooCommerce's "Create an account?" checkbox created the account
+        $user_registered = strtotime($existing_user->user_registered);
+        if ((time() - $user_registered) < 120) {
+            set_transient('microdos_new_account_' . $order_id, array(
+                'email'    => $billing_email,
+                'password' => '', // User chose their own password
+                'custom_password' => true,
+            ), 15 * MINUTE_IN_SECONDS);
+
+            if (WC()->session) {
+                WC()->session->set('microdos_new_account_created', true);
+                WC()->session->set('microdos_new_account_email', $billing_email);
+                WC()->session->set('microdos_new_account_custom', true);
+            }
+        }
+
         return;
     }
 
@@ -688,6 +706,85 @@ function microdos4u_fix_nav_labels($items) {
     return $items;
 }
 
+
+// ============================================
+// FIX: Hide "Create an account?" checkbox + catch WC-created accounts
+// ============================================
+add_filter('woocommerce_checkout_fields', 'microdos4u_hide_create_account_checkbox');
+function microdos4u_hide_create_account_checkbox($fields) {
+    remove_action('woocommerce_before_checkout_registration_form', 'woocommerce_checkout_registration_form', 10);
+    add_filter('woocommerce_checkout_registration_enabled', '__return_false');
+    return $fields;
+}
+
+add_action('woocommerce_created_customer', 'microdos4u_on_wc_created_customer', 10, 3);
+
+function microdos4u_on_wc_created_customer($customer_id, $new_customer_data, $password_generated) {
+    $user = get_user_by('id', $customer_id);
+    if (!$user || !in_array('customer', (array) $user->roles, true)) {
+        return;
+    }
+
+    $email = $user->user_email;
+    $login_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : wp_login_url();
+    $site_name = get_bloginfo('name');
+
+    // Store in a transient keyed by email for thank-you page lookup
+    set_transient('microdos_wc_created_' . md5($email), array(
+        'customer_id' => $customer_id,
+        'email'       => $email,
+        'timestamp'   => time(),
+    ), 15 * MINUTE_IN_SECONDS);
+
+    // Send welcome email with password reset link
+    $reset_key = get_password_reset_key($user);
+    $reset_url = !is_wp_error($reset_key) && !empty($reset_key)
+        ? network_site_url("wp-login.php?action=rp&key=" . rawurlencode($reset_key) . "&login=" . rawurlencode($user->user_login), 'login')
+        : '';
+
+    $subject = sprintf(__('Your %s account is ready', 'microdos4u'), $site_name);
+    $message  = sprintf(__('Hi %s,', 'microdos4u'), esc_html($user->display_name)) . "
+
+";
+    $message .= sprintf(__('Thank you for your order! We've created an account for you at %s.', 'microdos4u'), $site_name) . "
+
+";
+    $message .= __('Your login email:', 'microdos4u') . ' ' . $email . "
+
+";
+
+    if ($reset_url) {
+        $message .= __('You can set your password here:', 'microdos4u') . "
+";
+        $message .= $reset_url . "
+
+";
+    }
+
+    $message .= __('Or log in anytime at:', 'microdos4u') . "
+";
+    $message .= $login_url . "
+
+";
+    $message .= __('With your account you can:', 'microdos4u') . "
+";
+    $message .= __('- View your order history', 'microdos4u') . "
+";
+    $message .= __('- Track your orders', 'microdos4u') . "
+";
+    $message .= __('- Manage your subscriptions', 'microdos4u') . "
+";
+    $message .= __('- Update your account details', 'microdos4u') . "
+
+";
+    $message .= sprintf(__('If you have any questions, simply reply to this email.
+
+Thanks,
+The %s Team', 'microdos4u'), $site_name);
+
+    $headers = array('Content-Type: text/plain; charset=UTF-8');
+    wp_mail($email, $subject, $message, $headers);
+}
 // ============================================
 // EMAIL SETUP NOTE:
 // If welcome emails are not being delivered,
