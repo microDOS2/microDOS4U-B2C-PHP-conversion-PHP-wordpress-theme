@@ -1167,3 +1167,66 @@ function microdos_render_w9_form($atts) {
     <?php
     return ob_get_clean();
 }
+
+
+// ============================================
+// W-9 SERVER-SIDE VALIDATION & SAVE
+// ============================================
+
+/**
+ * Validate W-9 fields during affiliate registration.
+ * This runs server-side after the form submits via AJAX.
+ * If validation fails, AffiliateWP shows the error and stops registration.
+ */
+add_action('affwp_process_register_form', 'microdos_validate_w9_on_registration', 10, 1);
+
+function microdos_validate_w9_on_registration($data) {
+    $required_fields = array(
+        'affwp_w9_legal_name'         => 'Full Legal Name',
+        'affwp_w9_tax_classification' => 'Tax Classification',
+        'affwp_w9_address'            => 'Street Address',
+        'affwp_w9_city'               => 'City',
+        'affwp_w9_state'              => 'State',
+        'affwp_w9_zip'                => 'ZIP Code',
+        'affwp_w9_tax_id'             => 'SSN or EIN',
+    );
+
+    foreach ($required_fields as $field => $label) {
+        if (empty($_POST[$field])) {
+            affwp_add_error($field . '_required', sprintf(__('W-9: %s is required.'), $label));
+        }
+    }
+
+    if (empty($_POST['affwp_w9_certification'])) {
+        affwp_add_error('affwp_w9_certification_required', __('W-9: You must certify the information is correct under penalties of perjury.'));
+    }
+}
+
+/**
+ * Save W-9 data after successful affiliate registration.
+ * Runs after the user and affiliate records are created.
+ */
+add_action('user_register', 'microdos_save_w9_on_affiliate_register', 10, 1);
+
+function microdos_save_w9_on_affiliate_register($user_id) {
+    // Only process if W-9 fields were submitted (affiliate registration)
+    if (empty($_POST['affwp_w9_legal_name'])) {
+        return;
+    }
+
+    $w9_data = array(
+        'legal_name'          => sanitize_text_field($_POST['affwp_w9_legal_name'] ?? ''),
+        'business_name'       => sanitize_text_field($_POST['affwp_w9_business_name'] ?? ''),
+        'tax_classification'  => sanitize_text_field($_POST['affwp_w9_tax_classification'] ?? ''),
+        'address'             => sanitize_text_field($_POST['affwp_w9_address'] ?? ''),
+        'city'                => sanitize_text_field($_POST['affwp_w9_city'] ?? ''),
+        'state'               => sanitize_text_field($_POST['affwp_w9_state'] ?? ''),
+        'zip'                 => sanitize_text_field($_POST['affwp_w9_zip'] ?? ''),
+        'tax_id'              => sanitize_text_field($_POST['affwp_w9_tax_id'] ?? ''),
+        'certification_date'  => current_time('mysql'),
+        'ip_address'          => sanitize_text_field($_SERVER['REMOTE_ADDR'] ?? ''),
+    );
+
+    update_user_meta($user_id, 'microdos_w9_data', $w9_data);
+    update_user_meta($user_id, 'microdos_w9_status', 'complete');
+}
