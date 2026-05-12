@@ -1,6 +1,6 @@
 <?php
 /**
- * Template Name: Affiliate Area
+ * Template Name: Affiliate Area - Custom
  *
  * @package microDOS4U
  */
@@ -19,23 +19,81 @@ get_header();
 
         <!-- Commission Info -->
         <div class="card p-8 rounded-lg mb-8" style="background-color: #150f24 !important; border: 1px solid #1f2b47;">
-            <h2 class="text-2xl font-bold text-white text-center mb-6">Commission Structure</h2>
+            <h2 class="text-2xl font-bold text-white text-center mb-2">Commission Structure</h2>
+            <p class="text-center text-slate-400 text-sm mb-6">First 15 Founding Affiliates get <span style="color: #44f80c;">enhanced rates</span> — <a href="#apply" style="color: #ff66c4; text-decoration: underline;">apply now</a> to lock in Founding rates.</p>
             <div class="grid md:grid-cols-2 gap-6">
-                <div class="text-center p-4 rounded-lg" style="background-color: #0a0514;">
-                    <p class="text-slate-400 text-sm mb-1">Commission Rate</p>
-                    <p class="text-3xl font-bold" style="color: #44f80c;">15%</p>
-                    <p class="text-slate-400 text-xs mt-1">per sale</p>
+                <!-- Founding Affiliate -->
+                <div class="text-center p-5 rounded-lg" style="background-color: #0a0514; border: 1px solid #44f80c;">
+                    <p class="text-xs font-bold uppercase tracking-wider mb-2" style="color: #44f80c;">Founding Affiliate (First 15)</p>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <p class="text-slate-400 text-xs mb-1">Initial Sale</p>
+                            <p class="text-2xl font-bold" style="color: #44f80c;">25%</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs mb-1">Recurring</p>
+                            <p class="text-2xl font-bold" style="color: #44f80c;">15%</p>
+                        </div>
+                    </div>
+                    <p class="text-slate-500 text-xs">24-month cap on recurring</p>
                 </div>
-                <div class="text-center p-4 rounded-lg" style="background-color: #0a0514;">
-                    <p class="text-slate-400 text-sm mb-1">Cookie Duration</p>
-                    <p class="text-3xl font-bold" style="color: #44f80c;">60 Days</p>
-                    <p class="text-slate-400 text-xs mt-1">referral tracking</p>
+                <!-- Standard Affiliate -->
+                <div class="text-center p-5 rounded-lg" style="background-color: #0a0514; border: 1px solid #1f2b47;">
+                    <p class="text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">Standard Affiliate (16+)</p>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <p class="text-slate-400 text-xs mb-1">Initial Sale</p>
+                            <p class="text-2xl font-bold" style="color: #44f80c;">20%</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs mb-1">Recurring</p>
+                            <p class="text-2xl font-bold" style="color: #44f80c;">10%</p>
+                        </div>
+                    </div>
+                    <p class="text-slate-500 text-xs">24-month cap on recurring</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-6 mt-4">
+                <div class="text-center p-3 rounded-lg" style="background-color: #0a0514;">
+                    <p class="text-slate-400 text-xs mb-1">Cookie Duration</p>
+                    <p class="text-xl font-bold" style="color: #44f80c;">45 Days</p>
+                </div>
+                <div class="text-center p-3 rounded-lg" style="background-color: #0a0514;">
+                    <p class="text-slate-400 text-xs mb-1">Minimum Payout</p>
+                    <p class="text-xl font-bold" style="color: #44f80c;">$50</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="card p-8 rounded-lg mb-8" style="background-color: #150f24 !important; border: 1px solid #1f2b47;">
+            <h2 class="text-xl font-bold text-white text-center mb-6">How It Works</h2>
+            <div class="grid sm:grid-cols-4 gap-4 text-center">
+                <div>
+                    <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-lg font-bold" style="background-color: #44f80c; color: #0a0514;">1</div>
+                    <p class="text-white text-sm font-semibold mb-1">Register</p>
+                    <p class="text-slate-400 text-xs">Fill out the affiliate application below.</p>
+                </div>
+                <div>
+                    <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-lg font-bold" style="background-color: #44f80c; color: #0a0514;">2</div>
+                    <p class="text-white text-sm font-semibold mb-1">Get Approved</p>
+                    <p class="text-slate-400 text-xs">We'll review and approve your application within 24-48 hours.</p>
+                </div>
+                <div>
+                    <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-lg font-bold" style="background-color: #44f80c; color: #0a0514;">3</div>
+                    <p class="text-white text-sm font-semibold mb-1">Share Your Link</p>
+                    <p class="text-slate-400 text-xs">Post your unique referral link on social media, blogs, or email.</p>
+                </div>
+                <div>
+                    <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-lg font-bold" style="background-color: #44f80c; color: #0a0514;">4</div>
+                    <p class="text-white text-sm font-semibold mb-1">Earn Commissions</p>
+                    <p class="text-slate-400 text-xs">Get paid for every sale and subscription renewal.</p>
                 </div>
             </div>
         </div>
 
         <!-- AffiliateWP Content Area -->
-        <div class="card p-8 rounded-lg mb-8" style="background-color: #150f24 !important; border: 1px solid #1f2b47;">
+        <div id="apply" class="card p-8 rounded-lg mb-8" style="background-color: #150f24 !important; border: 1px solid #1f2b47;">
             <?php
             if (function_exists('affiliate_wp')) {
                 echo do_shortcode('[affiliate_area]');
@@ -45,87 +103,35 @@ get_header();
             ?>
         </div>
 
-
-<!-- Global password eye toggle loaded from main.js -->
         <!-- FAQ -->
         <div class="mt-12">
             <h2 class="text-2xl font-bold text-white text-center mb-8">Affiliate FAQ</h2>
             <div class="space-y-4">
                 <details class="card rounded-lg" style="background-color: #150f24 !important; border: 1px solid #1f2b47;">
                     <summary class="p-4 cursor-pointer text-white font-semibold">How do I get paid?</summary>
-                    <div class="px-4 pb-4 text-slate-400">Commissions are paid monthly via your preferred payment method once you reach the minimum payout threshold.</div>
+                    <div class="px-4 pb-4 text-slate-400">Commissions are paid monthly via PayPal or bank transfer once you reach the $50 minimum payout threshold. You must complete a W-9 form (US affiliates) before your first payout can be issued.</div>
                 </details>
                 <details class="card rounded-lg" style="background-color: #150f24 !important; border: 1px solid #1f2b47;">
                     <summary class="p-4 cursor-pointer text-white font-semibold">How long does the referral cookie last?</summary>
-                    <div class="px-4 pb-4 text-slate-400">When someone clicks your referral link, a 60-day cookie is placed on their browser. If they purchase within 60 days, you get the commission.</div>
+                    <div class="px-4 pb-4 text-slate-400">When someone clicks your referral link, a 45-day cookie is placed on their browser. If they purchase within 45 days, you get the commission — even if they don't buy immediately.</div>
+                </details>
+                <details class="card rounded-lg" style="background-color: #150f24 !important; border: 1px solid #1f2b47;">
+                    <summary class="p-4 cursor-pointer text-white font-semibold">What are recurring commissions?</summary>
+                    <div class="px-4 pb-4 text-slate-400">For subscription products, you earn a commission not just on the initial sale but on every monthly renewal for up to 24 months. Founding Affiliates earn 15% on recurring; Standard Affiliates earn 10%.</div>
                 </details>
                 <details class="card rounded-lg" style="background-color: #150f24 !important; border: 1px solid #1f2b47;">
                     <summary class="p-4 cursor-pointer text-white font-semibold">Can I promote on social media?</summary>
-                    <div class="px-4 pb-4 text-slate-400">Yes! You can share your referral link on any platform &mdash; Instagram, TikTok, Twitter, Facebook, blogs, email newsletters, and more.</div>
+                    <div class="px-4 pb-4 text-slate-400">Yes! You can share your referral link on any platform — Instagram, TikTok, Twitter/X, Facebook, blogs, email newsletters, Discord, Reddit, and more. Just follow our <a href="/affiliate-terms" style="color: #ff66c4; text-decoration: underline;">Affiliate Terms</a>.</div>
                 </details>
                 <details class="card rounded-lg" style="background-color: #150f24 !important; border: 1px solid #1f2b47;">
-                    <summary class="p-4 cursor-pointer text-white font-semibold">Is there a minimum payout?</summary>
-                    <div class="px-4 pb-4 text-slate-400">Yes. You must earn at least $50 in commissions before a payout is issued. Unpaid commissions roll over to the next month.</div>
+                    <summary class="p-4 cursor-pointer text-white font-semibold">Why do I need to submit a W-9 form?</summary>
+                    <div class="px-4 pb-4 text-slate-400">US tax law requires us to collect a completed W-9 form (Request for Taxpayer Identification Number) from all US-based affiliates before we can issue commission payments totaling $600 or more in a calendar year. This allows us to file the required 1099-NEC tax form. W-9 collection is mandatory and payouts cannot be issued until it is completed.</div>
                 </details>
             </div>
         </div>
 
     </div>
 </section>
-
-
-<!-- Hide Rewards floating button -->
-<script>
-(function() {
-    function hideRewards() {
-        var allElements = document.querySelectorAll('button, a, div, span, iframe');
-        allElements.forEach(function(el) {
-            if (el.textContent && el.textContent.trim() === 'Rewards') {
-                el.style.display = 'none !important';
-                el.style.visibility = 'hidden !important';
-                el.style.opacity = '0 !important';
-                el.style.pointerEvents = 'none !important';
-            }
-        });
-    }
-
-    // Hide immediately on load
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', hideRewards);
-    } else {
-        hideRewards();
-    }
-
-    // Also hide after a delay (for dynamically injected widgets)
-    setTimeout(hideRewards, 500);
-    setTimeout(hideRewards, 1500);
-    setTimeout(hideRewards, 3000);
-
-    // Watch for dynamically added elements
-    var observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            mutation.addedNodes.forEach(function(node) {
-                if (node.nodeType === 1) { // Element node
-                    if (node.textContent && node.textContent.trim() === 'Rewards') {
-                        node.style.display = 'none !important';
-                        node.style.visibility = 'hidden !important';
-                    }
-                    // Also check children
-                    var children = node.querySelectorAll ? node.querySelectorAll('*') : [];
-                    children.forEach(function(child) {
-                        if (child.textContent && child.textContent.trim() === 'Rewards') {
-                            child.style.display = 'none !important';
-                            child.style.visibility = 'hidden !important';
-                        }
-                    });
-                }
-            });
-        });
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-})();
-</script>
 
 <?php
 get_footer();
