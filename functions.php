@@ -572,7 +572,7 @@ function microdos4u_fix_nav_labels($items) {
 
 
 // ============================================
-// W-9 / TAX INFORMATION COLLECTION FOR AFFILIATES
+// W-9 / TAX INFORMATION COLLECTION FOR AFFILIATES - v2
 // Adds custom fields to AffiliateWP registration form
 // Required for 1099 compliance when paying commissions
 // ============================================
