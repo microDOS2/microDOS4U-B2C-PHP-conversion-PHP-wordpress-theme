@@ -3160,6 +3160,13 @@ input[type="text"] {
     display: none !important;
 }
 
+/* Hide "Create an account?" checkbox on checkout — accounts are auto-created */
+.woocommerce-checkout #createaccount,
+.woocommerce-checkout .create-account,
+.woocommerce-checkout .woocommerce-form__label-for-checkbox[for="createaccount"] {
+    display: none !important;
+}
+
 /* FORCE Log In button to show and be styled */
 .woocommerce-form-login .woocommerce-Button,
 .woocommerce-form-login .woocommerce-form-login__submit,
