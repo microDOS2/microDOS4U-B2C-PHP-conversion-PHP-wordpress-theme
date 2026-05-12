@@ -2,7 +2,7 @@
 /**
  * Checkout Thankyou Page
  *
- * Custom thank-you page with account management links.
+ * Custom thank-you page with account creation notice and password display.
  * Overrides WooCommerce's default thankyou.php template.
  *
  * @package microDOS4U
@@ -11,102 +11,123 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+
+// Ensure $order is available — retrieve from URL if not passed by WooCommerce
+if (!isset($order) || !is_object($order) || !($order instanceof WC_Order)) {
+    $order = false;
+
+    // Try to get order from URL parameters (standard WooCommerce order-received URL)
+    if (isset($_GET['order']) && isset($_GET['key'])) {
+        $order_id  = absint($_GET['order']);
+        $order_key = wc_clean(wp_unslash($_GET['key']));
+        $possible_order = wc_get_order($order_id);
+        if ($possible_order && $possible_order instanceof WC_Order && hash_equals($possible_order->get_order_key(), $order_key)) {
+            $order = $possible_order;
+        }
+    }
+
+    // Fallback: try from global scope
+    if (!$order && isset($GLOBALS['order']) && is_object($GLOBALS['order']) && $GLOBALS['order'] instanceof WC_Order) {
+        $order = $GLOBALS['order'];
+    }
+
+    // Fallback: try from the order-received endpoint
+    if (!$order && function_exists('wc_get_order_id_by_order_key') && isset($_GET['key'])) {
+        $order_id = wc_get_order_id_by_order_key(wc_clean(wp_unslash($_GET['key'])));
+        if ($order_id) {
+            $possible_order = wc_get_order($order_id);
+            if ($possible_order && $possible_order instanceof WC_Order) {
+                $order = $possible_order;
+            }
+        }
+    }
+}
+
+// Safely get order ID for actions
+$order_id = ($order && $order instanceof WC_Order) ? $order->get_id() : 0;
+
+// Check for newly created account — check transient first, then session
+$new_account_email = '';
+$new_account_password = '';
+$account_created = false;
+
+if ($order_id) {
+    // Check transient (most reliable — set by auto-create function)
+    $transient_key = 'microdos_new_account_' . $order_id;
+    $account_data = get_transient($transient_key);
+    if ($account_data && is_array($account_data)) {
+        $new_account_email = isset($account_data['email']) ? $account_data['email'] : '';
+        $new_account_password = isset($account_data['password']) ? $account_data['password'] : '';
+        $account_created = !empty($new_account_email);
+    }
+}
+
+// Fallback to session if transient not found
+if (!$account_created && function_exists('WC') && WC()->session) {
+    $session_created = WC()->session->get('microdos_new_account_created');
+    $session_email   = WC()->session->get('microdos_new_account_email');
+    $session_password = WC()->session->get('microdos_new_account_password');
+    if ($session_created && !empty($session_email)) {
+        $account_created = true;
+        $new_account_email = $session_email;
+        $new_account_password = $session_password ? $session_password : '';
+    }
+}
 ?>
 
 <div class="woocommerce-order py-12" style="color: #94a3b8;">
 
-    <?php
-    if ($order) :
-        do_action('woocommerce_before_thankyou', $order->get_id());
-    endif;
-    ?>
+    <?php if ($order && $order instanceof WC_Order) : ?>
 
-    <!-- Account Management Bar (shown to logged-in users) -->
-    <?php if (is_user_logged_in()) : ?>
-    <div class="mb-6 p-4 rounded-lg flex flex-wrap justify-between items-center gap-4" 
-         style="background-color: #150f24; border: 1px solid #1f2b47;">
-        <div class="flex items-center gap-3">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#44f80c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span class="text-white text-sm font-medium">
-                <?php 
-                $current_user = wp_get_current_user();
-                printf(esc_html__('Logged in as %s', 'microdos4u'), esc_html($current_user->display_name)); 
-                ?>
-            </span>
-        </div>
-        <div class="flex items-center gap-3">
-            <a href="<?php echo esc_url(wc_get_account_endpoint_url('dashboard')); ?>" 
-               class="text-sm font-medium transition-all duration-200 flex items-center gap-1"
-               style="color: #44f80c;"
-               onmouseover="this.style.color='#fff';"
-               onmouseout="this.style.color='#44f80c';">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                <?php esc_html_e('My Account', 'microdos4u'); ?>
-            </a>
-            <span class="text-slate-600">|</span>
-            <a href="<?php echo esc_url(wp_logout_url(home_url())); ?>" 
-               class="text-sm font-medium transition-all duration-200 flex items-center gap-1"
-               style="color: #ff4444;"
-               onmouseover="this.style.color='#fff';"
-               onmouseout="this.style.color='#ff4444';">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                <?php esc_html_e('Log Out', 'microdos4u'); ?>
-            </a>
-        </div>
-    </div>
-    <?php endif; ?>
+        <?php do_action('woocommerce_before_thankyou', $order->get_id()); ?>
 
-    <!-- Success Header -->
-    <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background-color: #44f80c20;">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#44f80c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <h1 class="text-3xl font-bold text-white mb-2"><?php esc_html_e('Thank You for Your Order!', 'microdos4u'); ?></h1>
-        <p class="text-slate-400"><?php esc_html_e('Your order has been received and is being processed.', 'microdos4u'); ?></p>
-    </div>
-
-    <?php if ($order) : ?>
-
-        <!-- Account Created Notice -->
-        <?php if (WC()->session && WC()->session->get('microdos_new_account_created')) : 
-            $new_email = WC()->session->get('microdos_new_account_email');
-            $new_password = WC()->session->get('microdos_new_account_password');
-        ?>
+        <!-- Account Creation Notice (with password) -->
+        <?php if ($account_created && !empty($new_account_email)) : ?>
         <div class="mb-6 p-5 rounded-lg" style="background-color: #150f24; border: 1px solid #44f80c;">
             <div class="flex items-start gap-3">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#44f80c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 mt-0.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <div>
-                    <p class="text-white font-medium mb-1"><?php esc_html_e('Account Created - Save Your Login Details!', 'microdos4u'); ?></p>
-                    <p class="text-slate-400 text-sm">
-                        <?php 
-                        printf(
-                            esc_html__('We\'ve created an account for you. Check your email at %s for login details and a link to set your password.', 'microdos4u'),
-                            '<strong style="color: #44f80c;">' . esc_html($new_email) . '</strong>
+                <div class="flex-1">
+                    <p class="text-white font-medium mb-2"><?php esc_html_e('Account Created Successfully!', 'microdos4u'); ?></p>
+                    <p class="text-slate-400 text-sm mb-3">
+                        <?php esc_html_e('We\'ve automatically created an account for you. Save these credentials — you\'ll need them to manage your orders and subscriptions.', 'microdos4u'); ?>
                     </p>
                     <div class="p-3 rounded mb-3" style="background-color: #0a0514; border: 1px solid #1f2b47;">
-                        <div class="text-slate-400 text-xs mb-1"><?php esc_html_e('Email:', 'microdos4u'); ?></div>
-                        <div class="text-white font-mono text-sm mb-2"><?php echo esc_html($new_email); ?></div>
-                        <?php if (!empty($new_password)) : ?>
-                        <div class="text-slate-400 text-xs mb-1"><?php esc_html_e('Password:', 'microdos4u'); ?></div>
-                        <div class="text-white font-mono text-sm"><?php echo esc_html($new_password); ?></div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-slate-400 text-sm"><?php esc_html_e('Email:', 'microdos4u'); ?></span>
+                            <span class="text-white font-medium"><?php echo esc_html($new_account_email); ?></span>
+                        </div>
+                        <?php if (!empty($new_account_password)) : ?>
+                        <div class="flex items-center gap-2">
+                            <span class="text-slate-400 text-sm"><?php esc_html_e('Password:', 'microdos4u'); ?></span>
+                            <code class="text-sm font-mono px-2 py-0.5 rounded" style="background-color: #1f2b47; color: #44f80c;"><?php echo esc_html($new_account_password); ?></code>
+                            <button type="button" onclick="var r=document.createRange();r.selectNode(this.previousElementSibling);window.getSelection().removeAllRanges();window.getSelection().addRange(r);document.execCommand('copy');this.textContent='Copied!';var b=this;setTimeout(function(){b.textContent='Copy';},2000);" 
+                                    class="text-xs px-2 py-0.5 rounded transition-colors" 
+                                    style="background-color: #1f2b47; color: #94a3b8; cursor: pointer; border: none;">Copy</button>
+                        </div>
                         <?php endif; ?>
                     </div>
-                    <a href="<?php echo esc_url(wc_get_page_permalink("myaccount")); ?>" class="inline-block px-4 py-2 rounded-lg text-sm font-medium" style="background-color: #44f80c; color: #0a0514;">
-                        <?php esc_html_e('Log In to My Account', 'microdos4u'); ?>
-                    </a>
-                    <p style="display:none;">'
-                        ); 
-                        ?>
+                    <p class="text-slate-500 text-xs">
+                        <?php esc_html_e('You can also log in anytime at:', 'microdos4u'); ?>
+                        <a href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>" style="color: #38bdf8; text-decoration: underline;"><?php echo esc_url(wc_get_page_permalink('myaccount')); ?></a>
                     </p>
                 </div>
             </div>
         </div>
         <?php endif; ?>
 
+        <!-- Success Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background-color: #44f80c20;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#44f80c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2"><?php esc_html_e('Thank You for Your Order!', 'microdos4u'); ?></h1>
+            <p class="text-slate-400"><?php esc_html_e('Your order has been received and is being processed.', 'microdos4u'); ?></p>
+        </div>
+
         <!-- Order Summary Card -->
         <div class="p-6 rounded-lg mb-6" style="background-color: #150f24; border: 1px solid #1f2b47;">
             <h2 class="text-xl font-bold text-white mb-4"><?php esc_html_e('Order Summary', 'microdos4u'); ?></h2>
-            
+
             <ul class="woocommerce-order-overview woocommerce-thankyou-order-details order_details mb-4" style="list-style: none; padding: 0; margin: 0;">
 
                 <li class="woocommerce-order-overview__order order mb-2 pb-2" style="border-bottom: 1px solid #1f2b47;">
@@ -171,13 +192,13 @@ if (!defined('ABSPATH')) {
 
         <!-- CTA Buttons -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="<?php echo esc_url(wc_get_account_endpoint_url('orders')); ?>" 
+            <a href="<?php echo esc_url(wc_get_account_endpoint_url('orders')); ?>"
                class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300"
                style="background-color: #44f80c; color: #0a0514;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                 <?php esc_html_e('View My Orders', 'microdos4u'); ?>
             </a>
-            <a href="<?php echo esc_url(wc_get_account_endpoint_url('dashboard')); ?>" 
+            <a href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>"
                class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300"
                style="background-color: #9a02d0; color: #fff;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -191,8 +212,12 @@ if (!defined('ABSPATH')) {
 
         <!-- No order found -->
         <div class="p-8 rounded-lg text-center" style="background-color: #150f24; border: 1px solid #1f2b47;">
-            <p class="text-slate-400 mb-4"><?php esc_html_e('Unable to locate order details. Please check your email for confirmation.', 'microdos4u'); ?></p>
-            <a href="<?php echo esc_url(home_url()); ?>" 
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background-color: #ff444420;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2"><?php esc_html_e('Order Not Found', 'microdos4u'); ?></h2>
+            <p class="text-slate-400 mb-4"><?php esc_html_e('We couldn\'t locate your order details. Please check your email for confirmation or contact support.', 'microdos4u'); ?></p>
+            <a href="<?php echo esc_url(home_url()); ?>"
                class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold"
                style="background-color: #44f80c; color: #0a0514;">
                 <?php esc_html_e('Back to Home', 'microdos4u'); ?>
@@ -202,3 +227,15 @@ if (!defined('ABSPATH')) {
     <?php endif; ?>
 
 </div>
+
+<?php
+// Clean up: clear session flags and transient after rendering
+if ($order_id) {
+    delete_transient('microdos_new_account_' . $order_id);
+}
+if (function_exists('WC') && WC()->session) {
+    WC()->session->set('microdos_new_account_created', null);
+    WC()->session->set('microdos_new_account_email', null);
+    WC()->session->set('microdos_new_account_password', null);
+}
+?>
