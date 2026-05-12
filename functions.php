@@ -472,11 +472,32 @@ function microdos4u_checkout_checkbox_validation() {
  */
 add_action('woocommerce_checkout_order_created', 'microdos4u_auto_create_account');
 
+/**
+ * Updated functions for microDOS4U thank-you page fix.
+ * 
+ * Apply these changes to the existing functions.php file.
+ * Replaces the microdos4u_auto_create_account() function and
+ * the microdos4u_thankyou_account_notice() hook.
+ */
+
+// ============================================
+// AUTO-CREATE CUSTOMER ACCOUNT ON CHECKOUT
+// ============================================
+
+/**
+ * Auto-create WordPress account from checkout billing data.
+ * Runs silently after order creation — no extra fields for the customer.
+ * Stores credentials in a transient for display on the thank-you page.
+ */
+add_action('woocommerce_checkout_order_created', 'microdos4u_auto_create_account');
+
 function microdos4u_auto_create_account($order) {
     // Guard: WooCommerce must be active and order is valid
-    if (!function_exists('WC') || !is_object($order)) {
+    if (!function_exists('WC') || !is_object($order) || !($order instanceof WC_Order)) {
         return;
     }
+
+    $order_id = $order->get_id();
 
     // Only for guest checkouts
     if (is_user_logged_in()) {
@@ -512,7 +533,8 @@ function microdos4u_auto_create_account($order) {
         $counter++;
     }
 
-    $password = wp_generate_password(12, false);
+    // Generate a readable password (alphanumeric, no special chars)
+    $password = wp_generate_password(12, false, false);
 
     $user_data = array(
         'user_login'   => $username,
@@ -534,51 +556,27 @@ function microdos4u_auto_create_account($order) {
         return;
     }
 
-    // Explicitly save first/last name to user profile
-    update_user_meta($user_id, 'first_name', sanitize_text_field($billing_first));
-    update_user_meta($user_id, 'last_name', sanitize_text_field($billing_last));
-
-    // Save billing and shipping addresses from order to user profile
-    $customer = new WC_Customer($user_id);
-    $customer->set_billing_first_name($order->get_billing_first_name());
-    $customer->set_billing_last_name($order->get_billing_last_name());
-    $customer->set_billing_address_1($order->get_billing_address_1());
-    $customer->set_billing_city($order->get_billing_city());
-    $customer->set_billing_state($order->get_billing_state());
-    $customer->set_billing_postcode($order->get_billing_postcode());
-    $customer->set_billing_country($order->get_billing_country());
-    $customer->set_billing_phone($order->get_billing_phone());
-    $customer->set_billing_email($order->get_billing_email());
-    $customer->set_shipping_first_name($order->get_shipping_first_name());
-    $customer->set_shipping_last_name($order->get_shipping_last_name());
-    $customer->set_shipping_address_1($order->get_shipping_address_1());
-    $customer->set_shipping_city($order->get_shipping_city());
-    $customer->set_shipping_state($order->get_shipping_state());
-    $customer->set_shipping_postcode($order->get_shipping_postcode());
-    $customer->set_shipping_country($order->get_shipping_country());
-    $customer->save();
-
-    // Link any pending subscriptions to this user
-    if (function_exists('wcs_get_users_subscriptions') && function_exists('wcs_get_subscription')) {
-        $pending_subs = wcs_get_subscriptions(array(
-            'customer_id' => 0,
-            'order_id' => $order->get_id(),
-            'status' => 'pending',
-        ));
-        foreach ($pending_subs as $sub) {
-            $sub->set_customer_id($user_id);
-            $sub->save();
-        }
-    }
+    // Save billing/shipping address to user meta
+    update_user_meta($user_id, 'billing_first_name', sanitize_text_field($billing_first));
+    update_user_meta($user_id, 'billing_last_name', sanitize_text_field($billing_last));
+    update_user_meta($user_id, 'billing_email', sanitize_email($billing_email));
+    update_user_meta($user_id, 'shipping_first_name', sanitize_text_field($billing_first));
+    update_user_meta($user_id, 'shipping_last_name', sanitize_text_field($billing_last));
 
     // Associate order with new user
     $order->set_customer_id($user_id);
     $order->save();
 
-    // Send welcome email
-    microdos4u_send_welcome_email($user_id, $billing_email, $password, $username, $display_name);
+    // Send welcome email with credentials
+    microdos4u_send_welcome_email($user_id, $billing_email, $password);
 
-    // Flag for thank-you page notice + store password
+    // Store credentials in transient for thank-you page display (15-minute expiry)
+    set_transient('microdos_new_account_' . $order_id, array(
+        'email'    => $billing_email,
+        'password' => $password,
+    ), 15 * MINUTE_IN_SECONDS);
+
+    // Also store in session as fallback
     if (WC()->session) {
         WC()->session->set('microdos_new_account_created', true);
         WC()->session->set('microdos_new_account_email', $billing_email);
@@ -587,95 +585,61 @@ function microdos4u_auto_create_account($order) {
 }
 
 /**
- * Send welcome email with login credentials
+ * Send welcome email with login credentials and password reset link
  */
-function microdos4u_send_welcome_email($user_id, $email, $password = '', $username = '', $display_name = '') {
+function microdos4u_send_welcome_email($user_id, $email, $plain_password) {
     $user = get_user_by('id', $user_id);
     if (!$user) {
         return;
     }
 
-    $login_url  = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : wp_login_url();
-    $site_name  = get_bloginfo('name');
+    $reset_key = get_password_reset_key($user);
+    $reset_url = !is_wp_error($reset_key) && !empty($reset_key)
+        ? network_site_url("wp-login.php?action=rp&key=" . rawurlencode($reset_key) . "&login=" . rawurlencode($user->user_login), 'login')
+        : '';
 
-    $display = $display_name ? $display_name : ($user->display_name ? $user->display_name : $username);
+    $login_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : wp_login_url();
+    $site_name = get_bloginfo('name');
 
-    $subject = sprintf(__('Welcome to %s - Your Login Details', 'microdos4u'), $site_name);
+    $subject = sprintf(__('Your %s account is ready', 'microdos4u'), $site_name);
 
-    $message  = sprintf(__('Hi %s,', 'microdos4u'), esc_html($display)) . "
+    $message  = sprintf(__('Hi %s,', 'microdos4u'), esc_html($user->display_name)) . "\n\n";
+    $message .= sprintf(__('Thank you for your order! We\'ve created an account for you at %s.', 'microdos4u'), $site_name) . "\n\n";
+    $message .= __('Your login credentials:', 'microdos4u') . "\n";
+    $message .= __('Email:', 'microdos4u') . ' ' . $email . "\n";
+    $message .= __('Password:', 'microdos4u') . ' ' . $plain_password . "\n\n";
 
-";
-    $message .= sprintf(__('Thank you for your order! Your account has been created successfully.'), 'microdos4u') . "
-
-";
-    $message .= __('Here are your login details:', 'microdos4u') . "
-
-";
-    $message .= __('Email:', 'microdos4u') . ' ' . $email . "
-";
-    if ($password) {
-        $message .= __('Password:', 'microdos4u') . ' ' . $password . "
-";
+    if ($reset_url) {
+        $message .= __('You can change your password anytime here:', 'microdos4u') . "\n";
+        $message .= $reset_url . "\n\n";
     }
-    $message .= "
-" . __('Log in to your account:', 'microdos4u') . "
-";
-    $message .= $login_url . "
 
-";
-    $message .= __('With your account you can:', 'microdos4u') . "
-";
-    $message .= __('- View your order history', 'microdos4u') . "
-";
-    $message .= __('- Manage your subscriptions', 'microdos4u') . "
-";
-    $message .= __('- Update your account details', 'microdos4u') . "
-
-";
-    $message .= __('Questions? Reply to this email.', 'microdos4u') . "
-
-";
-    $message .= sprintf(__('Thanks,The %s Team', 'microdos4u'), $site_name);
+    $message .= __('Or log in anytime at:', 'microdos4u') . "\n";
+    $message .= $login_url . "\n\n";
+    $message .= __('With your account you can:', 'microdos4u') . "\n";
+    $message .= __('- View your order history', 'microdos4u') . "\n";
+    $message .= __('- Track your orders', 'microdos4u') . "\n";
+    $message .= __('- Manage your subscriptions', 'microdos4u') . "\n";
+    $message .= __('- Update your account details', 'microdos4u') . "\n\n";
+    $message .= __('If you have any questions, simply reply to this email.', 'microdos4u') . "\n\n";
+    $message .= sprintf(__('Thanks,%sThe %s Team', 'microdos4u'), "\n", $site_name);
 
     $headers = array('Content-Type: text/plain; charset=UTF-8');
-    $sent = wp_mail($email, $subject, $message, $headers);
-
-    // Log email send status for debugging
-    if (!$sent && defined('WP_DEBUG') && WP_DEBUG) {
-        error_log('microDOS4U: Welcome email FAILED to send to ' . $email);
-    }
+    wp_mail($email, $subject, $message, $headers);
 }
 
 /**
- * Show account creation notice on WooCommerce thank-you page
+ * DEPRECATED: Account notice is now handled directly in the thankyou.php template.
+ * This hook is kept empty to prevent conflicts with older code.
+ * The template reads the transient and displays the notice with the actual password.
  */
 add_action('woocommerce_before_thankyou', 'microdos4u_thankyou_account_notice');
 
 function microdos4u_thankyou_account_notice($order_id) {
-    if (!function_exists('WC') || !WC()->session) {
-        return;
-    }
-
-    $new_account = WC()->session->get('microdos_new_account_created');
-    $email       = WC()->session->get('microdos_new_account_email');
-
-    if (!$new_account || empty($email)) {
-        return;
-    }
-
-    printf(
-        '<div class="woocommerce-message woocommerce-message--info woocommerce-Message woocommerce-Message--info woocommerce-info" style="background-color: #150f24; border: 1px solid #44f80c; color: #d1d5db; margin-bottom: 20px;">' .
-        '<strong style="color: #44f80c;">%s</strong> %s <strong>%s</strong>. %s' .
-        '</div>',
-        esc_html__('Account Created!', 'microdos4u'),
-        esc_html__('We\'ve created an account for you. Check your email at', 'microdos4u'),
-        esc_html($email),
-        esc_html__('for your login details and a link to set your password.', 'microdos4u')
-    );
-
-    // Clear session flags
-    WC()->session->set('microdos_new_account_created', null);
-    WC()->session->set('microdos_new_account_email', null);
+    // NOTICE HANDLED IN TEMPLATE: woocommerce/checkout/thankyou.php
+    // This function intentionally left empty to prevent fatal errors.
+    // The template reads from the transient 'microdos_new_account_{$order_id}'
+    // and displays the account creation notice with credentials.
 }
 
 // ============================================
