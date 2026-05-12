@@ -579,8 +579,10 @@ function microdos4u_fix_nav_labels($items) {
 
 /**
  * Add W-9/Tax fields to AffiliateWP registration form
+ * Uses both hooks for maximum compatibility (shortcode + block editor)
  */
 add_action('affwp_register_user_form', 'microdos4u_affiliate_w9_fields');
+add_action('affwp_register_form_before_submit', 'microdos4u_affiliate_w9_fields');
 function microdos4u_affiliate_w9_fields() {
 ?>
 
