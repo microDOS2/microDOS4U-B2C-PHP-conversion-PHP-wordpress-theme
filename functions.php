@@ -743,44 +743,25 @@ function microdos4u_on_wc_created_customer($customer_id, $new_customer_data, $pa
         : '';
 
     $subject = sprintf(__('Your %s account is ready', 'microdos4u'), $site_name);
-    $message  = sprintf(__('Hi %s,', 'microdos4u'), esc_html($user->display_name)) . "
 
-";
-    $message .= sprintf(__('Thank you for your order! We've created an account for you at %s.', 'microdos4u'), $site_name) . "
-
-";
-    $message .= __('Your login email:', 'microdos4u') . ' ' . $email . "
-
-";
+    $message  = sprintf(__('Hi %s,', 'microdos4u'), esc_html($user->display_name)) . "\n\n";
+    $message .= sprintf(__('Thank you for your order! We\'ve created an account for you at %s.', 'microdos4u'), $site_name) . "\n\n";
+    $message .= __('Your login email:', 'microdos4u') . ' ' . $email . "\n\n";
 
     if ($reset_url) {
-        $message .= __('You can set your password here:', 'microdos4u') . "
-";
-        $message .= $reset_url . "
-
-";
+        $message .= __('You can set your password here:', 'microdos4u') . "\n";
+        $message .= $reset_url . "\n\n";
     }
 
-    $message .= __('Or log in anytime at:', 'microdos4u') . "
-";
-    $message .= $login_url . "
-
-";
-    $message .= __('With your account you can:', 'microdos4u') . "
-";
-    $message .= __('- View your order history', 'microdos4u') . "
-";
-    $message .= __('- Track your orders', 'microdos4u') . "
-";
-    $message .= __('- Manage your subscriptions', 'microdos4u') . "
-";
-    $message .= __('- Update your account details', 'microdos4u') . "
-
-";
-    $message .= sprintf(__('If you have any questions, simply reply to this email.
-
-Thanks,
-The %s Team', 'microdos4u'), $site_name);
+    $message .= __('Or log in anytime at:', 'microdos4u') . "\n";
+    $message .= $login_url . "\n\n";
+    $message .= __('With your account you can:', 'microdos4u') . "\n";
+    $message .= __('- View your order history', 'microdos4u') . "\n";
+    $message .= __('- Track your orders', 'microdos4u') . "\n";
+    $message .= __('- Manage your subscriptions', 'microdos4u') . "\n";
+    $message .= __('- Update your account details', 'microdos4u') . "\n\n";
+    $message .= __('If you have any questions, simply reply to this email.', 'microdos4u') . "\n\n";
+    $message .= sprintf(__('Thanks,%sThe %s Team', 'microdos4u'), "\n", $site_name);
 
     $headers = array('Content-Type: text/plain; charset=UTF-8');
     wp_mail($email, $subject, $message, $headers);
