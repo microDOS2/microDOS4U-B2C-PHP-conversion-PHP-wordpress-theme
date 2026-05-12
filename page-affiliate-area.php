@@ -114,10 +114,32 @@ get_header();
         </div>
     </section>
 
-    <!-- Affiliate Registration Form (shortcode forces old-style form that triggers PHP hooks) -->
+    <!-- Affiliate Form / Dashboard -->
     <section class="affiliate-area-section py-12" style="background-color: #0a0514;">
         <div class="container mx-auto px-4 max-w-4xl">
-            <?php echo do_shortcode('[affiliate_registration]'); ?>
+
+            <?php if (is_user_logged_in() && function_exists('affwp_is_affiliate') && affwp_is_affiliate()) : ?>
+
+                <!-- Logged-in Affiliate: Show Dashboard -->
+                <div class="affiliate-dashboard-wrap">
+                    <h2 class="text-2xl font-bold text-white mb-6">Your Affiliate Dashboard</h2>
+                    <?php echo do_shortcode('[affiliate_dashboard]'); ?>
+                </div>
+
+            <?php else : ?>
+
+                <!-- Not Logged In: Show Registration Form (shortcode triggers W-9 PHP hooks) + Login Link -->
+                <div class="affiliate-registration-wrap">
+                    <?php echo do_shortcode('[affiliate_registration]'); ?>
+                </div>
+
+                <div class="text-center mt-8 p-6 rounded-lg" style="background-color: #150f24; border: 1px solid #1f2b47;">
+                    <p class="text-white font-medium mb-2">Already have an affiliate account?</p>
+                    <a href="<?php echo esc_url(wp_login_url(get_permalink())); ?>" class="inline-flex items-center justify-center px-6 py-2 rounded-lg font-semibold transition-all" style="background-color: #44f80c; color: #0a0514;">Log In to Your Dashboard</a>
+                </div>
+
+            <?php endif; ?>
+
         </div>
     </section>
 
