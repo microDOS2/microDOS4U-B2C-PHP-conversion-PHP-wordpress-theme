@@ -578,143 +578,24 @@ function microdos4u_fix_nav_labels($items) {
 // ============================================
 
 /**
- * Add W-9/Tax fields to AffiliateWP registration form
- * Uses both hooks for maximum compatibility (shortcode + block editor)
+ * Save W-9 fields when user registers (works with both block and shortcode forms)
  */
-add_action('affwp_register_user_form', 'microdos4u_affiliate_w9_fields');
-add_action('affwp_register_form_before_submit', 'microdos4u_affiliate_w9_fields');
-function microdos4u_affiliate_w9_fields() {
-?>
+add_action('user_register', 'microdos4u_save_w9_on_user_register');
+add_action('affwp_insert_affiliate', 'microdos4u_save_w9_on_affiliate_create', 10, 2);
 
-    <h4 style="color: #94a3b8; margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 1px solid #1f2b47; padding-bottom: 0.5rem;">Tax Information (Required for 1099)</h4>
-
-    <p class="affwp-w9-note" style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 1rem;">
-        The IRS requires us to collect this information to report payments of $600 or more per year. Your information is secure and confidential.
-    </p>
-
-    <!-- Full Legal Name -->
-    <p>
-        <label for="affwp_w9_legal_name" style="color: #94a3b8;">Full Legal Name (as shown on tax return) <span style="color: #ef4444;">*</span></label>
-        <input type="text" name="affwp_w9_legal_name" id="affwp_w9_legal_name" class="input" required
-               style="width: 100%; background-color: #150f24; border: 1px solid #1f2b47; color: #e2e8f0; padding: 0.5rem; border-radius: 0.375rem; margin-top: 0.25rem;">
-    </p>
-
-    <!-- Business Name -->
-    <p>
-        <label for="affwp_w9_business_name" style="color: #94a3b8;">Business Name (if different from above)</label>
-        <input type="text" name="affwp_w9_business_name" id="affwp_w9_business_name" class="input"
-               style="width: 100%; background-color: #150f24; border: 1px solid #1f2b47; color: #e2e8f0; padding: 0.5rem; border-radius: 0.375rem; margin-top: 0.25rem;">
-    </p>
-
-    <!-- Tax Classification -->
-    <p>
-        <label for="affwp_w9_tax_classification" style="color: #94a3b8;">Federal Tax Classification <span style="color: #ef4444;">*</span></label>
-        <select name="affwp_w9_tax_classification" id="affwp_w9_tax_classification" required
-                style="width: 100%; background-color: #150f24; border: 1px solid #1f2b47; color: #e2e8f0; padding: 0.5rem; border-radius: 0.375rem; margin-top: 0.25rem;">
-            <option value="">-- Select One --</option>
-            <option value="individual">Individual / Sole Proprietor</option>
-            <option value="llc">Limited Liability Company (LLC)</option>
-            <option value="ccorp">C Corporation</option>
-            <option value="scorp">S Corporation</option>
-            <option value="partnership">Partnership</option>
-        </select>
-    </p>
-
-    <!-- Street Address -->
-    <p>
-        <label for="affwp_w9_address" style="color: #94a3b8;">Street Address <span style="color: #ef4444;">*</span></label>
-        <input type="text" name="affwp_w9_address" id="affwp_w9_address" class="input" required
-               style="width: 100%; background-color: #150f24; border: 1px solid #1f2b47; color: #e2e8f0; padding: 0.5rem; border-radius: 0.375rem; margin-top: 0.25rem;">
-    </p>
-
-    <!-- City -->
-    <p>
-        <label for="affwp_w9_city" style="color: #94a3b8;">City <span style="color: #ef4444;">*</span></label>
-        <input type="text" name="affwp_w9_city" id="affwp_w9_city" class="input" required
-               style="width: 100%; background-color: #150f24; border: 1px solid #1f2b47; color: #e2e8f0; padding: 0.5rem; border-radius: 0.375rem; margin-top: 0.25rem;">
-    </p>
-
-    <!-- State & ZIP -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-        <p>
-            <label for="affwp_w9_state" style="color: #94a3b8;">State <span style="color: #ef4444;">*</span></label>
-            <input type="text" name="affwp_w9_state" id="affwp_w9_state" class="input" required maxlength="2"
-                   placeholder="CO"
-                   style="width: 100%; background-color: #150f24; border: 1px solid #1f2b47; color: #e2e8f0; padding: 0.5rem; border-radius: 0.375rem; margin-top: 0.25rem;">
-        </p>
-        <p>
-            <label for="affwp_w9_zip" style="color: #94a3b8;">ZIP Code <span style="color: #ef4444;">*</span></label>
-            <input type="text" name="affwp_w9_zip" id="affwp_w9_zip" class="input" required maxlength="10"
-                   placeholder="80004"
-                   style="width: 100%; background-color: #150f24; border: 1px solid #1f2b47; color: #e2e8f0; padding: 0.5rem; border-radius: 0.375rem; margin-top: 0.25rem;">
-        </p>
-    </div>
-
-    <!-- SSN or EIN -->
-    <p>
-        <label for="affwp_w9_tax_id" style="color: #94a3b8;">Social Security Number (SSN) or Employer Identification Number (EIN) <span style="color: #ef4444;">*</span></label>
-        <input type="text" name="affwp_w9_tax_id" id="affwp_w9_tax_id" class="input" required maxlength="11"
-               placeholder="123-45-6789 or 12-3456789"
-               style="width: 100%; background-color: #150f24; border: 1px solid #1f2b47; color: #e2e8f0; padding: 0.5rem; border-radius: 0.375rem; margin-top: 0.25rem;">
-        <span style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 0.25rem;">This is required for 1099 tax reporting. Format: XXX-XX-XXXX or XX-XXXXXXX</span>
-    </p>
-
-    <!-- W-9 Certification -->
-    <div style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #1f2b47; border-radius: 0.5rem; background-color: #150f24;">
-        <p style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 1rem;">
-            <strong style="color: #e2e8f0;">Certification</strong> — Under penalties of perjury, I certify that:
-        </p>
-        <ol style="color: #94a3b8; font-size: 0.75rem; margin-left: 1.25rem; margin-bottom: 1rem;">
-            <li>The number shown on this form is my correct taxpayer identification number (or I am waiting for a number to be issued to me), and</li>
-            <li>I am not subject to backup withholding because: (a) I am exempt from backup withholding, or (b) I have not been notified by the IRS that I am subject to backup withholding, and</li>
-            <li>I am a U.S. citizen or other U.S. person, and</li>
-            <li>The FATCA code(s) entered on this form (if any) indicating that I am exempt from FATCA reporting is correct.</li>
-        </ol>
-        <p>
-            <label style="color: #94a3b8; display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer;">
-                <input type="checkbox" name="affwp_w9_certification" id="affwp_w9_certification" value="1" required
-                       style="margin-top: 0.125rem;">
-                <span>I agree to the above certification and understand this is the same as my electronic signature on an IRS Form W-9. <span style="color: #ef4444;">*</span></span>
-            </label>
-        </p>
-    </div>
-
-<?php
+function microdos4u_save_w9_on_user_register($user_id) {
+    // Only process if this is an affiliate registration
+    if (empty($_POST['affwp_user_name']) && empty($_POST['affwp_user_login'])) {
+        return;
+    }
+    microdos4u_save_w9_data($user_id);
 }
 
-/**
- * Validate W-9 fields during registration
- */
-add_filter('affwp_process_register_form', 'microdos4u_validate_w9_fields', 10, 2);
-function microdos4u_validate_w9_fields($errors, $sanitized_user) {
-    $required_fields = array(
-        'affwp_w9_legal_name'       => 'Full Legal Name',
-        'affwp_w9_tax_classification' => 'Federal Tax Classification',
-        'affwp_w9_address'          => 'Street Address',
-        'affwp_w9_city'             => 'City',
-        'affwp_w9_state'            => 'State',
-        'affwp_w9_zip'              => 'ZIP Code',
-        'affwp_w9_tax_id'           => 'SSN or EIN',
-    );
-
-    foreach ($required_fields as $field => $label) {
-        if (empty($_POST[$field])) {
-            $errors[] = $label . ' is required for tax reporting.';
-        }
-    }
-
-    if (empty($_POST['affwp_w9_certification'])) {
-        $errors[] = 'You must agree to the W-9 certification to register.';
-    }
-
-    return $errors;
+function microdos4u_save_w9_on_affiliate_create($affiliate_id, $data) {
+    microdos4u_save_w9_data($data['user_id']);
 }
 
-/**
- * Save W-9 fields when affiliate is created
- */
-add_action('affwp_insert_affiliate', 'microdos4u_save_w9_fields', 10, 2);
-function microdos4u_save_w9_fields($affiliate_id, $data) {
+function microdos4u_save_w9_data($user_id) {
     $w9_fields = array(
         'affwp_w9_legal_name',
         'affwp_w9_business_name',
@@ -728,11 +609,13 @@ function microdos4u_save_w9_fields($affiliate_id, $data) {
 
     foreach ($w9_fields as $field) {
         if (!empty($_POST[$field])) {
-            update_user_meta($data['user_id'], $field, sanitize_text_field($_POST[$field]));
+            update_user_meta($user_id, $field, sanitize_text_field($_POST[$field]));
         }
     }
 
-    update_user_meta($data['user_id'], 'affwp_w9_certification', '1');
+    if (!empty($_POST['affwp_w9_certification'])) {
+        update_user_meta($user_id, 'affwp_w9_certification', '1');
+    }
 }
 
 /**
