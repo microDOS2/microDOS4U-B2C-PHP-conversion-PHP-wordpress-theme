@@ -118,6 +118,60 @@ get_header();
         </div>
     </section>
 
+    <!-- W-9 Tax Information Fields -->
+    <!-- Injected via JavaScript. NO required attributes - form submits normally. -->
+    <!-- Validation is handled server-side by affwp_process_register_form hook. -->
+    <script>
+    (function() {
+        function addW9Fields() {
+            var form = document.querySelector('.affwp-register-form form, form.affwp-form, .wp-block-affiliatewp-registration form');
+            if (!form) {
+                var btn = document.querySelector('input[name="affwp_register_submit"], button[name="affwp_register_submit"]');
+                if (btn) form = btn.closest('form');
+            }
+            if (!form) {
+                var forms = document.querySelectorAll('form');
+                for (var i = 0; i < forms.length; i++) {
+                    if (forms[i].querySelector('[name*="affwp"]')) { form = forms[i]; break; }
+                }
+            }
+            if (!form || form.querySelector('#w9-fields')) return;
+
+            var div = document.createElement('div');
+            div.id = 'w9-fields';
+            div.style.cssText = 'margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid #1f2b47;';
+            // NOTE: No 'required' attributes anywhere - form must submit for server validation
+            div.innerHTML =
+                '<h4 style="color:#94a3b8;margin-bottom:1rem;font-size:1.1rem;font-weight:600;">Tax Information (Required for 1099)</h4>' +
+                '<p style="color:#94a3b8;font-size:0.875rem;margin-bottom:1rem;">The IRS requires us to collect this information to report payments of $600 or more per year.</p>' +
+                '<p style="margin-bottom:1rem;"><label style="color:#94a3b8;display:block;margin-bottom:0.25rem;">Full Legal Name *</label><input type="text" name="affwp_w9_legal_name" style="width:100%;background:#150f24;border:1px solid #1f2b47;color:#e2e8f0;padding:0.5rem;border-radius:0.375rem;box-sizing:border-box;"></p>' +
+                '<p style="margin-bottom:1rem;"><label style="color:#94a3b8;display:block;margin-bottom:0.25rem;">Business Name</label><input type="text" name="affwp_w9_business_name" style="width:100%;background:#150f24;border:1px solid #1f2b47;color:#e2e8f0;padding:0.5rem;border-radius:0.375rem;box-sizing:border-box;"></p>' +
+                '<p style="margin-bottom:1rem;"><label style="color:#94a3b8;display:block;margin-bottom:0.25rem;">Tax Classification *</label><select name="affwp_w9_tax_classification" style="width:100%;background:#150f24;border:1px solid #1f2b47;color:#e2e8f0;padding:0.5rem;border-radius:0.375rem;box-sizing:border-box;"><option value="">-- Select --</option><option value="individual">Individual / Sole Proprietor</option><option value="llc">LLC</option><option value="ccorp">C-Corp</option><option value="scorp">S-Corp</option><option value="partnership">Partnership</option></select></p>' +
+                '<p style="margin-bottom:1rem;"><label style="color:#94a3b8;display:block;margin-bottom:0.25rem;">Street Address *</label><input type="text" name="affwp_w9_address" style="width:100%;background:#150f24;border:1px solid #1f2b47;color:#e2e8f0;padding:0.5rem;border-radius:0.375rem;box-sizing:border-box;"></p>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;"><p style="margin:0;"><label style="color:#94a3b8;display:block;margin-bottom:0.25rem;">City *</label><input type="text" name="affwp_w9_city" style="width:100%;background:#150f24;border:1px solid #1f2b47;color:#e2e8f0;padding:0.5rem;border-radius:0.375rem;box-sizing:border-box;"></p><p style="margin:0;"><label style="color:#94a3b8;display:block;margin-bottom:0.25rem;">State *</label><input type="text" name="affwp_w9_state" maxlength="2" style="width:100%;background:#150f24;border:1px solid #1f2b47;color:#e2e8f0;padding:0.5rem;border-radius:0.375rem;box-sizing:border-box;"></p></div>' +
+                '<p style="margin-bottom:1rem;"><label style="color:#94a3b8;display:block;margin-bottom:0.25rem;">ZIP Code *</label><input type="text" name="affwp_w9_zip" maxlength="10" style="width:100%;background:#150f24;border:1px solid #1f2b47;color:#e2e8f0;padding:0.5rem;border-radius:0.375rem;box-sizing:border-box;"></p>' +
+                '<p style="margin-bottom:1rem;"><label style="color:#94a3b8;display:block;margin-bottom:0.25rem;">SSN or EIN *</label><input type="text" name="affwp_w9_tax_id" maxlength="11" style="width:100%;background:#150f24;border:1px solid #1f2b47;color:#e2e8f0;padding:0.5rem;border-radius:0.375rem;box-sizing:border-box;"><span style="color:#64748b;font-size:0.75rem;">For 1099 tax reporting</span></p>' +
+                '<div style="margin-top:1.5rem;padding:1rem;border:1px solid #1f2b47;border-radius:0.5rem;background:#150f24;"><p style="color:#94a3b8;font-size:0.875rem;margin-bottom:1rem;"><strong style="color:#e2e8f0;">Certification</strong> &mdash; Under penalties of perjury, I certify that the information provided is correct.</p><label style="color:#94a3b8;display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;"><input type="checkbox" name="affwp_w9_certification" value="1" style="margin-top:0.125rem;"><span>I agree to the W-9 certification. *</span></label></div>';
+
+            var submit = form.querySelector('input[type="submit"], button[type="submit"]');
+            if (submit && submit.parentNode) {
+                submit.parentNode.insertBefore(div, submit);
+            } else {
+                form.appendChild(div);
+            }
+            console.log('[W-9] Fields added - server-side validation enabled');
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', addW9Fields);
+        } else {
+            setTimeout(addW9Fields, 100);
+        }
+        setTimeout(addW9Fields, 500);
+        setTimeout(addW9Fields, 1000);
+    })();
+    </script>
+
 </main>
 
 <?php
