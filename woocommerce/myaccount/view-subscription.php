@@ -17,6 +17,7 @@ if (!function_exists('wcs_get_subscription')) {
 
 wc_print_notices();
 
+$subscription_id = absint(get_query_var('view-subscription'));
 $subscription = wcs_get_subscription($subscription_id);
 
 if (!$subscription) {
