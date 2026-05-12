@@ -17,7 +17,18 @@ if (!function_exists('wcs_get_subscription')) {
 
 wc_print_notices();
 
+// Get subscription ID - try multiple methods
 $subscription_id = absint(get_query_var('view-subscription'));
+
+// Fallback: Extract from URL path (e.g., /view-subscription/296/)
+if (empty($subscription_id)) {
+    $uri = sanitize_text_field(wp_unslash(\$_SERVER['REQUEST_URI']));
+    $parts = explode('/', trim($uri, '/'));
+    \$key = array_search('view-subscription', \$parts);
+    if (\$key !== false && isset(\$parts[\$key + 1])) {
+        \$subscription_id = absint(\$parts[\$key + 1]);
+    }
+}
 $subscription = wcs_get_subscription($subscription_id);
 
 if (!$subscription) {
