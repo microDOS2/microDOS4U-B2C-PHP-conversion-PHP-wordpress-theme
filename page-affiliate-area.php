@@ -217,7 +217,7 @@ get_header();
                 var formAction = form.getAttribute('action') || '';
                 var formId = form.id || '';
 
-                if (formClasses.indexOf('affwp-registration') !== -1 ||
+                if (formClasses.indexOf('affwp-register-form') !== -1 ||
                     formClasses.indexOf('affwp-form') !== -1 ||
                     formClasses.indexOf('affiliate-registration') !== -1 ||
                     formAction.indexOf('affiliate') !== -1 ||
