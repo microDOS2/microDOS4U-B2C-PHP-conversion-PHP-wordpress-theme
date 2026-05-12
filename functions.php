@@ -637,7 +637,12 @@ function microdos4u_send_welcome_email($user_id, $email, $password = '', $userna
     $message .= sprintf(__('Thanks,The %s Team', 'microdos4u'), $site_name);
 
     $headers = array('Content-Type: text/plain; charset=UTF-8');
-    wp_mail($email, $subject, $message, $headers);
+    $sent = wp_mail($email, $subject, $message, $headers);
+
+    // Log email send status for debugging
+    if (!$sent && defined('WP_DEBUG') && WP_DEBUG) {
+        error_log('microDOS4U: Welcome email FAILED to send to ' . $email);
+    }
 }
 
 /**
@@ -728,3 +733,11 @@ function microdos4u_fix_nav_labels($items) {
     }
     return $items;
 }
+
+// ============================================
+// EMAIL SETUP NOTE:
+// If welcome emails are not being delivered,
+// install and configure the 'WP Mail SMTP' plugin.
+// This ensures reliable email delivery from SiteGround hosting.
+// Plugin: https://wordpress.org/plugins/wp-mail-smtp/
+// ============================================
