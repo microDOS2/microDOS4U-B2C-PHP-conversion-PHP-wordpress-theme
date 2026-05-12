@@ -712,8 +712,10 @@ function microdos4u_fix_nav_labels($items) {
 // ============================================
 add_filter('woocommerce_checkout_fields', 'microdos4u_hide_create_account_checkbox');
 function microdos4u_hide_create_account_checkbox($fields) {
+    // Remove the registration form from checkout (visual only)
+    // CSS handles hiding the checkbox and password field
+    // Do NOT disable registration — guest checkout must still work
     remove_action('woocommerce_before_checkout_registration_form', 'woocommerce_checkout_registration_form', 10);
-    add_filter('woocommerce_checkout_registration_enabled', '__return_false');
     return $fields;
 }
 
