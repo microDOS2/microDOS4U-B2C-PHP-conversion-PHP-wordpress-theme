@@ -114,10 +114,10 @@ get_header();
         </div>
     </section>
 
-    <!-- Affiliate Area Shortcode -->
+    <!-- Affiliate Registration Form (shortcode forces old-style form that triggers PHP hooks) -->
     <section class="affiliate-area-section py-12" style="background-color: #0a0514;">
         <div class="container mx-auto px-4 max-w-4xl">
-            <?php echo do_shortcode('[affiliate_area]'); ?>
+            <?php echo do_shortcode('[affiliate_registration]'); ?>
         </div>
     </section>
 
