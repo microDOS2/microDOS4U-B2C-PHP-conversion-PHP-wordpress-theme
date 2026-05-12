@@ -578,10 +578,11 @@ function microdos4u_auto_create_account($order) {
     // Send welcome email
     microdos4u_send_welcome_email($user_id, $billing_email, $password, $username, $display_name);
 
-    // Flag for thank-you page notice
+    // Flag for thank-you page notice + store password
     if (WC()->session) {
         WC()->session->set('microdos_new_account_created', true);
         WC()->session->set('microdos_new_account_email', $billing_email);
+        WC()->session->set('microdos_new_account_password', $password);
     }
 }
 
