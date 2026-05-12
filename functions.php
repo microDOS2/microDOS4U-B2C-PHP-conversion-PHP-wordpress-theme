@@ -462,6 +462,9 @@ function microdos4u_checkout_checkbox_validation() {
     wp_add_inline_script('jquery', $script);
 }
 
+// Force account creation on checkout (required for subscription management)
+add_filter('woocommerce_checkout_registration_required', '__return_true');
+
 // Disable WooCommerce's default 'Your account has been created' email
 // Our custom welcome_email below handles it with the password included.
 add_filter('woocommerce_email_enabled_customer_new_account', '__return_false');
