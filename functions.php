@@ -472,25 +472,6 @@ function microdos4u_checkout_checkbox_validation() {
  */
 add_action('woocommerce_checkout_order_created', 'microdos4u_auto_create_account');
 
-/**
- * Updated functions for microDOS4U thank-you page fix.
- * 
- * Apply these changes to the existing functions.php file.
- * Replaces the microdos4u_auto_create_account() function and
- * the microdos4u_thankyou_account_notice() hook.
- */
-
-// ============================================
-// AUTO-CREATE CUSTOMER ACCOUNT ON CHECKOUT
-// ============================================
-
-/**
- * Auto-create WordPress account from checkout billing data.
- * Runs silently after order creation — no extra fields for the customer.
- * Stores credentials in a transient for display on the thank-you page.
- */
-add_action('woocommerce_checkout_order_created', 'microdos4u_auto_create_account');
-
 function microdos4u_auto_create_account($order) {
     // Guard: WooCommerce must be active and order is valid
     if (!function_exists('WC') || !is_object($order) || !($order instanceof WC_Order)) {
@@ -498,11 +479,6 @@ function microdos4u_auto_create_account($order) {
     }
 
     $order_id = $order->get_id();
-
-    // Only for guest checkouts
-    if (is_user_logged_in()) {
-        return;
-    }
 
     $billing_email = $order->get_billing_email();
     $billing_first = $order->get_billing_first_name();
@@ -513,7 +489,20 @@ function microdos4u_auto_create_account($order) {
         return;
     }
 
-    // Check if user already exists
+    // If user is logged in, only bail out if their email matches the billing email
+    if (is_user_logged_in()) {
+        $current_user = wp_get_current_user();
+        if ($current_user && $current_user->user_email === $billing_email) {
+            // Logged-in user matches billing email — just link order
+            $order->set_customer_id($current_user->ID);
+            $order->save();
+            return;
+        }
+        // Logged in but email doesn't match (deleted account + stale session)
+        // Continue to create new account
+    }
+
+    // Check if user already exists by email
     $existing_user = get_user_by('email', $billing_email);
 
     if ($existing_user) {
