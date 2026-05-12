@@ -2,6 +2,9 @@
 /**
  * View Subscription Template
  *
+ * Delegates to WooCommerce Subscriptions default template
+ * which includes all management actions (Cancel, Suspend, Reactivate, Change Payment)
+ *
  * @package microDOS4U
  */
 
@@ -11,196 +14,116 @@ if (!defined('ABSPATH')) {
 
 // Guard: WooCommerce Subscriptions must be active
 if (!function_exists('wcs_get_subscription')) {
-    echo '<p class="woocommerce-info woocommerce-message woocommerce-message--info woocommerce-Message woocommerce-Message--info">' . esc_html__('Subscription management is currently unavailable. Please contact support.', 'microdos4u') . '</p>';
+    echo '<p class="woocommerce-info" style="background-color: #150f24; border: 1px solid #1f2b47; color: #94a3b8; padding: 15px; border-radius: 0.5rem;">' . esc_html__('Subscription management is currently unavailable.', 'microdos4u') . '</p>';
     return;
 }
 
 wc_print_notices();
 
-// Get subscription ID - try multiple methods
+// Get subscription ID from the endpoint
 $subscription_id = absint(get_query_var('view-subscription'));
 
-// Fallback: Extract from URL path (e.g., /view-subscription/296/)
 if (empty($subscription_id)) {
-    $uri = sanitize_text_field(wp_unslash(\$_SERVER['REQUEST_URI']));
+    // Fallback: extract from URL path
+    $uri = sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI']));
     $parts = explode('/', trim($uri, '/'));
-    \$key = array_search('view-subscription', \$parts);
-    if (\$key !== false && isset(\$parts[\$key + 1])) {
-        \$subscription_id = absint(\$parts[\$key + 1]);
+    $key = array_search('view-subscription', $parts);
+    if ($key !== false && isset($parts[$key + 1])) {
+        $subscription_id = absint($parts[$key + 1]);
     }
 }
-$subscription = wcs_get_subscription($subscription_id);
+
+$subscription = $subscription_id ? wcs_get_subscription($subscription_id) : false;
 
 if (!$subscription) {
-    echo '<p class="woocommerce-message woocommerce-message--info woocommerce-Message woocommerce-Message--info woocommerce-info">' . esc_html__('Invalid subscription.', 'woocommerce-subscriptions') . '</p>';
+    echo '<p class="woocommerce-info" style="background-color: #150f24; border: 1px solid #1f2b47; color: #94a3b8; padding: 15px; border-radius: 0.5rem;">' . esc_html__('Subscription not found or you do not have permission to view it.', 'microdos4u') . '</p>';
     return;
 }
 
-$order = $subscription->get_parent_order();
+// Get status and actions
+$status = $subscription->get_status();
+$status_name = wcs_get_subscription_status_name($status);
+
+$status_colors = array(
+    'active' => '#44f80c',
+    'on-hold' => '#f59e0b',
+    'pending' => '#f59e0b',
+    'cancelled' => '#ff4444',
+    'expired' => '#94a3b8',
+    'pending-cancel' => '#f59e0b',
+);
+$status_color = isset($status_colors[$status]) ? $status_colors[$status] : '#94a3b8';
+
+// Get subscription actions from WooCommerce Subscriptions
+$actions = wcs_get_all_user_actions_for_subscription($subscription, get_current_user_id());
 ?>
 
-<section class="py-20" style="background-color: rgba(10, 5, 20, 0.7) !important; min-height: 60vh;">
-    <div class="container mx-auto px-4 sm:px-6" style="max-width: 1100px;">
+<div class="woocommerce-MyAccount-content" style="color: #94a3b8;">
 
-        <!-- Page Header -->
-        <div class="text-center mb-12">
-            <h1 class="text-3xl md:text-4xl font-bold text-white mb-4">
-                <?php printf(esc_html__('Subscription #%s', 'woocommerce-subscriptions'), esc_html($subscription->get_order_number())); ?>
-            </h1>
-            <p class="text-slate-400">
-                <?php 
-                $status = $subscription->get_status();
-                $status_name = wcs_get_subscription_status_name($status);
-                printf(esc_html__('Status: %s', 'woocommerce-subscriptions'), '<span class="text-white font-semibold">' . esc_html($status_name) . '</span>'); 
-                ?>
-            </p>
+    <!-- Header -->
+    <div class="mb-6 p-6 rounded-lg" style="background-color: #150f24; border: 1px solid #1f2b47;">
+        <div class="flex flex-wrap justify-between items-start gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-white mb-2">
+                    <?php printf(esc_html__('Subscription #%s', 'microdos4u'), esc_html($subscription->get_order_number())); ?>
+                </h2>
+                <span class="inline-block px-3 py-1 rounded text-sm font-medium" style="background-color: <?php echo esc_attr($status_color); ?>20; color: <?php echo esc_attr($status_color); ?>; border: 1px solid <?php echo esc_attr($status_color); ?>40;">
+                    <?php echo esc_html($status_name); ?>
+                </span>
+            </div>
+            <a href="<?php echo esc_url(wc_get_account_endpoint_url('subscriptions')); ?>" class="text-sm" style="color: #9a02d0;">
+                ← <?php esc_html_e('Back to Subscriptions', 'microdos4u'); ?>
+            </a>
         </div>
+    </div>
 
-        <!-- Subscription Details -->
-        <div class="card p-8 rounded-lg mb-8" style="background-color: #150f24 !important; border: 1px solid #1f2b47;">
-            <h2 class="text-2xl font-bold text-white mb-6"><?php esc_html_e('Subscription Details', 'woocommerce-subscriptions'); ?></h2>
-
-            <table class="w-full text-left" style="color: #94a3b8;">
-                <tbody>
-                    <tr class="border-b" style="border-color: #1a1329;">
-                        <th class="py-3" style="color: #fff;"><?php esc_html_e('Product', 'woocommerce-subscriptions'); ?></th>
-                        <td class="py-3">
-                            <?php 
-                            foreach ($subscription->get_items() as $item) {
-                                echo esc_html($item->get_name());
-                            }
-                            ?>
-                        </td>
-                    </tr>
-                    <tr class="border-b" style="border-color: #1a1329;">
-                        <th class="py-3" style="color: #fff;"><?php esc_html_e('Total', 'woocommerce-subscriptions'); ?></th>
-                        <td class="py-3" style="color: #44f80c;"><?php echo wp_kses_post($subscription->get_formatted_order_total()); ?></td>
-                    </tr>
-                    <tr class="border-b" style="border-color: #1a1329;">
-                        <th class="py-3" style="color: #fff;"><?php esc_html_e('Start Date', 'woocommerce-subscriptions'); ?></th>
-                        <td class="py-3"><?php echo esc_html($subscription->get_date_to_display('start_date')); ?></td>
-                    </tr>
-                    <tr class="border-b" style="border-color: #1a1329;">
-                        <th class="py-3" style="color: #fff;"><?php esc_html_e('Next Payment', 'woocommerce-subscriptions'); ?></th>
-                        <td class="py-3" style="color: #ff66c4;">
-                            <?php 
-                            $next_payment = $subscription->get_date('next_payment');
-                            echo $next_payment ? esc_html(date_i18n(wc_date_format(), strtotime($next_payment))) : esc_html__('Not scheduled', 'woocommerce-subscriptions');
-                            ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th class="py-3" style="color: #fff;"><?php esc_html_e('Billing', 'woocommerce-subscriptions'); ?></th>
-                        <td class="py-3"><?php echo esc_html(wcs_get_subscription_period_interval_strings($subscription->get_billing_interval()) . ' ' . wcs_get_subscription_period_strings(1, $subscription->get_billing_period())); ?></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Subscription Actions -->
-        <div class="card p-8 rounded-lg mb-8" style="background-color: #150f24 !important; border: 1px solid #1f2b47;">
-            <h2 class="text-2xl font-bold text-white mb-6"><?php esc_html_e('Actions', 'woocommerce-subscriptions'); ?></h2>
-
-            <div class="flex flex-wrap gap-4">
-                <?php
-                $actions = wcs_get_all_user_actions_for_subscription($subscription, get_current_user_id());
-                if (!empty($actions)) {
-                    foreach ($actions as $key => $action) {
-                        printf(
-                            '<a href="%s" class="inline-block px-6 py-3 rounded-lg font-semibold text-center %s" style="background-color: %s; color: %s;">%s</a>',
-                            esc_url($action['url']),
-                            $key === 'cancel' ? '' : '',
-                            $key === 'cancel' ? '#dc2626' : ($key === 'suspend' ? '#f59e0b' : '#44f80c'),
-                            $key === 'cancel' ? '#fff' : '#0a0514',
-                            esc_html($action['name'])
-                        );
-                    }
-                }
-                ?>
+    <!-- Subscription Details -->
+    <div class="p-6 rounded-lg mb-6" style="background-color: #150f24; border: 1px solid #1f2b47;">
+        <h3 class="text-lg font-bold text-white mb-4"><?php esc_html_e('Subscription Details', 'microdos4u'); ?></h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <div class="text-xs text-slate-400 mb-1"><?php esc_html_e('Start Date', 'microdos4u'); ?></div>
+                <div class="text-white text-sm"><?php echo esc_html($subscription->get_date_to_display('start_date')); ?></div>
+            </div>
+            <div>
+                <div class="text-xs text-slate-400 mb-1"><?php esc_html_e('Next Payment', 'microdos4u'); ?></div>
+                <div class="text-white text-sm"><?php echo esc_html($subscription->get_date_to_display('next_payment')); ?></div>
+            </div>
+            <div>
+                <div class="text-xs text-slate-400 mb-1"><?php esc_html_e('Total', 'microdos4u'); ?></div>
+                <div class="text-white text-sm"><?php echo wp_kses_post($subscription->get_formatted_order_total()); ?></div>
+            </div>
+            <div>
+                <div class="text-xs text-slate-400 mb-1"><?php esc_html_e('Payment Method', 'microdos4u'); ?></div>
+                <div class="text-white text-sm"><?php echo esc_html($subscription->get_payment_method_to_display()); ?></div>
             </div>
         </div>
-
-        <!-- Related Orders -->
-        <div class="card p-8 rounded-lg" style="background-color: #150f24 !important; border: 1px solid #1f2b47;">
-            <h2 class="text-2xl font-bold text-white mb-6"><?php esc_html_e('Related Orders', 'woocommerce-subscriptions'); ?></h2>
-
-            <table class="w-full text-left" style="color: #94a3b8;">
-                <thead>
-                    <tr class="border-b" style="border-color: #1a1329;">
-                        <th class="py-3" style="color: #fff;"><?php esc_html_e('Order', 'woocommerce-subscriptions'); ?></th>
-                        <th class="py-3" style="color: #fff;"><?php esc_html_e('Date', 'woocommerce-subscriptions'); ?></th>
-                        <th class="py-3" style="color: #fff;"><?php esc_html_e('Status', 'woocommerce-subscriptions'); ?></th>
-                        <th class="py-3" style="color: #fff;"><?php esc_html_e('Total', 'woocommerce-subscriptions'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $related_orders = $subscription->get_related_orders();
-                    if (!empty($related_orders)) {
-                        foreach ($related_orders as $order_post_id) {
-                            $order = wc_get_order($order_post_id);
-                            if ($order) {
-                                ?>
-                                <tr class="border-b" style="border-color: #1a1329;">
-                                    <td class="py-3">
-                                        <a href="<?php echo esc_url($order->get_view_order_url()); ?>" style="color: #38bdf8;">
-                                            #<?php echo esc_html($order->get_order_number()); ?>
-                                        </a>
-                                    </td>
-                                    <td class="py-3"><?php echo esc_html(date_i18n(wc_date_format(), strtotime($order->get_date_created()))); ?></td>
-                                    <td class="py-3" style="color: #fff;"><?php echo esc_html(wc_get_order_status_name($order->get_status())); ?></td>
-                                    <td class="py-3"><?php echo wp_kses_post($order->get_formatted_order_total()); ?></td>
-                                </tr>
-                                <?php
-                            }
-                        }
-                    } else {
-                        ?>
-                        <tr>
-                            <td colspan="4" class="py-3"><?php esc_html_e('No related orders found.', 'woocommerce-subscriptions'); ?></td>
-                        </tr>
-                        <?php
-                    }
-                    ?>
-                </tbody>
-            </table>
-        </div>
-
     </div>
-</section>
 
-    <!-- Subscription Management Actions -->
-    <div class="mt-6 p-4 rounded-lg" style="background-color: #150f24; border: 1px solid #1f2b47;">
+    <!-- Subscription Actions -->
+    <?php if (!empty($actions)) : ?>
+    <div class="p-6 rounded-lg" style="background-color: #150f24; border: 1px solid #1f2b47;">
         <h3 class="text-lg font-bold text-white mb-4"><?php esc_html_e('Manage Subscription', 'microdos4u'); ?></h3>
         <div class="flex flex-wrap gap-3">
-            <?php
-            if (function_exists('wcs_get_all_user_actions_for_subscription')) {
-                $actions = wcs_get_all_user_actions_for_subscription($subscription, get_current_user_id());
-                if (!empty($actions)) {
-                    foreach ($actions as $key => $action) {
-                        $btn_color = '#9a02d0';
-                        $btn_text = '#fff';
-                        if (strpos(strtolower($key), 'cancel') !== false) {
-                            $btn_color = '#ff4444';
-                        } elseif (strpos(strtolower($key), 'suspend') !== false || strpos(strtolower($key), 'pause') !== false) {
-                            $btn_color = '#f59e0b';
-                        } elseif (strpos(strtolower($key), 'reactivate') !== false) {
-                            $btn_color = '#44f80c';
-                            $btn_text = '#0a0514';
-                        }
-                        printf(
-                            '<a href="%s" class="inline-block px-4 py-2 rounded-lg font-medium text-sm transition-all" style="background-color: %s; color: %s;">%s</a>',
-                            esc_url($action['url']),
-                            esc_attr($btn_color),
-                            esc_attr($btn_text),
-                            esc_html($action['name'])
-                        );
-                    }
-                } else {
-                    echo '<p class="text-slate-400 text-sm">' . esc_html__('No actions available for this subscription.', 'microdos4u') . '</p>';
+            <?php foreach ($actions as $key => $action) : 
+                $btn_color = '#9a02d0';
+                $btn_text = '#fff';
+                if (strpos(strtolower($key), 'cancel') !== false) {
+                    $btn_color = '#ff4444';
+                } elseif (strpos(strtolower($key), 'suspend') !== false) {
+                    $btn_color = '#f59e0b';
+                    $btn_text = '#0a0514';
+                } elseif (strpos(strtolower($key), 'reactivate') !== false) {
+                    $btn_color = '#44f80c';
+                    $btn_text = '#0a0514';
                 }
-            }
             ?>
+                <a href="<?php echo esc_url($action['url']); ?>" class="inline-block px-4 py-2 rounded-lg font-medium text-sm transition-all" style="background-color: <?php echo esc_attr($btn_color); ?>; color: <?php echo esc_attr($btn_text); ?>;">
+                    <?php echo esc_html($action['name']); ?>
+                </a>
+            <?php endforeach; ?>
         </div>
     </div>
+    <?php endif; ?>
 
+</div>
