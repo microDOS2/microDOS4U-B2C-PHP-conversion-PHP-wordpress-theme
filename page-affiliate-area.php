@@ -34,13 +34,11 @@ get_header();
                         <h3 class="text-lg font-semibold mb-2" style="color: #44f80c;">Initial Purchase</h3>
                         <p class="text-3xl font-bold text-white mb-1">20%</p>
                         <p class="text-slate-400 text-sm">Commission on every first-time purchase made by your referral.</p>
-                        <p class="text-slate-500 text-xs mt-2">Founding affiliates (first 15) earn 25%.</p>
                     </div>
                     <div class="p-4 rounded" style="background-color: #150f24;">
                         <h3 class="text-lg font-semibold mb-2" style="color: #9a02d0;">Subscription Renewals</h3>
                         <p class="text-3xl font-bold text-white mb-1">10%</p>
                         <p class="text-slate-400 text-sm">Recurring commission on every monthly subscription renewal for 24 months.</p>
-                        <p class="text-slate-500 text-xs mt-2">Founding affiliates (first 15) earn 15%.</p>
                     </div>
                 </div>
             </div>
