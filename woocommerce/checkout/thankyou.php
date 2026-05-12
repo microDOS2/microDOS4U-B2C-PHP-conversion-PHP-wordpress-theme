@@ -42,80 +42,14 @@ if (!isset($order) || !is_object($order) || !($order instanceof WC_Order)) {
         }
     }
 }
-
-// Safely get order ID for actions
-$order_id = ($order && $order instanceof WC_Order) ? $order->get_id() : 0;
-
-// Check for newly created account — check transient first, then session
-$new_account_email = '';
-$new_account_password = '';
-$account_created = false;
-
-if ($order_id) {
-    // Check transient (most reliable — set by auto-create function)
-    $transient_key = 'microdos_new_account_' . $order_id;
-    $account_data = get_transient($transient_key);
-    if ($account_data && is_array($account_data)) {
-        $new_account_email = isset($account_data['email']) ? $account_data['email'] : '';
-        $new_account_password = isset($account_data['password']) ? $account_data['password'] : '';
-        $account_created = !empty($new_account_email);
-    }
-}
-
-// Fallback to session if transient not found
-if (!$account_created && function_exists('WC') && WC()->session) {
-    $session_created = WC()->session->get('microdos_new_account_created');
-    $session_email   = WC()->session->get('microdos_new_account_email');
-    $session_password = WC()->session->get('microdos_new_account_password');
-    if ($session_created && !empty($session_email)) {
-        $account_created = true;
-        $new_account_email = $session_email;
-        $new_account_password = $session_password ? $session_password : '';
-    }
-}
 ?>
-
 <div class="woocommerce-order py-12" style="color: #94a3b8;">
 
     <?php if ($order && $order instanceof WC_Order) : ?>
 
         <?php do_action('woocommerce_before_thankyou', $order->get_id()); ?>
 
-        <!-- Account Creation Notice (with password) -->
-        <?php if ($account_created && !empty($new_account_email)) : ?>
-        <div class="mb-6 p-5 rounded-lg" style="background-color: #150f24; border: 1px solid #44f80c;">
-            <div class="flex items-start gap-3">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#44f80c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 mt-0.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <div class="flex-1">
-                    <p class="text-white font-medium mb-2"><?php esc_html_e('Account Created Successfully!', 'microdos4u'); ?></p>
-                    <p class="text-slate-400 text-sm mb-3">
-                        <?php esc_html_e('We\'ve automatically created an account for you. Save these credentials — you\'ll need them to manage your orders and subscriptions.', 'microdos4u'); ?>
-                    </p>
-                    <div class="p-3 rounded mb-3" style="background-color: #0a0514; border: 1px solid #1f2b47;">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-slate-400 text-sm"><?php esc_html_e('Email:', 'microdos4u'); ?></span>
-                            <span class="text-white font-medium"><?php echo esc_html($new_account_email); ?></span>
-                        </div>
-                        <?php if (!empty($new_account_password)) : ?>
-                        <div class="flex items-center gap-2">
-                            <span class="text-slate-400 text-sm"><?php esc_html_e('Password:', 'microdos4u'); ?></span>
-                            <code class="text-sm font-mono px-2 py-0.5 rounded" style="background-color: #1f2b47; color: #44f80c;"><?php echo esc_html($new_account_password); ?></code>
-                            <button type="button" onclick="var r=document.createRange();r.selectNode(this.previousElementSibling);window.getSelection().removeAllRanges();window.getSelection().addRange(r);document.execCommand('copy');this.textContent='Copied!';var b=this;setTimeout(function(){b.textContent='Copy';},2000);" 
-                                    class="text-xs px-2 py-0.5 rounded transition-colors" 
-                                    style="background-color: #1f2b47; color: #94a3b8; cursor: pointer; border: none;">Copy</button>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                    <p class="text-slate-500 text-xs">
-                        <?php esc_html_e('You can also log in anytime at:', 'microdos4u'); ?>
-                        <a href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>" style="color: #38bdf8; text-decoration: underline;"><?php echo esc_url(wc_get_page_permalink('myaccount')); ?></a>
-                    </p>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
 
-        <!-- Success Header -->
         <div class="text-center mb-8">
             <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background-color: #44f80c20;">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#44f80c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -227,15 +161,3 @@ if (!$account_created && function_exists('WC') && WC()->session) {
     <?php endif; ?>
 
 </div>
-
-<?php
-// Clean up: clear session flags and transient after rendering
-if ($order_id) {
-    delete_transient('microdos_new_account_' . $order_id);
-}
-if (function_exists('WC') && WC()->session) {
-    WC()->session->set('microdos_new_account_created', null);
-    WC()->session->set('microdos_new_account_email', null);
-    WC()->session->set('microdos_new_account_password', null);
-}
-?>
