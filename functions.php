@@ -70,6 +70,47 @@ function microdos4u_setup() {
 add_action('after_setup_theme', 'microdos4u_setup');
 
 // ============================================
+// AUTO-CREATE REQUIRED PAGES ON THEME ACTIVATION
+// ============================================
+
+/**
+ * Create the Affiliate W-9 Form page if it doesn't exist.
+ * Runs when the theme is activated or switched to.
+ */
+add_action('after_switch_theme', 'microdos_create_required_pages');
+add_action('admin_init', 'microdos_create_required_pages'); // Also check on admin load (one-time)
+
+function microdos_create_required_pages() {
+    // Track which pages we've already created to avoid loops
+    $pages_created = get_option('microdos_pages_created', array());
+
+    // --- Affiliate W-9 Form Page ---
+    if (empty($pages_created['affiliate_w9'])) {
+        $existing = get_page_by_path('affiliate-w9');
+        if (!$existing) {
+            $page_id = wp_insert_post(array(
+                'post_title'     => 'Affiliate W-9 Form',
+                'post_name'      => 'affiliate-w9',
+                'post_content'   => '', // Template handles all content
+                'post_status'    => 'publish',
+                'post_type'      => 'page',
+                'page_template'  => 'page-affiliate-w9.php',
+                'comment_status' => 'closed',
+                'ping_status'    => 'closed',
+            ));
+            if (!is_wp_error($page_id) && $page_id > 0) {
+                $pages_created['affiliate_w9'] = $page_id;
+            }
+        } else {
+            $pages_created['affiliate_w9'] = $existing->ID;
+        }
+    }
+
+    // Save the tracking array
+    update_option('microdos_pages_created', $pages_created);
+}
+
+// ============================================
 // ENQUEUE SCRIPTS AND STYLES
 // ============================================
 
