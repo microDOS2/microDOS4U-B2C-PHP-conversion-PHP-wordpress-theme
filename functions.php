@@ -1295,7 +1295,7 @@ function microdos_create_affiliate_from_form($entry, $form) {
     if (function_exists('affwp_add_affiliate')) {
         affwp_add_affiliate(array(
             'user_id'       => $user_id,
-            'status'        => 'active',
+            'status'        => 'pending',
             'payment_email' => sanitize_email($email),
         ));
     }
@@ -1329,118 +1329,57 @@ add_action('wp_head', 'microdos_gravity_forms_css_fix', 100);
 
 function microdos_gravity_forms_css_fix() {
     echo '<style>
-    /* Override Gravity Forms 2.9+ CSS custom properties */
-    #gform_wrapper_1 {
-        --gf-ctrl-label-color-primary: #ffffff !important;
-        --gf-ctrl-label-color-secondary: #d1d5db !important;
-        --gf-color-primary: #44f80c !important;
-        --gf-color-primary-contrast: #0a0514 !important;
-    }
-    /* All labels white */
-    #gform_wrapper_1 .gfield_label,
-    #gform_wrapper_1 label {
+    /* Labels */
+    .gform_wrapper label,
+    .gform_wrapper .gfield_label,
+    .gform_wrapper .gsection_title,
+    .gform_wrapper .gsection_description,
+    .gform_wrapper .gfield_description {
         color: #ffffff !important;
     }
-    #gform_wrapper_1 .gsection_title {
+    .gform_wrapper .gsection_title {
         color: #44f80c !important;
     }
-    #gform_wrapper_1 .gsection_description,
-    #gform_wrapper_1 .gfield_description {
+    .gform_wrapper .gsection_description,
+    .gform_wrapper .gfield_description {
         color: #d1d5db !important;
     }
-    /* Input fields */
-    #gform_wrapper_1 input[type="text"],
-    #gform_wrapper_1 input[type="email"],
-    #gform_wrapper_1 input[type="password"],
-    #gform_wrapper_1 input[type="url"],
-    #gform_wrapper_1 select,
-    #gform_wrapper_1 textarea {
-        background-color: #150f24 !important;
-        border-color: #2d2255 !important;
+    /* Inputs */
+    .gform_wrapper input[type="text"],
+    .gform_wrapper input[type="email"],
+    .gform_wrapper input[type="password"],
+    .gform_wrapper input[type="url"],
+    .gform_wrapper select,
+    .gform_wrapper textarea {
+        background-color: #1a1040 !important;
+        border: 1px solid #2d2255 !important;
         color: #ffffff !important;
     }
-    #gform_wrapper_1 select option {
-        background-color: #150f24 !important;
+    .gform_wrapper select option {
+        background-color: #1a1040 !important;
         color: #ffffff !important;
     }
-    /* Submit button */
-    #gform_wrapper_1 .gform_footer input[type="submit"] {
+    /* Checkboxes */
+    .gform_wrapper input[type="checkbox"] {
+        width: 18px !important;
+        height: 18px !important;
+        accent-color: #44f80c !important;
+    }
+    /* Submit */
+    .gform_wrapper .gform_footer input[type="submit"] {
         background: #44f80c !important;
         color: #0a0514 !important;
         font-weight: 700 !important;
         width: 100% !important;
     }
-    /* ALL CHECKBOXES - FORCE VISIBLE including Terms of Service */
-    #gform_wrapper_1 input[type="checkbox"] {
-        width: 20px !important;
-        height: 20px !important;
-        min-width: 20px !important;
-        min-height: 20px !important;
-        display: inline-block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        position: static !important;
-        clip: auto !important;
-        clip-path: none !important;
-        appearance: checkbox !important;
-        -webkit-appearance: checkbox !important;
-        accent-color: #44f80c !important;
-        background: #ffffff !important;
-        border: 2px solid #44f80c !important;
-        margin-right: 8px !important;
-        vertical-align: middle !important;
-    }
-    #gform_wrapper_1 input[type="checkbox"]:checked {
-        background: #44f80c !important;
-    }
-    /* Checkbox labels */
-    #gform_wrapper_1 .gfield_checkbox label,
-    #gform_wrapper_1 .gfield--type-checkbox label,
-    #gform_wrapper_1 .gchoice label {
-        color: #ffffff !important;
-    }
-    /* Validation errors */
-    #gform_wrapper_1 .gform_validation_errors {
+    /* Errors */
+    .gform_wrapper .gform_validation_errors {
         background: #150f24 !important;
         border-color: #ff4444 !important;
         color: #ff4444 !important;
     }
-    #gform_wrapper_1 .gfield_validation_message,
-    #gform_wrapper_1 .validation_message {
+    .gform_wrapper .validation_message {
         color: #ff4444 !important;
-    }
-    /* Terms of Service specific - show the terms text */
-    #gform_wrapper_1 .gfield--type-terms_of_use .gform-terms-and-conditions,
-    #gform_wrapper_1 .gfield--type-terms_of_use .gfield_description {
-        color: #d1d5db !important;
-        display: block !important;
-        visibility: visible !important;
-    }
-    /* Force the Terms of Service field container visible */
-    #gform_wrapper_1 .gfield--type-terms_of_use {
-        display: block !important;
-        visibility: visible !important;
-    }
-    #gform_wrapper_1 .gfield--type-terms_of_use .ginput_container {
-        display: block !important;
-        visibility: visible !important;
-        min-height: 30px !important;
-    }
-    /* If Gravity Forms uses a custom element for the checkbox */
-    #gform_wrapper_1 .gfield--type-terms_of_use .gform-checkbox,
-    #gform_wrapper_1 .gfield--type-terms_of_use .gform-checkbox__input,
-    #gform_wrapper_1 .gfield--type-terms_of_use .gform-toggle__input {
-        display: inline-block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        width: 20px !important;
-        height: 20px !important;
-    }
-    /* Make sure the gchoice wrapper is visible */
-    #gform_wrapper_1 .gfield--type-terms_of_use .gchoice {
-        display: flex !important;
-        align-items: flex-start !important;
-        gap: 8px !important;
     }
     </style>';
 }
