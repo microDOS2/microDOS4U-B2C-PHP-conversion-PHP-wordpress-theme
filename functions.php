@@ -1232,82 +1232,153 @@ function microdos_save_w9_on_affiliate_register($user_id) {
 }
 
 
+
+
+
 // ============================================
-// AUTO-CREATE AFFILIATEWP GRAVITY FORMS FEED
-// Runs once when admin visits the dashboard
+// AFFILIATEWP GRAVITY FORMS - DIRECT SUBMISSION HANDLER
+// Creates user + affiliate when form is submitted
+// No feed required - hooks directly into form submission
 // ============================================
 
-add_action('admin_init', 'microdos_create_affiliate_gf_feed', 5);
+/**
+ * Process affiliate registration form submission.
+ * Creates WordPress user + AffiliateWP affiliate + saves W-9 data.
+ */
+add_action('gform_after_submission_1', 'microdos_process_affiliate_registration', 10, 2);
 
-function microdos_create_affiliate_gf_feed() {
-    // Check if already created
-    if (get_option('microdos_gf_feed_created')) {
-        return;
+function microdos_process_affiliate_registration($entry, $form) {
+    // Extract form fields from entry
+    $first_name   = rgar($entry, '1.3');     // Name: First
+    $last_name    = rgar($entry, '1.6');     // Name: Last
+    $email        = rgar($entry, '2');       // Email
+    $password     = rgar($entry, '3');       // Password
+    $username     = rgar($entry, '4');       // Username
+    $website      = rgar($entry, '5');       // Website
+    $promo_method = rgar($entry, '6');       // Promotion method
+    $legal_name   = rgar($entry, '7');       // W-9: Full Legal Name
+    $business_name = rgar($entry, '8');      // W-9: Business Name
+    $tax_class    = rgar($entry, '9');       // W-9: Tax Classification
+    $address      = rgar($entry, '10');      // W-9: Street Address
+    $address2     = rgar($entry, '11');      // W-9: Apt/Suite
+    $city         = rgar($entry, '12');      // W-9: City
+    $state        = rgar($entry, '13');      // W-9: State
+    $zip          = rgar($entry, '14');      // W-9: ZIP
+    $tax_id       = rgar($entry, '15');      // W-9: SSN/EIN
+
+    // Use email prefix as username if not provided
+    if (empty($username)) {
+        $username = sanitize_user(current(explode('@', $email)), true);
     }
 
-    // Check required plugins
-    if (!function_exists('affiliate_wp') || !class_exists('GFForms')) {
-        return;
+    // Ensure unique username
+    $original_username = $username;
+    $suffix = 1;
+    while (username_exists($username)) {
+        $username = $original_username . $suffix;
+        $suffix++;
     }
 
-    // Check if form exists (ID 1)
-    if (!class_exists('GFAPI')) {
-        return;
-    }
-    $form = GFAPI::get_form(1);
-    if (!$form) {
-        return;
-    }
-
-    // Check if feed already exists for this form
-    $existing_feeds = get_posts(array(
-        'post_type'      => 'affwp_gf_registration_feed',
-        'posts_per_page' => 1,
-        'post_status'    => 'publish',
-        'meta_query'     => array(
-            array(
-                'key'     => '_affwp_gf_registration_feed_settings',
-                'compare' => 'EXISTS',
-            ),
-        ),
+    // Create WordPress user
+    $user_id = wp_insert_user(array(
+        'user_login'   => $username,
+        'user_email'   => sanitize_email($email),
+        'user_pass'    => $password,
+        'first_name'   => sanitize_text_field($first_name),
+        'last_name'    => sanitize_text_field($last_name),
+        'user_url'     => esc_url_raw($website),
+        'role'         => 'subscriber',
     ));
 
-    // Check if any feed is for form ID 1
-    foreach ($existing_feeds as $feed) {
-        $settings = get_post_meta($feed->ID, '_affwp_gf_registration_feed_settings', true);
-        if (!empty($settings) && isset($settings['form_id']) && $settings['form_id'] == 1) {
-            update_option('microdos_gf_feed_created', true);
-            return; // Feed already exists
+    if (is_wp_error($user_id)) {
+        error_log('[microDOS] User creation failed: ' . $user_id->get_error_message());
+        return;
+    }
+
+    // Create AffiliateWP affiliate
+    if (function_exists('affwp_add_affiliate')) {
+        $affiliate_id = affwp_add_affiliate(array(
+            'user_id'       => $user_id,
+            'status'        => 'active',
+            'payment_email' => sanitize_email($email),
+            'website'       => esc_url_raw($website),
+        ));
+
+        if ($affiliate_id) {
+            // Save promotion method
+            if (!empty($promo_method)) {
+                affwp_update_affiliate_meta($affiliate_id, 'promotion_method', sanitize_text_field($promo_method));
+            }
         }
     }
 
-    // Create the feed
-    $feed_id = wp_insert_post(array(
-        'post_type'   => 'affwp_gf_registration_feed',
-        'post_title'  => 'Affiliate Registration',
-        'post_status' => 'publish',
-    ));
-
-    if (is_wp_error($feed_id) || !$feed_id) {
-        return;
-    }
-
-    // Field mappings for form ID 1
-    // Form fields: Name (1) with 1.3=First, 1.6=Last, Password (3)
-    $settings = array(
-        'form_id'             => 1,
-        'first_name_field'    => '1.3',   // Name: First
-        'last_name_field'     => '1.6',   // Name: Last
-        'password_field'      => '3',     // Password
-        'website_url_field'   => '',      // Optional
-        'username_field'      => '',      // Auto-generated
-        'email_field'         => '2',     // Email
-        'payment_email_field' => '8',     // Payment Email
-        'affiliate_status'    => 'active', // or 'pending'
-        'promotion_method_field' => '6',  // How will you promote us
-        'terms_of_use_field'  => '17',    // Terms of Use checkbox
+    // Save W-9 data to user meta
+    $w9_data = array(
+        'legal_name'         => sanitize_text_field($legal_name),
+        'business_name'      => sanitize_text_field($business_name),
+        'tax_classification' => sanitize_text_field($tax_class),
+        'address'            => sanitize_text_field($address),
+        'address2'           => sanitize_text_field($address2),
+        'city'               => sanitize_text_field($city),
+        'state'              => sanitize_text_field($state),
+        'zip'                => sanitize_text_field($zip),
+        'tax_id'             => sanitize_text_field($tax_id),
+        'certification_date' => current_time('mysql'),
+        'ip_address'         => sanitize_text_field($_SERVER['REMOTE_ADDR'] ?? ''),
     );
 
-    update_post_meta($feed_id, '_affwp_gf_registration_feed_settings', $settings);
-    update_option('microdos_gf_feed_created', true);
+    update_user_meta($user_id, 'microdos_w9_data', $w9_data);
+    update_user_meta($user_id, 'microdos_w9_status', 'complete');
+
+    // Auto-login the new user
+    wp_set_current_user($user_id);
+    wp_set_auth_cookie($user_id, true);
+
+    // Redirect to affiliate dashboard
+    if (function_exists('affwp_get_affiliate_area_page_url')) {
+        wp_redirect(affwp_get_affiliate_area_page_url());
+        exit;
+    }
+}
+
+// ============================================
+// GRAVITY FORMS TEXT COLOR FIX (v3 - Ultra Strong)
+// ============================================
+
+add_action('wp_head', 'microdos_gravity_forms_css_fix', 100);
+
+function microdos_gravity_forms_css_fix() {
+    echo '<style>
+    /* GRAVITY FORMS TEXT COLOR - FORCE OVERRIDE */
+    body .gform_wrapper,
+    body .gform_wrapper *:not(input):not(select):not(textarea) {
+        color: #d1d5db !important;
+    }
+    body .gform_wrapper .gfield_label,
+    body .gform_wrapper label,
+    body .gform_wrapper .gfield_description,
+    body .gform_wrapper .gsection_title,
+    body .gform_wrapper .gsection_description,
+    body .gform_wrapper .gform-field-label {
+        color: #d1d5db !important;
+    }
+    body .gform_wrapper .gfield_required {
+        color: #ef4444 !important;
+    }
+    body .gform_wrapper input::placeholder,
+    body .gform_wrapper textarea::placeholder {
+        color: #64748b !important;
+    }
+    body .gform_wrapper .gsection_title {
+        color: #44f80c !important;
+    }
+    body .gform_wrapper .gform_validation_errors {
+        background: #150f24 !important;
+        border-color: #ef4444 !important;
+    }
+    body .gform_wrapper .gform_footer input[type="submit"] {
+        background: #44f80c !important;
+        color: #0a0514 !important;
+    }
+    </style>';
 }
