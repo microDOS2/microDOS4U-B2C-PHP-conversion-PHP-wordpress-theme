@@ -1235,112 +1235,23 @@ function microdos_save_w9_on_affiliate_register($user_id) {
 
 
 
+
 // ============================================
-// AFFILIATEWP GRAVITY FORMS - DIRECT SUBMISSION HANDLER
-// Creates user + affiliate when form is submitted
-// No feed required - hooks directly into form submission
+// GRAVITY FORMS ENQUEUE SCRIPTS
+// Required when embedding via theme template
 // ============================================
 
-/**
- * Process affiliate registration form submission.
- * Creates WordPress user + AffiliateWP affiliate + saves W-9 data.
- */
-add_action('gform_after_submission_1', 'microdos_process_affiliate_registration', 10, 2);
+add_action('wp_enqueue_scripts', 'microdos_enqueue_gravity_form_scripts');
 
-function microdos_process_affiliate_registration($entry, $form) {
-    // Extract form fields from entry
-    $first_name   = rgar($entry, '1.3');     // Name: First
-    $last_name    = rgar($entry, '1.6');     // Name: Last
-    $email        = rgar($entry, '2');       // Email
-    $password     = rgar($entry, '3');       // Password
-    $username     = rgar($entry, '4');       // Username
-    $website      = rgar($entry, '5');       // Website
-    $promo_method = rgar($entry, '6');       // Promotion method
-    $legal_name   = rgar($entry, '7');       // W-9: Full Legal Name
-    $business_name = rgar($entry, '8');      // W-9: Business Name
-    $tax_class    = rgar($entry, '9');       // W-9: Tax Classification
-    $address      = rgar($entry, '10');      // W-9: Street Address
-    $address2     = rgar($entry, '11');      // W-9: Apt/Suite
-    $city         = rgar($entry, '12');      // W-9: City
-    $state        = rgar($entry, '13');      // W-9: State
-    $zip          = rgar($entry, '14');      // W-9: ZIP
-    $tax_id       = rgar($entry, '15');      // W-9: SSN/EIN
-
-    // Use email prefix as username if not provided
-    if (empty($username)) {
-        $username = sanitize_user(current(explode('@', $email)), true);
-    }
-
-    // Ensure unique username
-    $original_username = $username;
-    $suffix = 1;
-    while (username_exists($username)) {
-        $username = $original_username . $suffix;
-        $suffix++;
-    }
-
-    // Create WordPress user
-    $user_id = wp_insert_user(array(
-        'user_login'   => $username,
-        'user_email'   => sanitize_email($email),
-        'user_pass'    => $password,
-        'first_name'   => sanitize_text_field($first_name),
-        'last_name'    => sanitize_text_field($last_name),
-        'user_url'     => esc_url_raw($website),
-        'role'         => 'subscriber',
-    ));
-
-    if (is_wp_error($user_id)) {
-        error_log('[microDOS] User creation failed: ' . $user_id->get_error_message());
-        return;
-    }
-
-    // Create AffiliateWP affiliate
-    if (function_exists('affwp_add_affiliate')) {
-        $affiliate_id = affwp_add_affiliate(array(
-            'user_id'       => $user_id,
-            'status'        => 'active',
-            'payment_email' => sanitize_email($email),
-            'website'       => esc_url_raw($website),
-        ));
-
-        if ($affiliate_id) {
-            // Save promotion method
-            if (!empty($promo_method)) {
-                affwp_update_affiliate_meta($affiliate_id, 'promotion_method', sanitize_text_field($promo_method));
-            }
+function microdos_enqueue_gravity_form_scripts() {
+    if (function_exists('gravity_form_enqueue_scripts') && is_page()) {
+        // Load scripts for form ID 1 on the affiliate page
+        global $post;
+        if ($post && ($post->post_name === 'affiliate-area' || $post->post_name === 'affiliate-area-page')) {
+            gravity_form_enqueue_scripts(1, true);
         }
     }
-
-    // Save W-9 data to user meta
-    $w9_data = array(
-        'legal_name'         => sanitize_text_field($legal_name),
-        'business_name'      => sanitize_text_field($business_name),
-        'tax_classification' => sanitize_text_field($tax_class),
-        'address'            => sanitize_text_field($address),
-        'address2'           => sanitize_text_field($address2),
-        'city'               => sanitize_text_field($city),
-        'state'              => sanitize_text_field($state),
-        'zip'                => sanitize_text_field($zip),
-        'tax_id'             => sanitize_text_field($tax_id),
-        'certification_date' => current_time('mysql'),
-        'ip_address'         => sanitize_text_field($_SERVER['REMOTE_ADDR'] ?? ''),
-    );
-
-    update_user_meta($user_id, 'microdos_w9_data', $w9_data);
-    update_user_meta($user_id, 'microdos_w9_status', 'complete');
-
-    // Auto-login the new user
-    wp_set_current_user($user_id);
-    wp_set_auth_cookie($user_id, true);
-
-    // Redirect to affiliate dashboard
-    if (function_exists('affwp_get_affiliate_area_page_url')) {
-        wp_redirect(affwp_get_affiliate_area_page_url());
-        exit;
-    }
 }
-
 // ============================================
 // GRAVITY FORMS TEXT COLOR FIX (v3 - Ultra Strong)
 // ============================================
