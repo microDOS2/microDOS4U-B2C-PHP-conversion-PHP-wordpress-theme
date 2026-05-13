@@ -114,7 +114,7 @@ get_header();
     <!-- Affiliate Portal -->
     <section class="affiliate-portal py-12" style="background-color: #0a0514;">
         <div class="container mx-auto px-4 max-w-4xl">
-            <?php echo do_shortcode('[affiliate_area]'); ?>
+            <?php echo do_shortcode('[affiliate_registration]'); ?>
         </div>
     </section>
 
