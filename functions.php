@@ -1246,6 +1246,31 @@ add_filter('affwp_registration_role', 'microdos_set_affiliate_role');
 function microdos_set_affiliate_role($role) {
     return 'subscriber'; // Keep as subscriber - AffiliateWP manages affiliate status separately
 }
+
+
+// ============================================
+// AFFILIATEWP EMAIL - CONSTRAIN LOGO SIZE
+// Prevents oversized logo images in emails
+// ============================================
+
+add_filter('affwp_email_template_logo', 'microdos_constrain_email_logo');
+
+function microdos_constrain_email_logo($logo_html) {
+    // Add max-width constraint to logo image
+    if (!empty($logo_html)) {
+        $logo_html = str_replace('<img', '<img style="max-width:150px;height:auto;display:block;margin:0 auto;"', $logo_html);
+    }
+    return $logo_html;
+}
+
+// Also constrain all images in AffiliateWP emails
+add_filter('affwp_email_content', 'microdos_constrain_email_images');
+
+function microdos_constrain_email_images($content) {
+    // Add max-width to all images in email content
+    $content = str_replace('<img', '<img style="max-width:100%;height:auto;"', $content);
+    return $content;
+}
 // ============================================
 // GRAVITY FORMS - CREATE USER & AFFILIATE ON SUBMISSION
 // Uses gform_after_submission_2 per Gravity Forms docs
