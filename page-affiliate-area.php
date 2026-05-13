@@ -116,8 +116,8 @@ get_header();
         <div class="container mx-auto px-4 max-w-4xl">
             <?php
             if (function_exists('gravity_form')) {
-                gravity_form_enqueue_scripts(1, true);
-                gravity_form(1, false, false, false, '', true, 1);
+                gravity_form_enqueue_scripts(2, true);
+                gravity_form(2, false, false, false, '', true, 1);
             } else {
                 echo '<p style="color:#ff4444;text-align:center;padding:20px;">Gravity Forms is not active.</p>';
             }
