@@ -1238,6 +1238,14 @@ function microdos_save_w9_on_affiliate_register($user_id) {
 
 
 
+
+
+// Set WordPress role to 'affiliate' for new affiliate registrations
+add_filter('affwp_registration_role', 'microdos_set_affiliate_role');
+
+function microdos_set_affiliate_role($role) {
+    return 'subscriber'; // Keep as subscriber - AffiliateWP manages affiliate status separately
+}
 // ============================================
 // GRAVITY FORMS - CREATE USER & AFFILIATE ON SUBMISSION
 // Uses gform_after_submission_2 per Gravity Forms docs
@@ -1358,6 +1366,31 @@ function microdos_gravity_forms_css_fix() {
     .gform_wrapper select option {
         background-color: #1a1040 !important;
         color: #ffffff !important;
+    }
+    .gform_wrapper select:focus,
+    .gform_wrapper select:active {
+        color: #ffffff !important;
+        background-color: #1a1040 !important;
+    }
+    .gform_wrapper select:not([multiple]) {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
+    .gform_wrapper .gfield--type-select select {
+        color: #ffffff !important;
+    }
+    .gform_wrapper .gfield--type-select .ginput_container_select select {
+        color: #ffffff !important;
+    }
+    /* Force Gravity Forms dropdown selected text visible */
+    .gform-theme--framework .gfield_select select,
+    .gform-theme--framework .gform-field__select select {
+        color: #ffffff !important;
+    }
+    .gform-theme--framework .gfield_select option,
+    .gform-theme--framework .gform-field__select option {
+        color: #ffffff !important;
+        background: #1a1040 !important;
     }
     /* Checkboxes */
     .gform_wrapper input[type="checkbox"] {
