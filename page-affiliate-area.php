@@ -125,6 +125,29 @@ get_header();
         </div>
     </section>
 
+
+    <!-- Dropdown text color fix -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function fixSelects() {
+            var selects = document.querySelectorAll('.gform_wrapper select');
+            selects.forEach(function(select) {
+                select.style.color = '#ffffff';
+                select.style.backgroundColor = '#1a1040';
+                select.style.webkitTextFillColor = '#ffffff';
+            });
+        }
+        fixSelects();
+        // Also run after any Gravity Forms JS initializes
+        setTimeout(fixSelects, 500);
+        setTimeout(fixSelects, 1000);
+        setTimeout(fixSelects, 2000);
+        // Fix on change
+        document.querySelectorAll('.gform_wrapper select').forEach(function(s) {
+            s.addEventListener('change', function() { this.style.color = '#ffffff'; });
+        });
+    });
+    </script>
 </main>
 
 <?php
