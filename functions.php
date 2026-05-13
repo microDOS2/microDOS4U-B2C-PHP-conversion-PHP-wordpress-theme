@@ -1397,3 +1397,4 @@ function microdos_gravity_forms_css_fix() {
     .gform_validation_errors { background: #150f24 !important; border-color: #ff4444 !important; color: #ff4444 !important; }
     .validation_message { color: #ff4444 !important; }
     </style>';
+}
