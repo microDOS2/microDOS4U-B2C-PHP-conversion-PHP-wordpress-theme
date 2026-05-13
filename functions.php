@@ -1330,38 +1330,15 @@ add_action('wp_head', 'microdos_gravity_forms_css_fix', 100);
 function microdos_gravity_forms_css_fix() {
     echo '<style>
     /* Override Gravity Forms 2.9+ CSS custom properties */
-    #gform_wrapper_1,
-    .gform-theme--framework,
-    .gform-theme--orbital {
-        --gf-color-primary: #44f80c !important;
-        --gf-color-primary-contrast: #0a0514 !important;
-        --gf-color-secondary: #150f24 !important;
-        --gf-color-secondary-contrast: #ffffff !important;
-        --gf-color-in-ctrl: #150f24 !important;
-        --gf-color-in-ctrl-contrast: #ffffff !important;
-        --gf-color-in-ctrl-primary: #44f80c !important;
-        --gf-color-in-ctrl-primary-contrast: #0a0514 !important;
+    #gform_wrapper_1 {
         --gf-ctrl-label-color-primary: #ffffff !important;
         --gf-ctrl-label-color-secondary: #d1d5db !important;
-        --gf-ctrl-border-color: #2d2255 !important;
-        --gf-color-out-ctrl-dark: #d1d5db !important;
-        --gf-color-out-ctrl-dark-darker: #ffffff !important;
-        --gf-field-pg-steps-number-color: #d1d5db !important;
-        --gf-radius: 6px !important;
+        --gf-color-primary: #44f80c !important;
+        --gf-color-primary-contrast: #0a0514 !important;
     }
-    /* Force all labels and text white */
+    /* All labels white */
     #gform_wrapper_1 .gfield_label,
-    #gform_wrapper_1 label,
-    #gform_wrapper_1 .gfield_description,
-    #gform_wrapper_1 .gsection_title,
-    #gform_wrapper_1 .gsection_description,
-    #gform_wrapper_1 .gform-field-label,
-    #gform_wrapper_1 .gfield_checkbox label,
-    #gform_wrapper_1 .gfield_consent_label,
-    #gform_wrapper_1 .ginput_complex label,
-    #gform_wrapper_1 .gfield_required,
-    .gform-theme--framework .gfield_label,
-    .gform-theme--framework label {
+    #gform_wrapper_1 label {
         color: #ffffff !important;
     }
     #gform_wrapper_1 .gsection_title {
@@ -1370,10 +1347,10 @@ function microdos_gravity_forms_css_fix() {
     #gform_wrapper_1 .gsection_description {
         color: #94a3b8 !important;
     }
-    #gform_wrapper_1 input::placeholder,
-    #gform_wrapper_1 textarea::placeholder {
-        color: #64748b !important;
+    #gform_wrapper_1 .gfield_description {
+        color: #d1d5db !important;
     }
+    /* Input fields */
     #gform_wrapper_1 input[type="text"],
     #gform_wrapper_1 input[type="email"],
     #gform_wrapper_1 input[type="password"],
@@ -1388,15 +1365,39 @@ function microdos_gravity_forms_css_fix() {
         background-color: #150f24 !important;
         color: #ffffff !important;
     }
+    /* Submit button */
     #gform_wrapper_1 .gform_footer input[type="submit"] {
-        background-color: #44f80c !important;
+        background: #44f80c !important;
         color: #0a0514 !important;
         font-weight: 700 !important;
         width: 100% !important;
     }
+    /* Terms of Service checkbox - MAKE VISIBLE */
+    #gform_wrapper_1 .gfield--type-terms_of_use input[type="checkbox"],
+    #gform_wrapper_1 .gfield_consent input[type="checkbox"] {
+        width: 20px !important;
+        height: 20px !important;
+        accent-color: #44f80c !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin-right: 8px !important;
+    }
+    /* Checkbox labels white */
+    #gform_wrapper_1 .gfield_checkbox label,
+    #gform_wrapper_1 .gfield--type-terms_of_use label {
+        color: #ffffff !important;
+    }
+    /* Validation errors */
     #gform_wrapper_1 .gform_validation_errors {
         background: #150f24 !important;
         border-color: #ff4444 !important;
+        color: #ff4444 !important;
+    }
+    #gform_wrapper_1 .gfield_error label {
+        color: #ff4444 !important;
+    }
+    #gform_wrapper_1 .gfield_validation_message {
         color: #ff4444 !important;
     }
     </style>';
