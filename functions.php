@@ -1344,9 +1344,7 @@ function microdos_gravity_forms_css_fix() {
     #gform_wrapper_1 .gsection_title {
         color: #44f80c !important;
     }
-    #gform_wrapper_1 .gsection_description {
-        color: #94a3b8 !important;
-    }
+    #gform_wrapper_1 .gsection_description,
     #gform_wrapper_1 .gfield_description {
         color: #d1d5db !important;
     }
@@ -1372,20 +1370,33 @@ function microdos_gravity_forms_css_fix() {
         font-weight: 700 !important;
         width: 100% !important;
     }
-    /* Terms of Service checkbox - MAKE VISIBLE */
-    #gform_wrapper_1 .gfield--type-terms_of_use input[type="checkbox"],
-    #gform_wrapper_1 .gfield_consent input[type="checkbox"] {
+    /* ALL CHECKBOXES - FORCE VISIBLE including Terms of Service */
+    #gform_wrapper_1 input[type="checkbox"] {
         width: 20px !important;
         height: 20px !important;
-        accent-color: #44f80c !important;
+        min-width: 20px !important;
+        min-height: 20px !important;
         display: inline-block !important;
         visibility: visible !important;
         opacity: 1 !important;
+        position: static !important;
+        clip: auto !important;
+        clip-path: none !important;
+        appearance: checkbox !important;
+        -webkit-appearance: checkbox !important;
+        accent-color: #44f80c !important;
+        background: #ffffff !important;
+        border: 2px solid #44f80c !important;
         margin-right: 8px !important;
+        vertical-align: middle !important;
     }
-    /* Checkbox labels white */
+    #gform_wrapper_1 input[type="checkbox"]:checked {
+        background: #44f80c !important;
+    }
+    /* Checkbox labels */
     #gform_wrapper_1 .gfield_checkbox label,
-    #gform_wrapper_1 .gfield--type-terms_of_use label {
+    #gform_wrapper_1 .gfield--type-checkbox label,
+    #gform_wrapper_1 .gchoice label {
         color: #ffffff !important;
     }
     /* Validation errors */
@@ -1394,11 +1405,42 @@ function microdos_gravity_forms_css_fix() {
         border-color: #ff4444 !important;
         color: #ff4444 !important;
     }
-    #gform_wrapper_1 .gfield_error label {
+    #gform_wrapper_1 .gfield_validation_message,
+    #gform_wrapper_1 .validation_message {
         color: #ff4444 !important;
     }
-    #gform_wrapper_1 .gfield_validation_message {
-        color: #ff4444 !important;
+    /* Terms of Service specific - show the terms text */
+    #gform_wrapper_1 .gfield--type-terms_of_use .gform-terms-and-conditions,
+    #gform_wrapper_1 .gfield--type-terms_of_use .gfield_description {
+        color: #d1d5db !important;
+        display: block !important;
+        visibility: visible !important;
+    }
+    /* Force the Terms of Service field container visible */
+    #gform_wrapper_1 .gfield--type-terms_of_use {
+        display: block !important;
+        visibility: visible !important;
+    }
+    #gform_wrapper_1 .gfield--type-terms_of_use .ginput_container {
+        display: block !important;
+        visibility: visible !important;
+        min-height: 30px !important;
+    }
+    /* If Gravity Forms uses a custom element for the checkbox */
+    #gform_wrapper_1 .gfield--type-terms_of_use .gform-checkbox,
+    #gform_wrapper_1 .gfield--type-terms_of_use .gform-checkbox__input,
+    #gform_wrapper_1 .gfield--type-terms_of_use .gform-toggle__input {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 20px !important;
+        height: 20px !important;
+    }
+    /* Make sure the gchoice wrapper is visible */
+    #gform_wrapper_1 .gfield--type-terms_of_use .gchoice {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
     }
     </style>';
 }
