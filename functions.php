@@ -1230,3 +1230,84 @@ function microdos_save_w9_on_affiliate_register($user_id) {
     update_user_meta($user_id, 'microdos_w9_data', $w9_data);
     update_user_meta($user_id, 'microdos_w9_status', 'complete');
 }
+
+
+// ============================================
+// AUTO-CREATE AFFILIATEWP GRAVITY FORMS FEED
+// Runs once when admin visits the dashboard
+// ============================================
+
+add_action('admin_init', 'microdos_create_affiliate_gf_feed', 5);
+
+function microdos_create_affiliate_gf_feed() {
+    // Check if already created
+    if (get_option('microdos_gf_feed_created')) {
+        return;
+    }
+
+    // Check required plugins
+    if (!function_exists('affiliate_wp') || !class_exists('GFForms')) {
+        return;
+    }
+
+    // Check if form exists (ID 1)
+    if (!class_exists('GFAPI')) {
+        return;
+    }
+    $form = GFAPI::get_form(1);
+    if (!$form) {
+        return;
+    }
+
+    // Check if feed already exists for this form
+    $existing_feeds = get_posts(array(
+        'post_type'      => 'affwp_gf_registration_feed',
+        'posts_per_page' => 1,
+        'post_status'    => 'publish',
+        'meta_query'     => array(
+            array(
+                'key'     => '_affwp_gf_registration_feed_settings',
+                'compare' => 'EXISTS',
+            ),
+        ),
+    ));
+
+    // Check if any feed is for form ID 1
+    foreach ($existing_feeds as $feed) {
+        $settings = get_post_meta($feed->ID, '_affwp_gf_registration_feed_settings', true);
+        if (!empty($settings) && isset($settings['form_id']) && $settings['form_id'] == 1) {
+            update_option('microdos_gf_feed_created', true);
+            return; // Feed already exists
+        }
+    }
+
+    // Create the feed
+    $feed_id = wp_insert_post(array(
+        'post_type'   => 'affwp_gf_registration_feed',
+        'post_title'  => 'Affiliate Registration',
+        'post_status' => 'publish',
+    ));
+
+    if (is_wp_error($feed_id) || !$feed_id) {
+        return;
+    }
+
+    // Field mappings for form ID 1
+    // Form fields: Name (1) with 1.3=First, 1.6=Last, Password (3)
+    $settings = array(
+        'form_id'             => 1,
+        'first_name_field'    => '1.3',   // Name: First
+        'last_name_field'     => '1.6',   // Name: Last
+        'password_field'      => '3',     // Password
+        'website_url_field'   => '',      // Optional
+        'username_field'      => '',      // Auto-generated
+        'email_field'         => '2',     // Email
+        'payment_email_field' => '8',     // Payment Email
+        'affiliate_status'    => 'active', // or 'pending'
+        'promotion_method_field' => '6',  // How will you promote us
+        'terms_of_use_field'  => '17',    // Terms of Use checkbox
+    );
+
+    update_post_meta($feed_id, '_affwp_gf_registration_feed_settings', $settings);
+    update_option('microdos_gf_feed_created', true);
+}
