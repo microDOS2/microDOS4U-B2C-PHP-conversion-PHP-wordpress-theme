@@ -1377,51 +1377,32 @@ function microdos_gravity_forms_css_fix() {
     .gform_wrapper .gfield_description {
         color: #d1d5db !important;
     }
-    /* Inputs */
+    /* Text inputs */
     .gform_wrapper input[type="text"],
     .gform_wrapper input[type="email"],
     .gform_wrapper input[type="password"],
     .gform_wrapper input[type="url"],
-    .gform_wrapper select,
     .gform_wrapper textarea {
         background-color: #1a1040 !important;
         border: 1px solid #2d2255 !important;
         color: #ffffff !important;
-        -webkit-text-fill-color: #ffffff !important;
     }
-    /* DROPDOWN SELECT - FORCE SELECTED TEXT VISIBLE */
+    /* SELECT DROPDOWNS - light bg with dark text for visibility */
     .gform_wrapper select {
-        color: #ffffff !important;
-        -webkit-text-fill-color: #ffffff !important;
-        background-color: #1a1040 !important;
+        background-color: #e8e8e8 !important;
+        border: 1px solid #2d2255 !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        font-size: 1rem !important;
+        padding: 0.5rem !important;
     }
     .gform_wrapper select option {
-        color: #ffffff !important;
-        background-color: #1a1040 !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
     }
-    .gform_wrapper select option:checked,
-    .gform_wrapper select option:focus,
-    .gform_wrapper select option:hover {
-        color: #ffffff !important;
-        background-color: #2d2255 !important;
-    }
-    /* Gravity Forms 2.9 specific select styling */
-    .gform-theme--framework .gfield_select select,
-    .gform-theme--framework .gfield select,
-    .gform-field__select select {
-        color: #ffffff !important;
-        -webkit-text-fill-color: #ffffff !important;
-        background-color: #1a1040 !important;
-    }
-    .gform-theme--framework .gfield_select option,
-    .gform-theme--framework .gfield option,
-    .gform-field__select option {
-        color: #ffffff !important;
-        background-color: #1a1040 !important;
-    }
-    /* Force the selected value text */
-    .gform_wrapper select:not(:focus) {
-        color: #ffffff !important;
+    .gform_wrapper select option:checked {
+        background-color: #44f80c !important;
+        color: #000000 !important;
     }
     /* Submit */
     .gform_wrapper .gform_footer input[type="submit"] {
@@ -1436,7 +1417,6 @@ function microdos_gravity_forms_css_fix() {
         height: 18px !important;
         accent-color: #44f80c !important;
     }
-    /* Checkbox labels */
     .gform_wrapper .gfield_checkbox label,
     .gform_wrapper .gfield--type-checkbox label {
         color: #ffffff !important;
