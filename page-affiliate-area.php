@@ -115,7 +115,12 @@ get_header();
     <section class="affiliate-portal py-12" style="background-color: #0a0514;">
         <div class="container mx-auto px-4 max-w-4xl">
             <?php
-            echo do_shortcode('[affiliate_area]');
+            if (function_exists('gravity_form')) {
+                gravity_form_enqueue_scripts(1, true);
+                gravity_form(1, false, false, false, '', true, 1);
+            } else {
+                echo '<p style="color:#ff4444;text-align:center;padding:20px;">Gravity Forms is not active.</p>';
+            }
             ?>
         </div>
     </section>
