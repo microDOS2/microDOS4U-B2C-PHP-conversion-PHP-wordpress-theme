@@ -1240,11 +1240,11 @@ function microdos_save_w9_on_affiliate_register($user_id) {
 
 // ============================================
 // GRAVITY FORMS - CREATE USER & AFFILIATE ON SUBMISSION
-// Uses gform_after_submission_1 per Gravity Forms docs
+// Uses gform_after_submission_2 per Gravity Forms docs
 // https://docs.gravityforms.com/gform_after_submission/
 // ============================================
 
-add_action('gform_after_submission_1', 'microdos_create_affiliate_from_form', 10, 2);
+add_action('gform_after_submission_2', 'microdos_create_affiliate_from_form', 10, 2);
 
 function microdos_create_affiliate_from_form($entry, $form) {
     // Extract values using rgar() per Gravity Forms docs
