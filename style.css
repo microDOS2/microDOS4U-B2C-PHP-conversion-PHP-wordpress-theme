@@ -3227,3 +3227,130 @@ input#is_gift,
 input[name="is_gift"] {
     display: none !important;
 }
+
+
+/* ============================================
+   GRAVITY FORMS - DARK THEME STYLING
+   ============================================ */
+
+/* Form container */
+.gform_wrapper {
+    background: transparent !important;
+}
+
+/* Field labels */
+.gform_wrapper .gfield_label,
+.gform_wrapper label,
+.gform_wrapper .gfield_description,
+.gform_wrapper .gform-field-label {
+    color: #d1d5db !important;
+    font-weight: 600 !important;
+}
+
+/* Required asterisk */
+.gform_wrapper .gfield_required {
+    color: #ef4444 !important;
+}
+
+/* Text inputs */
+.gform_wrapper input[type="text"],
+.gform_wrapper input[type="email"],
+.gform_wrapper input[type="password"],
+.gform_wrapper input[type="url"],
+.gform_wrapper select,
+.gform_wrapper textarea {
+    background-color: #150f24 !important;
+    border: 1px solid #1f2b47 !important;
+    color: #e2e8f0 !important;
+    padding: 0.75rem !important;
+    border-radius: 0.375rem !important;
+    font-size: 1rem !important;
+}
+
+.gform_wrapper input::placeholder,
+.gform_wrapper textarea::placeholder {
+    color: #64748b !important;
+}
+
+/* Select dropdown */
+.gform_wrapper select {
+    color: #e2e8f0 !important;
+    background-color: #150f24 !important;
+}
+
+.gform_wrapper select option {
+    background-color: #150f24 !important;
+    color: #e2e8f0 !important;
+}
+
+/* Checkbox and radio labels */
+.gform_wrapper .gfield_checkbox .gchoice label,
+.gform_wrapper .gfield_radio .gchoice label {
+    color: #d1d5db !important;
+}
+
+/* Section break title */
+.gform_wrapper .gsection_title {
+    color: #44f80c !important;
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    border-bottom: 1px solid #1f2b47 !important;
+    padding-bottom: 0.5rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.gform_wrapper .gsection_description {
+    color: #94a3b8 !important;
+    font-size: 0.875rem !important;
+}
+
+/* Submit button */
+.gform_wrapper .gform_footer input[type="submit"],
+.gform_wrapper .gform_button {
+    background-color: #44f80c !important;
+    color: #0a0514 !important;
+    font-weight: 700 !important;
+    padding: 0.875rem 2rem !important;
+    border: none !important;
+    border-radius: 0.5rem !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    width: 100% !important;
+}
+
+.gform_wrapper .gform_footer input[type="submit"]:hover {
+    opacity: 0.85 !important;
+}
+
+/* Validation errors */
+.gform_wrapper .gfield_error input,
+.gform_wrapper .gfield_error select,
+.gform_wrapper .gfield_error textarea {
+    border-color: #ef4444 !important;
+}
+
+.gform_wrapper .validation_message {
+    color: #ef4444 !important;
+    font-size: 0.875rem !important;
+}
+
+.gform_wrapper .gform_validation_errors {
+    background: #150f24 !important;
+    border: 1px solid #ef4444 !important;
+    color: #ef4444 !important;
+    border-radius: 0.5rem !important;
+    padding: 1rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Field description / help text */
+.gform_wrapper .gfield_description {
+    color: #94a3b8 !important;
+    font-size: 0.875rem !important;
+}
+
+/* Hide Gravity Forms default title if present */
+.gform_wrapper .gform_title,
+.gform_wrapper .gform_description {
+    color: #fff !important;
+}
