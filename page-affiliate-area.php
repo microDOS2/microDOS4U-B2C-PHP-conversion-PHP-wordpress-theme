@@ -148,6 +148,45 @@ get_header();
         });
     });
     </script>
+
+    <!-- Force dropdown selected text to display -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function fixDropdownText() {
+            document.querySelectorAll('select').forEach(function(select) {
+                // Force native rendering
+                select.style.cssText = 'background-color: #e8e8e8 !important; color: #000 !important; -webkit-appearance: menulist !important; appearance: menulist !important;';
+                // If value is selected but text hidden, force it
+                if (select.value) {
+                    var selected = select.querySelector('option:checked');
+                    if (selected && selected.text) {
+                        // Create a visible text span if needed
+                        var span = select.parentNode.querySelector('.selected-text');
+                        if (!span) {
+                            span = document.createElement('span');
+                            span.className = 'selected-text';
+                            span.style.cssText = 'position: absolute; top: 50%; left: 8px; transform: translateY(-50%); pointer-events: none; color: #000; font-size: 14px; z-index: 2;';
+                            select.parentNode.style.position = 'relative';
+                            select.parentNode.appendChild(span);
+                        }
+                        span.textContent = selected.text;
+                    }
+                }
+            });
+        }
+        fixDropdownText();
+        // Run on every change
+        document.querySelectorAll('select').forEach(function(s) {
+            s.addEventListener('change', function() {
+                var selected = this.querySelector('option:checked');
+                var span = this.parentNode.querySelector('.selected-text');
+                if (span && selected) span.textContent = selected.text;
+            });
+        });
+        setTimeout(fixDropdownText, 500);
+        setTimeout(fixDropdownText, 1000);
+    });
+    </script>
 </main>
 
 <?php
