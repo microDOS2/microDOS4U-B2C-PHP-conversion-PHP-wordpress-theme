@@ -1349,80 +1349,75 @@ add_action('wp_head', 'microdos_gravity_forms_css_fix', 100);
 
 function microdos_gravity_forms_css_fix() {
     echo '<style>
-    /* ULTRA-STRONG GRAVITY FORMS TEXT COLOR OVERRIDE */
-    .gform_wrapper,
-    .gform-theme--framework .gform_wrapper,
+    /* Override Gravity Forms 2.9+ CSS custom properties */
     #gform_wrapper_1,
-    .gform_wrapper .gform-body,
-    .gform_wrapper .gform_fields,
-    .gform_wrapper .gfield,
-    .gform_wrapper .gfield_label,
-    .gform_wrapper label,
-    .gform_wrapper .gfield_description,
-    .gform_wrapper .gsection_title,
-    .gform_wrapper .gsection_description,
-    .gform_wrapper .gform-field-label,
-    .gform_wrapper .gfield_checkbox .gchoice label,
-    .gform_wrapper .gfield_radio .gchoice label,
-    .gform_wrapper .ginput_complex label,
-    .gform_wrapper .gfield_consent_label,
-    .gform_wrapper .gfield_required,
-    .gform_wrapper .gfield_required_text,
-    .gform_wrapper .gform_fileupload_rules,
-    .gform_wrapper .ginput_container_fileupload,
-    .gform_wrapper .gform_drop_instructions,
-    .gform_wrapper .gfield_visibility_visible,
-    .gform_wrapper .gfield_visibility_hidden,
-    .gform_wrapper input[type="checkbox"] + label,
-    .gform_wrapper input[type="radio"] + label,
+    .gform-theme--framework,
+    .gform-theme--orbital {
+        --gf-color-primary: #44f80c !important;
+        --gf-color-primary-contrast: #0a0514 !important;
+        --gf-color-secondary: #150f24 !important;
+        --gf-color-secondary-contrast: #ffffff !important;
+        --gf-color-in-ctrl: #150f24 !important;
+        --gf-color-in-ctrl-contrast: #ffffff !important;
+        --gf-color-in-ctrl-primary: #44f80c !important;
+        --gf-color-in-ctrl-primary-contrast: #0a0514 !important;
+        --gf-ctrl-label-color-primary: #ffffff !important;
+        --gf-ctrl-label-color-secondary: #d1d5db !important;
+        --gf-ctrl-border-color: #2d2255 !important;
+        --gf-color-out-ctrl-dark: #d1d5db !important;
+        --gf-color-out-ctrl-dark-darker: #ffffff !important;
+        --gf-field-pg-steps-number-color: #d1d5db !important;
+        --gf-radius: 6px !important;
+    }
+    /* Force all labels and text white */
+    #gform_wrapper_1 .gfield_label,
+    #gform_wrapper_1 label,
+    #gform_wrapper_1 .gfield_description,
+    #gform_wrapper_1 .gsection_title,
+    #gform_wrapper_1 .gsection_description,
+    #gform_wrapper_1 .gform-field-label,
+    #gform_wrapper_1 .gfield_checkbox label,
+    #gform_wrapper_1 .gfield_consent_label,
+    #gform_wrapper_1 .ginput_complex label,
+    #gform_wrapper_1 .gfield_required,
     .gform-theme--framework .gfield_label,
-    .gform-theme--framework label,
-    .gform-theme--framework .gfield_description,
-    .gform-theme--framework .gsection_title,
-    .gform-theme--framework .gsection_description {
+    .gform-theme--framework label {
         color: #ffffff !important;
     }
-    .gform_wrapper .gfield_required,
-    .gform_wrapper .gfield_required_text {
-        color: #ff4444 !important;
-    }
-    .gform_wrapper .gsection_title {
+    #gform_wrapper_1 .gsection_title {
         color: #44f80c !important;
-        font-weight: 700 !important;
     }
-    .gform_wrapper .gsection_description {
+    #gform_wrapper_1 .gsection_description {
         color: #94a3b8 !important;
     }
-    .gform_wrapper input::placeholder,
-    .gform_wrapper textarea::placeholder,
-    .gform_wrapper select::placeholder {
+    #gform_wrapper_1 input::placeholder,
+    #gform_wrapper_1 textarea::placeholder {
         color: #64748b !important;
-        opacity: 1 !important;
     }
-    .gform_wrapper .gform_validation_errors {
+    #gform_wrapper_1 input[type="text"],
+    #gform_wrapper_1 input[type="email"],
+    #gform_wrapper_1 input[type="password"],
+    #gform_wrapper_1 input[type="url"],
+    #gform_wrapper_1 select,
+    #gform_wrapper_1 textarea {
+        background-color: #150f24 !important;
+        border-color: #2d2255 !important;
+        color: #ffffff !important;
+    }
+    #gform_wrapper_1 select option {
+        background-color: #150f24 !important;
+        color: #ffffff !important;
+    }
+    #gform_wrapper_1 .gform_footer input[type="submit"] {
+        background-color: #44f80c !important;
+        color: #0a0514 !important;
+        font-weight: 700 !important;
+        width: 100% !important;
+    }
+    #gform_wrapper_1 .gform_validation_errors {
         background: #150f24 !important;
         border-color: #ff4444 !important;
         color: #ff4444 !important;
-    }
-    .gform_wrapper .gform_footer input[type="submit"],
-    .gform_wrapper .gform_button {
-        background: #44f80c !important;
-        color: #0a0514 !important;
-        font-weight: 700 !important;
-    }
-    .gform_wrapper input[type="text"],
-    .gform_wrapper input[type="email"],
-    .gform_wrapper input[type="password"],
-    .gform_wrapper input[type="url"],
-    .gform_wrapper select,
-    .gform_wrapper textarea {
-        background-color: #1a1040 !important;
-        border: 1px solid #2d2255 !important;
-        color: #ffffff !important;
-    }
-    .gform_wrapper select option {
-        background-color: #1a1040 !important;
-        color: #ffffff !important;
     }
     </style>';
 }
