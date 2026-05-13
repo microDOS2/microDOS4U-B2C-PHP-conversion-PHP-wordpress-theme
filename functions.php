@@ -1362,40 +1362,14 @@ add_action('wp_head', 'microdos_gravity_forms_css_fix', 100);
 
 function microdos_gravity_forms_css_fix() {
     echo '<style>
-    /* Force select text visible - override all GF 2.9 styles */
-    .gform_wrapper select,
-    .gform_wrapper select.gfield_select,
-    .gform_wrapper select.large,
-    .gform_wrapper select.medium,
-    #gform_wrapper_2 select,
-    .gform-theme--framework select,
-    .gform-theme--framework .gfield--type-select select {
-        background-color: #e0e0e0 !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        -webkit-appearance: menulist !important;
-        appearance: menulist !important;
-        text-indent: 0 !important;
-        text-overflow: clip !important;
-        white-space: nowrap !important;
-        overflow: visible !important;
-        font-size: 14px !important;
-        line-height: normal !important;
-        height: 38px !important;
-        padding: 4px 8px !important;
-        border: 1px solid #888 !important;
-        min-width: 100px !important;
-    }
-    /* Force selected option text */
-    .gform_wrapper select option:checked,
-    .gform_wrapper select:focus,
-    .gform_wrapper select:active {
-        color: #000000 !important;
-        background-color: #e0e0e0 !important;
-    }
-    .gform_wrapper select option {
-        color: #000000 !important;
-        background-color: #ffffff !important;
+    /* Per Gravity Forms CSS API: --gf-ctrl-color controls select text */
+    .gform-theme--framework#gform_wrapper_2 .gfield--type-select {
+        --gf-ctrl-bg-color: #e8e8e8;
+        --gf-ctrl-color: #000000;
+        --gf-ctrl-bg-color-hover: #d0d0d0;
+        --gf-ctrl-color-hover: #000000;
+        --gf-ctrl-bg-color-focus: #e8e8e8;
+        --gf-ctrl-color-focus: #000000;
     }
     /* Labels */
     .gform_wrapper label, .gform_wrapper .gfield_label { color: #ffffff !important; }
