@@ -3391,4 +3391,68 @@ body .gform_wrapper .gfield .ginput_container_name label {
     font-size: 0.8rem !important;
 }
 
+/* ============================================
+   AUTHORIZE.NET CHECKOUT - CARD FIELD STYLING
+   Fix invisible text in credit card inputs
+   ============================================ */
+
+/* Credit card input fields */
+.wc-authorize-net-easy-payment-credit-card-form input,
+.wc-authorize-net-easy-payment-credit-card-form .input-text,
+.wc-authorize-net-easy-payment-credit-card-form input[type="text"],
+.wc-authorize-net-easy-payment-credit-card-form input[type="tel"],
+.authorize-net-easy-payment-card-number,
+.authorize-net-easy-payment-card-expiry,
+.authorize-net-easy-payment-card-cvc,
+#authorize_net_easy_payment_card_number,
+#authorize_net_easy_payment_card_expiry,
+#authorize_net_easy_payment_card_cvc {
+    background-color: #150f24 !important;
+    border: 1px solid #1f2b47 !important;
+    color: #e2e8f0 !important;
+    -webkit-text-fill-color: #e2e8f0 !important;
+    padding: 0.75rem !important;
+    border-radius: 0.375rem !important;
+    font-size: 1rem !important;
+}
+
+/* Card field placeholders */
+.wc-authorize-net-easy-payment-credit-card-form input::placeholder {
+    color: #64748b !important;
+    opacity: 1 !important;
+}
+
+/* Card field labels */
+.wc-authorize-net-easy-payment-credit-card-form label {
+    color: #94a3b8 !important;
+}
+
+/* General checkout input styling for Authorize.Net */
+.wc-payment-form input,
+.wc-payment-form .input-text,
+.wc-payment-form input[type="text"],
+.wc-payment-form input[type="tel"] {
+    background-color: #150f24 !important;
+    border: 1px solid #1f2b47 !important;
+    color: #e2e8f0 !important;
+    -webkit-text-fill-color: #e2e8f0 !important;
+    padding: 0.75rem !important;
+    border-radius: 0.375rem !important;
+}
+
+/* eCheck (ACH) fields */
+.wc-authorize-net-easy-payment-echeck-form input,
+.wc-authorize-net-easy-payment-echeck-form .input-text,
+.wc-authorize-net-easy-payment-echeck-form input[type="text"] {
+    background-color: #150f24 !important;
+    border: 1px solid #1f2b47 !important;
+    color: #e2e8f0 !important;
+    -webkit-text-fill-color: #e2e8f0 !important;
+    padding: 0.75rem !important;
+    border-radius: 0.375rem !important;
+}
+
+/* eCheck labels */
+.wc-authorize-net-easy-payment-echeck-form label {
+    color: #94a3b8 !important;
 }
