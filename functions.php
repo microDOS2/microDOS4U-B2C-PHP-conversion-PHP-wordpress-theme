@@ -1354,22 +1354,17 @@ function microdos_gravity_forms_css_fix() {
         border: 1px solid #2d2255 !important;
         color: #ffffff !important;
     }
-    /* SELECT - Light background with dark text so selected text is visible */
-    .gform_wrapper select {
-        background-color: #e8e8e8 !important;
-        border: 1px solid #888 !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        font-size: 14px !important;
-        height: 38px !important;
+    /* SELECT - CSS API: --gf-ctrl-color controls selected text */
+    .gform-theme--framework#gform_wrapper_2 .gfield--type-select {
+        --gf-ctrl-bg-color: #1a1040;
+        --gf-ctrl-color: #ffffff;  /* WHITE text on dark background = VISIBLE */
     }
-    .gform_wrapper select option {
-        background-color: #ffffff !important;
-        color: #000000 !important;
+    .gform-theme--framework#gform_wrapper_2 .gfield--type-select select {
+        color: #ffffff !important;
     }
-    .gform_wrapper select option:checked {
-        background-color: #dddddd !important;
-        color: #000000 !important;
+    .gform-theme--framework#gform_wrapper_2 .gfield--type-select select option {
+        background-color: #1a1040;
+        color: #ffffff;
     }
     /* Checkboxes */
     .gform_wrapper input[type="checkbox"] {
