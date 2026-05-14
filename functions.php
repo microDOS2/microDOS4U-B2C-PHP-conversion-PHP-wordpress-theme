@@ -1431,6 +1431,34 @@ function microdos_fix_affiliate_email_logo($logo) {
 }
 
 // ============================================
+// AFFILIATE TERMS OF SERVICE LINK
+// Add hyperlink to "terms and conditions" in the registration form
+// ============================================
+
+add_filter('gform_field_content', 'microdos_affiliate_terms_link', 10, 5);
+function microdos_affiliate_terms_link($content, $field, $value, $lead_id, $form_id) {
+    // Only apply to the affiliate registration form (ID 2)
+    if ($form_id != 2) {
+        return $content;
+    }
+
+    // Only apply to checkbox fields that contain the terms text
+    if ($field->type != 'checkbox' || strpos($content, 'terms and conditions') === false) {
+        return $content;
+    }
+
+    // Wrap "terms and conditions" in a hyperlink
+    $terms_url = home_url('/affiliate-terms-of-use/');
+    $content = str_replace(
+        'terms and conditions',
+        '<a href="' . esc_url($terms_url) . '" target="_blank" style="color:#ff66c4;text-decoration:underline;">terms and conditions</a>',
+        $content
+    );
+
+    return $content;
+}
+
+// ============================================
 // GRAVITY FORMS TEXT COLOR FIX (v3 - Ultra Strong)
 // ============================================
 
