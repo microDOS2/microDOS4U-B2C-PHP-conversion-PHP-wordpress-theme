@@ -1488,3 +1488,239 @@ function microdos_gform_dark_theme_styles($styles) {
 }
 
 
+
+// ============================================
+// CUSTOM ORDER STATUS: SHIPPED
+// Adds "Shipped" between Processing and Completed
+// Integrates with ShipStation (or manual workflow)
+// ============================================
+
+add_action('init', 'microdos_register_shipped_status', 10, 0);
+function microdos_register_shipped_status() {
+    register_post_status('wc-shipped', [
+        'label'                     => _x('Shipped', 'Order status', 'microdos4u'),
+        'public'                    => false,
+        'exclude_from_search'       => false,
+        'show_in_admin_all_list'    => true,
+        'show_in_admin_status_list' => true,
+        'label_count'               => _n_noop('Shipped <span class="count">(%s)</span>', 'Shipped <span class="count">(%s)</span>', 'microdos4u'),
+    ]);
+}
+
+// Add "Shipped" to WooCommerce order statuses
+add_filter('wc_order_statuses', 'microdos_add_shipped_status');
+function microdos_add_shipped_status($order_statuses) {
+    $new_statuses = [];
+    foreach ($order_statuses as $key => $value) {
+        $new_statuses[$key] = $value;
+        if ($key === 'wc-processing') {
+            $new_statuses['wc-shipped'] = _x('Shipped', 'Order status', 'microdos4u');
+        }
+    }
+    return $new_statuses;
+}
+
+// Add "Mark as Shipped" bulk action on Orders list
+add_filter('bulk_actions-edit-shop_order', 'microdos_add_shipped_bulk_action');
+function microdos_add_shipped_bulk_action($actions) {
+    $actions['mark_shipped'] = __('Mark as Shipped', 'microdos4u');
+    return $actions;
+}
+
+// ============================================
+// TRACKING NUMBER META FIELD
+// Add tracking number to order admin page
+// ============================================
+
+add_action('add_meta_boxes', 'microdos_add_tracking_meta_box');
+function microdos_add_tracking_meta_box() {
+    add_meta_box(
+        'microdos_tracking',
+        __('Shipping & Tracking', 'microdos4u'),
+        'microdos_tracking_meta_box_html',
+        'shop_order',
+        'side',
+        'high'
+    );
+}
+
+function microdos_tracking_meta_box_html($post) {
+    $order = wc_get_order($post->ID);
+    $tracking = $order->get_meta('_microdos_tracking_number', true);
+    $carrier  = $order->get_meta('_microdos_tracking_carrier', true) ?: 'usps';
+    wp_nonce_field('microdos_save_tracking', 'microdos_tracking_nonce');
+    ?>
+    <p>
+        <label for="microdos_tracking_number" style="display:block;margin-bottom:4px;font-weight:600;">Tracking Number</label>
+        <input type="text" id="microdos_tracking_number" name="microdos_tracking_number" value="<?php echo esc_attr($tracking); ?>" style="width:100%;padding:6px;border:1px solid #1f2b47;background:#150f24;color:#e2e8f0;border-radius:4px;" placeholder="e.g. 9400111899223456789012">
+    </p>
+    <p>
+        <label for="microdos_tracking_carrier" style="display:block;margin-bottom:4px;font-weight:600;">Carrier</label>
+        <select id="microdos_tracking_carrier" name="microdos_tracking_carrier" style="width:100%;padding:6px;border:1px solid #1f2b47;background:#150f24;color:#e2e8f0;border-radius:4px;">
+            <option value="usps" <?php selected($carrier, 'usps'); ?>>USPS</option>
+            <option value="ups" <?php selected($carrier, 'ups'); ?>>UPS</option>
+            <option value="fedex" <?php selected($carrier, 'fedex'); ?>>FedEx</option>
+        </select>
+    </p>
+    <p style="margin-top:8px;">
+        <button type="button" class="button" onclick="document.getElementById('microdos_tracking_number').value='';document.getElementById('microdos_tracking_carrier').value='usps';">Clear</button>
+    </p>
+    <?php
+}
+
+// Save tracking meta
+add_action('save_post', 'microdos_save_tracking_meta');
+function microdos_save_tracking_meta($post_id) {
+    if (get_post_type($post_id) !== 'shop_order') return;
+    if (!isset($_POST['microdos_tracking_nonce']) || !wp_verify_nonce($_POST['microdos_tracking_nonce'], 'microdos_save_tracking')) return;
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (!current_user_can('edit_post', $post_id)) return;
+
+    $tracking = isset($_POST['microdos_tracking_number']) ? sanitize_text_field($_POST['microdos_tracking_number']) : '';
+    $carrier  = isset($_POST['microdos_tracking_carrier']) ? sanitize_text_field($_POST['microdos_tracking_carrier']) : 'usps';
+
+    $order = wc_get_order($post_id);
+    $order->update_meta_data('_microdos_tracking_number', $tracking);
+    $order->update_meta_data('_microdos_tracking_carrier', $carrier);
+    $order->save();
+}
+
+// ============================================
+// SHIPPED EMAIL NOTIFICATION
+// Send HTML email to customer when order ships
+// ============================================
+
+add_action('woocommerce_order_status_shipped', 'microdos_shipped_email_notification', 10, 1);
+function microdos_shipped_email_notification($order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+
+    $tracking  = $order->get_meta('_microdos_tracking_number', true);
+    $carrier   = $order->get_meta('_microdos_tracking_carrier', true) ?: 'usps';
+    $site_name = get_bloginfo('name');
+    $site_url  = home_url('/');
+    $to        = $order->get_billing_email();
+    $subject   = "Your {$site_name} Order Has Shipped (#" . $order->get_order_number() . ")";
+
+    $tracking_url = microdos_get_tracking_url_by_carrier($tracking, $carrier);
+
+    $message = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>';
+    $message .= '<body style="margin:0;padding:0;background-color:#0a0514;font-family:Arial,Helvetica,sans-serif;">';
+    $message .= '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:30px 20px;">';
+    $message .= '<table width="100%" style="max-width:600px;background-color:#150f24;border:1px solid #1f2b47;border-radius:12px;overflow:hidden;">';
+
+    $message .= '<tr><td style="padding:30px;text-align:center;background-color:#0a0514;border-bottom:1px solid #1f2b47;">';
+    $message .= '<h1 style="margin:0;font-size:24px;color:#44f80c;">' . esc_html($site_name) . '</h1>';
+    $message .= '<p style="margin:8px 0 0;color:#94a3b8;font-size:14px;">Order Shipped</p>';
+    $message .= '</td></tr>';
+
+    $message .= '<tr><td style="padding:30px;">';
+    $message .= '<h2 style="margin:0 0 16px;font-size:20px;color:#ffffff;">Hello ' . esc_html($order->get_billing_first_name()) . ',</h2>';
+    $message .= '<p style="color:#94a3b8;font-size:15px;line-height:1.6;">Great news! Your order <strong style="color:#ffffff;">#' . esc_html($order->get_order_number()) . '</strong> has been shipped and is on its way.</p>';
+
+    if ($tracking && $tracking_url) {
+        $message .= '<p style="color:#94a3b8;font-size:15px;line-height:1.6;">Tracking number: <strong style="color:#ffffff;">' . esc_html($tracking) . '</strong></p>';
+        $message .= '<p style="text-align:center;margin:20px 0;"><a href="' . esc_url($tracking_url) . '" style="display:inline-block;background-color:#44f80c;color:#0a0514;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">Track Your Package</a></p>';
+    }
+
+    $message .= '<p style="color:#94a3b8;font-size:15px;line-height:1.6;">You can also track your order in your <a href="' . esc_url(wc_get_page_permalink('myaccount') . 'orders/') . '" style="color:#ff66c4;text-decoration:underline;">account</a>.</p>';
+    $message .= '</td></tr>';
+
+    $message .= '<tr><td style="padding:20px 30px;text-align:center;border-top:1px solid #1f2b47;background-color:#0a0514;">';
+    $message .= '<p style="margin:0;color:#64748b;font-size:12px;">' . esc_html($site_name) . ' &bull; <a href="' . esc_url($site_url) . '" style="color:#64748b;text-decoration:none;">' . esc_url($site_url) . '</a></p>';
+    $message .= '</td></tr></table></td></tr></table></body></html>';
+
+    $headers = ['Content-Type: text/html; charset=UTF-8', 'From: ' . $site_name . ' <' . get_option('admin_email') . '>'];
+    wp_mail($to, $subject, $message, $headers);
+}
+
+// ============================================
+// HELPER: Get tracking URL by carrier
+// ============================================
+
+function microdos_get_tracking_url_by_carrier($tracking, $carrier) {
+    if (!$tracking) return '';
+    switch ($carrier) {
+        case 'usps':  return 'https://tools.usps.com/go/TrackConfirmAction?tLabels=' . esc_attr($tracking);
+        case 'ups':   return 'https://www.ups.com/track?tracknum=' . esc_attr($tracking);
+        case 'fedex': return 'https://www.fedex.com/fedextrack/?trknbr=' . esc_attr($tracking);
+        default:      return '';
+    }
+}
+
+// ============================================
+// CUSTOMER-FACING: Show tracking on order list
+// ============================================
+
+add_filter('woocommerce_my_account_my_orders_columns', 'microdos_add_tracking_column');
+function microdos_add_tracking_column($columns) {
+    $new_columns = [];
+    foreach ($columns as $key => $value) {
+        $new_columns[$key] = $value;
+        if ($key === 'order-status') {
+            $new_columns['order-tracking'] = __('Tracking', 'microdos4u');
+        }
+    }
+    return $new_columns;
+}
+
+add_action('woocommerce_my_account_my_orders_column_order-tracking', 'microdos_display_tracking_column');
+function microdos_display_tracking_column($order) {
+    $tracking = $order->get_meta('_microdos_tracking_number', true);
+    $carrier  = $order->get_meta('_microdos_tracking_carrier', true) ?: 'usps';
+    $tracking_url = microdos_get_tracking_url_by_carrier($tracking, $carrier);
+
+    if ($tracking && $tracking_url && $order->has_status('shipped')) {
+        echo '<a href="' . esc_url($tracking_url) . '" target="_blank" style="color:#44f80c;text-decoration:underline;font-size:13px;font-weight:600;">' . esc_html($tracking) . '</a>';
+    } elseif ($tracking && $tracking_url && $order->has_status('completed')) {
+        echo '<a href="' . esc_url($tracking_url) . '" target="_blank" style="color:#44f80c;text-decoration:underline;font-size:13px;">' . esc_html($tracking) . '</a>';
+    } else {
+        echo '<span style="color:#64748b;font-size:13px;">--</span>';
+    }
+}
+
+// ============================================
+// CUSTOMER-FACING: Show tracking on order details
+// ============================================
+
+add_action('woocommerce_view_order', 'microdos_display_tracking_on_order', 20);
+function microdos_display_tracking_on_order($order_id) {
+    $order = wc_get_order($order_id);
+    $tracking = $order->get_meta('_microdos_tracking_number', true);
+    $carrier  = $order->get_meta('_microdos_tracking_carrier', true) ?: 'usps';
+    $tracking_url = microdos_get_tracking_url_by_carrier($tracking, $carrier);
+
+    if ($tracking && $tracking_url) {
+        echo '<div style="background:#0a0514;border:1px solid #1f2b47;border-radius:8px;padding:20px;margin:20px 0;">';
+        echo '<h3 style="color:#44f80c;margin:0 0 12px;font-size:16px;">Shipping & Tracking</h3>';
+        echo '<p style="color:#94a3b8;margin:0 0 8px;">Carrier: <strong style="color:#e2e8f0;">' . esc_html(strtoupper($carrier)) . '</strong></p>';
+        echo '<p style="color:#94a3b8;margin:0 0 12px;">Tracking #: <strong style="color:#e2e8f0;">' . esc_html($tracking) . '</strong></p>';
+        echo '<a href="' . esc_url($tracking_url) . '" target="_blank" style="display:inline-block;background:#44f80c;color:#0a0514;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:700;font-size:14px;">Track on ' . esc_html(strtoupper($carrier)) . '</a>';
+        echo '</div>';
+    }
+}
+
+// ============================================
+// CUSTOMER-FACING: Show tracking on thankyou page
+// ============================================
+
+add_action('woocommerce_thankyou', 'microdos_thankyou_shipping_notice', 15);
+function microdos_thankyou_shipping_notice($order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+    $tracking = $order->get_meta('_microdos_tracking_number', true);
+    $carrier  = $order->get_meta('_microdos_tracking_carrier', true) ?: 'usps';
+    $tracking_url = microdos_get_tracking_url_by_carrier($tracking, $carrier);
+
+    if ($tracking && $tracking_url && ($order->has_status('shipped') || $order->has_status('completed'))) {
+        echo '<div style="background:#0a0514;border:1px solid #44f80c;border-radius:8px;padding:20px;margin:20px 0;text-align:center;">';
+        echo '<h3 style="color:#44f80c;margin:0 0 8px;font-size:16px;">Your Order Has Shipped!</h3>';
+        echo '<p style="color:#94a3b8;margin:0 0 12px;">Tracking: <strong style="color:#e2e8f0;">' . esc_html($tracking) . '</strong></p>';
+        echo '<a href="' . esc_url($tracking_url) . '" target="_blank" style="display:inline-block;background:#44f80c;color:#0a0514;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:700;font-size:14px;">Track Package</a>';
+        echo '</div>';
+    } else {
+        echo '<div style="background:#0a0514;border:1px solid #1f2b47;border-radius:8px;padding:20px;margin:20px 0;text-align:center;">';
+        echo '<p style="color:#94a3b8;margin:0;">Your order will ship within <strong style="color:#e2e8f0;">1-2 business days</strong>. You will receive a tracking email once it ships.</p>';
+        echo '</div>';
+    }
+}
