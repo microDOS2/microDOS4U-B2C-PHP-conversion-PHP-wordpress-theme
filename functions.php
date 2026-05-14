@@ -70,6 +70,47 @@ function microdos4u_setup() {
 add_action('after_setup_theme', 'microdos4u_setup');
 
 // ============================================
+// AUTO-CREATE REQUIRED PAGES ON THEME ACTIVATION
+// ============================================
+
+/**
+ * Create the Affiliate W-9 Form page if it doesn't exist.
+ * Runs when the theme is activated or switched to.
+ */
+add_action('after_switch_theme', 'microdos_create_required_pages');
+add_action('admin_init', 'microdos_create_required_pages'); // Also check on admin load (one-time)
+
+function microdos_create_required_pages() {
+    // Track which pages we've already created to avoid loops
+    $pages_created = get_option('microdos_pages_created', array());
+
+    // --- Affiliate W-9 Form Page ---
+    if (empty($pages_created['affiliate_w9'])) {
+        $existing = get_page_by_path('affiliate-w9');
+        if (!$existing) {
+            $page_id = wp_insert_post(array(
+                'post_title'     => 'Affiliate W-9 Form',
+                'post_name'      => 'affiliate-w9',
+                'post_content'   => '', // Template handles all content
+                'post_status'    => 'publish',
+                'post_type'      => 'page',
+                'page_template'  => 'page-affiliate-w9.php',
+                'comment_status' => 'closed',
+                'ping_status'    => 'closed',
+            ));
+            if (!is_wp_error($page_id) && $page_id > 0) {
+                $pages_created['affiliate_w9'] = $page_id;
+            }
+        } else {
+            $pages_created['affiliate_w9'] = $existing->ID;
+        }
+    }
+
+    // Save the tracking array
+    update_option('microdos_pages_created', $pages_created);
+}
+
+// ============================================
 // ENQUEUE SCRIPTS AND STYLES
 // ============================================
 
@@ -1127,15 +1168,205 @@ function microdos_render_w9_form($atts) {
     return ob_get_clean();
 }
 
-// ============================================================
-// v1.8.0 - Gravity Forms Dark Theme Fix for Affiliate Registration
-// ============================================================
+
+// ============================================
+// W-9 SERVER-SIDE VALIDATION & SAVE
+// ============================================
 
 /**
- * Fix Gravity Forms Orbital theme for dark backgrounds
- * Uses official gform_default_styles filter to set input text color to white
- * This fixes the invisible select dropdown text (dark-on-dark) issue
+ * Validate W-9 fields during affiliate registration.
+ * This runs server-side after the form submits via AJAX.
+ * If validation fails, AffiliateWP shows the error and stops registration.
  */
+add_action('affwp_process_register_form', 'microdos_validate_w9_on_registration', 10, 1);
+
+function microdos_validate_w9_on_registration($data) {
+    $required_fields = array(
+        'affwp_w9_legal_name'         => 'Full Legal Name',
+        'affwp_w9_tax_classification' => 'Tax Classification',
+        'affwp_w9_address'            => 'Street Address',
+        'affwp_w9_city'               => 'City',
+        'affwp_w9_state'              => 'State',
+        'affwp_w9_zip'                => 'ZIP Code',
+        'affwp_w9_tax_id'             => 'SSN or EIN',
+    );
+
+    foreach ($required_fields as $field => $label) {
+        if (empty($_POST[$field])) {
+            affwp_add_error($field . '_required', sprintf(__('W-9: %s is required.'), $label));
+        }
+    }
+
+    if (empty($_POST['affwp_w9_certification'])) {
+        affwp_add_error('affwp_w9_certification_required', __('W-9: You must certify the information is correct under penalties of perjury.'));
+    }
+}
+
+/**
+ * Save W-9 data after successful affiliate registration.
+ * Runs after the user and affiliate records are created.
+ */
+add_action('user_register', 'microdos_save_w9_on_affiliate_register', 10, 1);
+
+function microdos_save_w9_on_affiliate_register($user_id) {
+    // Only process if W-9 fields were submitted (affiliate registration)
+    if (empty($_POST['affwp_w9_legal_name'])) {
+        return;
+    }
+
+    $w9_data = array(
+        'legal_name'          => sanitize_text_field($_POST['affwp_w9_legal_name'] ?? ''),
+        'business_name'       => sanitize_text_field($_POST['affwp_w9_business_name'] ?? ''),
+        'tax_classification'  => sanitize_text_field($_POST['affwp_w9_tax_classification'] ?? ''),
+        'address'             => sanitize_text_field($_POST['affwp_w9_address'] ?? ''),
+        'city'                => sanitize_text_field($_POST['affwp_w9_city'] ?? ''),
+        'state'               => sanitize_text_field($_POST['affwp_w9_state'] ?? ''),
+        'zip'                 => sanitize_text_field($_POST['affwp_w9_zip'] ?? ''),
+        'tax_id'              => sanitize_text_field($_POST['affwp_w9_tax_id'] ?? ''),
+        'certification_date'  => current_time('mysql'),
+        'ip_address'          => sanitize_text_field($_SERVER['REMOTE_ADDR'] ?? ''),
+    );
+
+    update_user_meta($user_id, 'microdos_w9_data', $w9_data);
+    update_user_meta($user_id, 'microdos_w9_status', 'complete');
+}
+
+
+
+
+
+
+
+
+
+
+// ============================================
+// FORCE SELECT DROPDOWN TEXT VISIBLE (JavaScript)
+// Inline styles override all CSS
+// ============================================
+
+add_action('wp_footer', 'microdos_force_select_text_visible', 999);
+
+function microdos_force_select_text_visible() {
+    ?>
+    <script>
+    (function() {
+        function fixSelects() {
+            var selects = document.querySelectorAll('#gform_wrapper_2 select');
+            selects.forEach(function(select) {
+                select.style.setProperty('color', '#ffffff', 'important');
+                select.style.setProperty('background-color', '#1a1040', 'important');
+                select.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
+            });
+        }
+        // Run immediately and after a delay
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', fixSelects);
+        } else {
+            fixSelects();
+        }
+        setTimeout(fixSelects, 100);
+        setTimeout(fixSelects, 500);
+        setTimeout(fixSelects, 1000);
+        // Also run on change
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.tagName === 'SELECT') {
+                e.target.style.setProperty('color', '#ffffff', 'important');
+                e.target.style.setProperty('background-color', '#1a1040', 'important');
+            }
+        });
+    })();
+    </script>
+    <?php
+}
+
+// ============================================
+// GRAVITY FORMS - CREATE USER & AFFILIATE ON SUBMISSION
+// Uses gform_after_submission_1 per Gravity Forms docs
+// https://docs.gravityforms.com/gform_after_submission/
+// ============================================
+
+add_action('gform_after_submission_2', 'microdos_create_affiliate_from_form', 10, 2);
+
+function microdos_create_affiliate_from_form($entry, $form) {
+    // Extract values using rgar() per Gravity Forms docs
+    $first_name  = rgar($entry, '1.3');   // Name: First
+    $last_name   = rgar($entry, '1.6');   // Name: Last
+    $email       = rgar($entry, '2');     // Email
+    $password    = rgar($entry, '3');     // Password
+    $username    = rgar($entry, '4');     // Username
+    $website     = rgar($entry, '5');     // Website
+    $legal_name  = rgar($entry, '7');     // W-9: Full Legal Name
+    $business    = rgar($entry, '8');     // W-9: Business Name
+    $tax_class   = rgar($entry, '9');     // W-9: Tax Classification
+    $address     = rgar($entry, '10');    // W-9: Address
+    $address2    = rgar($entry, '11');    // W-9: Address 2
+    $city        = rgar($entry, '12');    // W-9: City
+    $state       = rgar($entry, '13');    // W-9: State
+    $zip         = rgar($entry, '14');    // W-9: ZIP
+    $tax_id      = rgar($entry, '15');    // W-9: SSN/EIN
+
+    // Auto-generate username from email if empty
+    if (empty($username)) {
+        $username = sanitize_user(current(explode('@', $email)), true);
+    }
+    $original = $username;
+    $suffix = 1;
+    while (username_exists($username)) {
+        $username = $original . $suffix;
+        $suffix++;
+    }
+
+    // Create WordPress user
+    $user_id = wp_insert_user(array(
+        'user_login'   => $username,
+        'user_email'   => sanitize_email($email),
+        'user_pass'    => $password,
+        'first_name'   => sanitize_text_field($first_name),
+        'last_name'    => sanitize_text_field($last_name),
+        'user_url'     => esc_url_raw($website),
+        'role'         => 'subscriber',
+    ));
+
+    if (is_wp_error($user_id)) {
+        error_log('[microDOS] User creation failed: ' . $user_id->get_error_message());
+        return;
+    }
+
+    // Create AffiliateWP affiliate
+    if (function_exists('affwp_add_affiliate')) {
+        affwp_add_affiliate(array(
+            'user_id'       => $user_id,
+            'status'        => 'pending',
+            'payment_email' => sanitize_email($email),
+        ));
+    }
+
+    // Save W-9 data
+    update_user_meta($user_id, 'microdos_w9_data', array(
+        'legal_name'         => sanitize_text_field($legal_name),
+        'business_name'      => sanitize_text_field($business),
+        'tax_classification' => sanitize_text_field($tax_class),
+        'address'            => sanitize_text_field($address),
+        'address2'           => sanitize_text_field($address2),
+        'city'               => sanitize_text_field($city),
+        'state'              => sanitize_text_field($state),
+        'zip'                => sanitize_text_field($zip),
+        'tax_id'             => sanitize_text_field($tax_id),
+        'certification_date' => current_time('mysql'),
+        'ip_address'         => sanitize_text_field($_SERVER['REMOTE_ADDR'] ?? ''),
+    ));
+    update_user_meta($user_id, 'microdos_w9_status', 'complete');
+
+    // Log the user in
+    wp_set_current_user($user_id);
+    wp_set_auth_cookie($user_id, true);
+}
+
+// ============================================
+// GRAVITY FORMS TEXT COLOR FIX (v3 - Ultra Strong)
+// ============================================
+
 add_filter('gform_default_styles', 'microdos_gform_dark_theme_styles', 10, 1);
 function microdos_gform_dark_theme_styles($styles) {
     // Per docs: $styles can be array, JSON string, or false
@@ -1160,6 +1391,10 @@ function microdos_gform_dark_theme_styles($styles) {
 
     return $style_array; // Return array per official docs Example 1
 }
+
+/**
+ * CSS fallback for enhanced select dropdowns (Chosen) and all Gravity Forms inputs
+ */
 add_action('wp_head', 'microdos_gravity_forms_select_fix', 100);
 function microdos_gravity_forms_select_fix() {
     echo '<style>
@@ -1235,5 +1470,4 @@ function microdos_gravity_forms_select_fix() {
         color: #ff4444 !important;
     }
     </style>';
-}
 }
