@@ -1233,43 +1233,153 @@ function microdos_save_w9_on_affiliate_register($user_id) {
 
 
 
+
+
+
+
+
+// ============================================
+// GRAVITY FORMS - CREATE USER & AFFILIATE ON SUBMISSION
+// Uses gform_after_submission_1 per Gravity Forms docs
+// https://docs.gravityforms.com/gform_after_submission/
+// ============================================
+
+add_action('gform_after_submission_1', 'microdos_create_affiliate_from_form', 10, 2);
+
+function microdos_create_affiliate_from_form($entry, $form) {
+    // Extract values using rgar() per Gravity Forms docs
+    $first_name  = rgar($entry, '1.3');   // Name: First
+    $last_name   = rgar($entry, '1.6');   // Name: Last
+    $email       = rgar($entry, '2');     // Email
+    $password    = rgar($entry, '3');     // Password
+    $username    = rgar($entry, '4');     // Username
+    $website     = rgar($entry, '5');     // Website
+    $legal_name  = rgar($entry, '7');     // W-9: Full Legal Name
+    $business    = rgar($entry, '8');     // W-9: Business Name
+    $tax_class   = rgar($entry, '9');     // W-9: Tax Classification
+    $address     = rgar($entry, '10');    // W-9: Address
+    $address2    = rgar($entry, '11');    // W-9: Address 2
+    $city        = rgar($entry, '12');    // W-9: City
+    $state       = rgar($entry, '13');    // W-9: State
+    $zip         = rgar($entry, '14');    // W-9: ZIP
+    $tax_id      = rgar($entry, '15');    // W-9: SSN/EIN
+
+    // Auto-generate username from email if empty
+    if (empty($username)) {
+        $username = sanitize_user(current(explode('@', $email)), true);
+    }
+    $original = $username;
+    $suffix = 1;
+    while (username_exists($username)) {
+        $username = $original . $suffix;
+        $suffix++;
+    }
+
+    // Create WordPress user
+    $user_id = wp_insert_user(array(
+        'user_login'   => $username,
+        'user_email'   => sanitize_email($email),
+        'user_pass'    => $password,
+        'first_name'   => sanitize_text_field($first_name),
+        'last_name'    => sanitize_text_field($last_name),
+        'user_url'     => esc_url_raw($website),
+        'role'         => 'subscriber',
+    ));
+
+    if (is_wp_error($user_id)) {
+        error_log('[microDOS] User creation failed: ' . $user_id->get_error_message());
+        return;
+    }
+
+    // Create AffiliateWP affiliate
+    if (function_exists('affwp_add_affiliate')) {
+        affwp_add_affiliate(array(
+            'user_id'       => $user_id,
+            'status'        => 'pending',
+            'payment_email' => sanitize_email($email),
+        ));
+    }
+
+    // Save W-9 data
+    update_user_meta($user_id, 'microdos_w9_data', array(
+        'legal_name'         => sanitize_text_field($legal_name),
+        'business_name'      => sanitize_text_field($business),
+        'tax_classification' => sanitize_text_field($tax_class),
+        'address'            => sanitize_text_field($address),
+        'address2'           => sanitize_text_field($address2),
+        'city'               => sanitize_text_field($city),
+        'state'              => sanitize_text_field($state),
+        'zip'                => sanitize_text_field($zip),
+        'tax_id'             => sanitize_text_field($tax_id),
+        'certification_date' => current_time('mysql'),
+        'ip_address'         => sanitize_text_field($_SERVER['REMOTE_ADDR'] ?? ''),
+    ));
+    update_user_meta($user_id, 'microdos_w9_status', 'complete');
+
+    // Log the user in
+    wp_set_current_user($user_id);
+    wp_set_auth_cookie($user_id, true);
+}
+
+// ============================================
+// GRAVITY FORMS TEXT COLOR FIX (v3 - Ultra Strong)
+// ============================================
+
 add_action('wp_head', 'microdos_gravity_forms_css_fix', 100);
 
 function microdos_gravity_forms_css_fix() {
     echo '<style>
-    /* Select dropdown - WHITE text on dark background so it's VISIBLE */
-    .gform-theme--framework#gform_wrapper_2 .gfield--type-select {
-        --gf-ctrl-bg-color: #1a1040;
-        --gf-ctrl-color: #ffffff;
-        --gf-ctrl-bg-color-hover: #2d2255;
-        --gf-ctrl-color-hover: #ffffff;
-        --gf-ctrl-bg-color-focus: #1a1040;
-        --gf-ctrl-color-focus: #ffffff;
-    }
-    .gform-theme--framework#gform_wrapper_2 .gfield--type-select select {
+    /* Labels */
+    .gform_wrapper label,
+    .gform_wrapper .gfield_label,
+    .gform_wrapper .gsection_title,
+    .gform_wrapper .gsection_description,
+    .gform_wrapper .gfield_description {
         color: #ffffff !important;
     }
-    .gform-theme--framework#gform_wrapper_2 .gfield--type-select select option {
-        background-color: #1a1040;
-        color: #ffffff;
+    .gform_wrapper .gsection_title {
+        color: #44f80c !important;
     }
-    .gform-theme--framework#gform_wrapper_2 .gfield--type-select select option:checked {
-        background-color: #2d2255;
-        color: #ffffff;
+    .gform_wrapper .gsection_description,
+    .gform_wrapper .gfield_description {
+        color: #d1d5db !important;
     }
-    /* Labels */
-    .gform_wrapper label, .gform_wrapper .gfield_label { color: #ffffff !important; }
-    .gform_wrapper .gsection_title { color: #44f80c !important; }
-    .gform_wrapper .gsection_description, .gform_wrapper .gfield_description { color: #d1d5db !important; }
-    /* Text inputs */
-    .gform_wrapper input[type="text"], .gform_wrapper input[type="email"], .gform_wrapper input[type="password"] { background: #1a1040 !important; border: 1px solid #2d2255 !important; color: #fff !important; }
-    /* Submit */
-    .gform_wrapper input[type="submit"] { background: #44f80c !important; color: #0a0514 !important; font-weight: 700 !important; width: 100% !important; }
+    /* Inputs */
+    .gform_wrapper input[type="text"],
+    .gform_wrapper input[type="email"],
+    .gform_wrapper input[type="password"],
+    .gform_wrapper input[type="url"],
+    .gform_wrapper select,
+    .gform_wrapper textarea {
+        background-color: #1a1040 !important;
+        border: 1px solid #2d2255 !important;
+        color: #ffffff !important;
+    }
+    .gform_wrapper select option {
+        background-color: #1a1040 !important;
+        color: #ffffff !important;
+    }
     /* Checkboxes */
-    .gform_wrapper input[type="checkbox"] { accent-color: #44f80c !important; width: 18px !important; height: 18px !important; }
-    .gform_wrapper .gfield_checkbox label { color: #fff !important; }
+    .gform_wrapper input[type="checkbox"] {
+        width: 18px !important;
+        height: 18px !important;
+        accent-color: #44f80c !important;
+    }
+    /* Submit */
+    .gform_wrapper .gform_footer input[type="submit"] {
+        background: #44f80c !important;
+        color: #0a0514 !important;
+        font-weight: 700 !important;
+        width: 100% !important;
+    }
     /* Errors */
-    .gform_validation_errors { background: #150f24 !important; border-color: #ff4444 !important; color: #ff4444 !important; }
-    .validation_message { color: #ff4444 !important; }
+    .gform_wrapper .gform_validation_errors {
+        background: #150f24 !important;
+        border-color: #ff4444 !important;
+        color: #ff4444 !important;
+    }
+    .gform_wrapper .validation_message {
+        color: #ff4444 !important;
+    }
     </style>';
 }
