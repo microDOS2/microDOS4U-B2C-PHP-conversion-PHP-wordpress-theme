@@ -1349,15 +1349,27 @@ function microdos_gravity_forms_css_fix() {
     .gform_wrapper input[type="email"],
     .gform_wrapper input[type="password"],
     .gform_wrapper input[type="url"],
-    .gform_wrapper select,
     .gform_wrapper textarea {
         background-color: #1a1040 !important;
         border: 1px solid #2d2255 !important;
         color: #ffffff !important;
     }
+    /* SELECT - Light background with dark text so selected text is visible */
+    .gform_wrapper select {
+        background-color: #e8e8e8 !important;
+        border: 1px solid #888 !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        font-size: 14px !important;
+        height: 38px !important;
+    }
     .gform_wrapper select option {
-        background-color: #1a1040 !important;
-        color: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+    .gform_wrapper select option:checked {
+        background-color: #dddddd !important;
+        color: #000000 !important;
     }
     /* Checkboxes */
     .gform_wrapper input[type="checkbox"] {
