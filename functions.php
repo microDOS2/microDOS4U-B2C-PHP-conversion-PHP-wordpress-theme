@@ -1238,6 +1238,48 @@ function microdos_save_w9_on_affiliate_register($user_id) {
 
 
 
+
+
+// ============================================
+// FORCE SELECT DROPDOWN TEXT VISIBLE (JavaScript)
+// Inline styles override all CSS
+// ============================================
+
+add_action('wp_footer', 'microdos_force_select_text_visible', 999);
+
+function microdos_force_select_text_visible() {
+    ?>
+    <script>
+    (function() {
+        function fixSelects() {
+            var selects = document.querySelectorAll('#gform_wrapper_2 select');
+            selects.forEach(function(select) {
+                select.style.setProperty('color', '#ffffff', 'important');
+                select.style.setProperty('background-color', '#1a1040', 'important');
+                select.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
+            });
+        }
+        // Run immediately and after a delay
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', fixSelects);
+        } else {
+            fixSelects();
+        }
+        setTimeout(fixSelects, 100);
+        setTimeout(fixSelects, 500);
+        setTimeout(fixSelects, 1000);
+        // Also run on change
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.tagName === 'SELECT') {
+                e.target.style.setProperty('color', '#ffffff', 'important');
+                e.target.style.setProperty('background-color', '#1a1040', 'important');
+            }
+        });
+    })();
+    </script>
+    <?php
+}
+
 // ============================================
 // GRAVITY FORMS - CREATE USER & AFFILIATE ON SUBMISSION
 // Uses gform_after_submission_1 per Gravity Forms docs
