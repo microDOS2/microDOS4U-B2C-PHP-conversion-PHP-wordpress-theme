@@ -3230,148 +3230,20 @@ input[name="is_gift"] {
 
 
 /* ============================================
-   GRAVITY FORMS - DARK THEME STYLING
+/* ============================================
+   GRAVITY FORMS - DARK THEME STYLING (v3)
+   Clean consolidated fix for dropdown visibility
    ============================================ */
 
-/* Form container */
-.gform_wrapper {
+/* Form container - transparent background on wrapper only */
+body .gform_wrapper {
     background: transparent !important;
 }
 
-/* Field labels */
-.gform_wrapper .gfield_label,
-.gform_wrapper label,
-.gform_wrapper .gfield_description,
-.gform_wrapper .gform-field-label {
-    color: #d1d5db !important;
-    font-weight: 600 !important;
-}
-
-/* Required asterisk */
-.gform_wrapper .gfield_required {
-    color: #ef4444 !important;
-}
-
-/* Text inputs */
-.gform_wrapper input[type="text"],
-.gform_wrapper input[type="email"],
-.gform_wrapper input[type="password"],
-.gform_wrapper input[type="url"],
-.gform_wrapper select,
-.gform_wrapper textarea {
-    background-color: #150f24 !important;
-    border: 1px solid #1f2b47 !important;
-    color: #e2e8f0 !important;
-    padding: 0.75rem !important;
-    border-radius: 0.375rem !important;
-    font-size: 1rem !important;
-}
-
-.gform_wrapper input::placeholder,
-.gform_wrapper textarea::placeholder {
-    color: #64748b !important;
-}
-
-/* Select dropdown */
-.gform_wrapper select {
-    color: #e2e8f0 !important;
-    background-color: #150f24 !important;
-}
-
-.gform_wrapper select option {
-    background-color: #150f24 !important;
-    color: #e2e8f0 !important;
-}
-
-/* Checkbox and radio labels */
-.gform_wrapper .gfield_checkbox .gchoice label,
-.gform_wrapper .gfield_radio .gchoice label {
-    color: #d1d5db !important;
-}
-
-/* Section break title */
-.gform_wrapper .gsection_title {
-    color: #44f80c !important;
-    font-size: 1.1rem !important;
-    font-weight: 700 !important;
-    border-bottom: 1px solid #1f2b47 !important;
-    padding-bottom: 0.5rem !important;
-    margin-bottom: 1rem !important;
-}
-
-.gform_wrapper .gsection_description {
-    color: #94a3b8 !important;
-    font-size: 0.875rem !important;
-}
-
-/* Submit button */
-.gform_wrapper .gform_footer input[type="submit"],
-.gform_wrapper .gform_button {
-    background-color: #44f80c !important;
-    color: #0a0514 !important;
-    font-weight: 700 !important;
-    padding: 0.875rem 2rem !important;
-    border: none !important;
-    border-radius: 0.5rem !important;
-    font-size: 1rem !important;
-    cursor: pointer !important;
-    width: 100% !important;
-}
-
-.gform_wrapper .gform_footer input[type="submit"]:hover {
-    opacity: 0.85 !important;
-}
-
-/* Validation errors */
-.gform_wrapper .gfield_error input,
-.gform_wrapper .gfield_error select,
-.gform_wrapper .gfield_error textarea {
-    border-color: #ef4444 !important;
-}
-
-.gform_wrapper .validation_message {
-    color: #ef4444 !important;
-    font-size: 0.875rem !important;
-}
-
-.gform_wrapper .gform_validation_errors {
-    background: #150f24 !important;
-    border: 1px solid #ef4444 !important;
-    color: #ef4444 !important;
-    border-radius: 0.5rem !important;
-    padding: 1rem !important;
-    margin-bottom: 1.5rem !important;
-}
-
-/* Field description / help text */
-.gform_wrapper .gfield_description {
-    color: #94a3b8 !important;
-    font-size: 0.875rem !important;
-}
-
-/* Hide Gravity Forms default title if present */
-.gform_wrapper .gform_title,
-.gform_wrapper .gform_description {
-    color: #fff !important;
-}
-
-
-/* ============================================
-   GRAVITY FORMS - DARK THEME (v2)
-   Stronger selectors to override defaults
-   ============================================ */
-
-/* Force dark background on form wrapper */
-body .gform_wrapper,
-body .gform_wrapper * {
-    background-color: transparent;
-}
-
-/* Labels - HIGH SPECIFICITY */
+/* --- Field Labels --- */
 body .gform_wrapper .gfield_label,
 body .gform_wrapper label.gform-field-label,
 body .gform_wrapper .gfield label,
-body .gform_wrapper .gfield .gfield_label,
 .gform-theme--framework .gform_wrapper label {
     color: #d1d5db !important;
     font-weight: 600 !important;
@@ -3384,7 +3256,7 @@ body .gform_wrapper .gfield_required_text {
     color: #ef4444 !important;
 }
 
-/* All text inputs */
+/* --- All Text Inputs --- */
 body .gform_wrapper input[type="text"],
 body .gform_wrapper input[type="email"],
 body .gform_wrapper input[type="password"],
@@ -3410,14 +3282,28 @@ body .gform_wrapper textarea::placeholder {
     opacity: 1 !important;
 }
 
-/* Select dropdown text */
-body .gform_wrapper select,
-body .gform_wrapper select option {
+/* --- Select Dropdown (CRITICAL FIX) --- */
+body .gform_wrapper select {
     color: #e2e8f0 !important;
     background-color: #150f24 !important;
+    min-height: 2.75rem !important;
+    line-height: 1.5 !important;
+    /* CRITICAL: Ensure selected text is visible in Chrome */
+    -webkit-text-fill-color: #e2e8f0 !important;
 }
 
-/* Checkbox/radio labels */
+body .gform_wrapper select option {
+    background-color: #150f24 !important;
+    color: #e2e8f0 !important;
+}
+
+/* Focus state for select */
+body .gform_wrapper select:focus {
+    border-color: #44f80c !important;
+    outline: none !important;
+}
+
+/* --- Checkbox/Radio Labels --- */
 body .gform_wrapper .gfield_checkbox .gchoice label,
 body .gform_wrapper .gfield_radio .gchoice label,
 body .gform_wrapper .gfield_checkbox label,
@@ -3426,7 +3312,12 @@ body .gform_wrapper .gfield_checkbox label,
     font-weight: 400 !important;
 }
 
-/* Section break title */
+/* Checkbox accent */
+body .gform_wrapper .gfield_checkbox input[type="checkbox"] {
+    accent-color: #44f80c !important;
+}
+
+/* --- Section Break --- */
 body .gform_wrapper .gsection_title,
 .gform-theme--framework .gform_wrapper .gsection_title {
     color: #44f80c !important;
@@ -3441,7 +3332,7 @@ body .gform_wrapper .gsection_description {
     font-size: 0.875rem !important;
 }
 
-/* Submit button */
+/* --- Submit Button --- */
 body .gform_wrapper .gform_footer input[type="submit"],
 body .gform_wrapper .gform_button,
 .gform-theme--framework .gform_wrapper .gform_footer input[type="submit"] {
@@ -3456,14 +3347,20 @@ body .gform_wrapper .gform_button,
     width: 100% !important;
 }
 
-/* Validation errors */
+body .gform_wrapper .gform_footer input[type="submit"]:hover {
+    opacity: 0.85 !important;
+}
+
+/* --- Validation Errors --- */
 body .gform_wrapper .gfield_error input,
-body .gform_wrapper .gfield_error select {
+body .gform_wrapper .gfield_error select,
+body .gform_wrapper .gfield_error textarea {
     border-color: #ef4444 !important;
 }
 
 body .gform_wrapper .validation_message {
     color: #ef4444 !important;
+    font-size: 0.875rem !important;
 }
 
 body .gform_wrapper .gform_validation_errors {
@@ -3472,30 +3369,26 @@ body .gform_wrapper .gform_validation_errors {
     color: #ef4444 !important;
     border-radius: 0.5rem !important;
     padding: 1rem !important;
+    margin-bottom: 1.5rem !important;
 }
 
-/* Field descriptions */
+/* --- Field Descriptions --- */
 body .gform_wrapper .gfield_description {
     color: #94a3b8 !important;
     font-size: 0.875rem !important;
 }
 
-/* Force text color on ALL form elements */
-body .gform_wrapper,
-body .gform_wrapper .gform_body,
-body .gform_wrapper .gform_fields,
-body .gform_wrapper .gfield {
-    color: #d1d5db !important;
+/* Form titles */
+body .gform_wrapper .gform_title,
+body .gform_wrapper .gform_description {
+    color: #fff !important;
 }
 
-/* Sub-labels (like "First", "Last" under Name field) */
+/* --- Sub-labels (First/Last under Name field) --- */
 body .gform_wrapper .ginput_complex label,
 body .gform_wrapper .gfield .ginput_container_name label {
     color: #94a3b8 !important;
     font-size: 0.8rem !important;
 }
 
-/* Checkbox input styling */
-body .gform_wrapper .gfield_checkbox input[type="checkbox"] {
-    accent-color: #44f80c !important;
 }
