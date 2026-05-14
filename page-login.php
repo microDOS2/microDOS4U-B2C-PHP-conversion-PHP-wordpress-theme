@@ -1,14 +1,20 @@
 <?php
 /**
  * Template Name: Login
- * 
- * Dedicated login page for customers.
- * 
+ *
+ * Login page — redirects affiliates to the affiliate area.
+ *
  * @package microDOS4U
  */
 
-// If already logged in, redirect to My Account
+// If already logged in, redirect appropriately
 if (is_user_logged_in()) {
+    // Affiliates go to the affiliate dashboard
+    if (function_exists('affwp_is_affiliate') && affwp_is_affiliate()) {
+        wp_redirect(get_permalink(get_page_by_path('affiliate-area')) ?: home_url('/'));
+        exit;
+    }
+    // Everyone else goes to My Account
     $redirect_url = function_exists('wc_get_account_endpoint_url') ? wc_get_account_endpoint_url('dashboard') : home_url('/');
     wp_redirect($redirect_url);
     exit;
