@@ -1318,9 +1318,116 @@ function microdos_create_affiliate_from_form($entry, $form) {
     ));
     update_user_meta($user_id, 'microdos_w9_status', 'complete');
 
+    // Send pending welcome email to new affiliate
+    microdos_send_affiliate_pending_email($user_id, $email, $first_name, $last_name);
+
     // Log the user in
     wp_set_current_user($user_id);
     wp_set_auth_cookie($user_id, true);
+}
+
+// ============================================
+// AFFILIATE PENDING WELCOME EMAIL
+// Sent immediately after registration
+// ============================================
+
+function microdos_send_affiliate_pending_email($user_id, $email, $first_name, $last_name) {
+    $site_name   = get_bloginfo('name');
+    $site_url    = home_url('/');
+    $affiliate_area = get_permalink(get_page_by_path('affiliate-area')) ?: home_url('/affiliate-area/');
+    $admin_email = get_option('admin_email');
+
+    $subject = "Your {$site_name} Affiliate Application Received";
+
+    // Build dark-themed HTML email
+    $message = '<!DOCTYPE html>';
+    $message .= '<html><head><meta charset="UTF-8"></head>';
+    $message .= '<body style="margin:0;padding:0;background-color:#0a0514;font-family:Arial,Helvetica,sans-serif;">';
+    $message .= '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:30px 20px;">';
+    $message .= '<table width="100%" max-width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background-color:#150f24;border:1px solid #1f2b47;border-radius:12px;overflow:hidden;">';
+
+    // Header
+    $message .= '<tr><td style="padding:30px;text-align:center;background-color:#0a0514;border-bottom:1px solid #1f2b47;">';
+    $message .= '<h1 style="margin:0;font-size:24px;color:#44f80c;">' . esc_html($site_name) . '</h1>';
+    $message .= '</td></tr>';
+
+    // Body
+    $display_name = $first_name ?: $last_name ?: 'Affiliate';
+    $message .= '<tr><td style="padding:30px;">';
+    $message .= '<h2 style="margin:0 0 16px;font-size:20px;color:#ffffff;">Hello ' . esc_html($display_name) . ',</h2>';
+    $message .= '<p style="color:#94a3b8;font-size:15px;line-height:1.6;">';
+    $message .= 'Thank you for applying to the <strong style="color:#ffffff;">' . esc_html($site_name) . ' Affiliate Program</strong>. ';
+    $message .= 'Your application has been received and is now <strong style="color:#44f80c;">pending review</strong>.';
+    $message .= '</p>';
+
+    $message .= '<p style="color:#94a3b8;font-size:15px;line-height:1.6;">';
+    $message .= 'What happens next:';
+    $message .= '</p>';
+
+    $message .= '<ul style="color:#94a3b8;font-size:15px;line-height:1.6;padding-left:20px;">';
+    $message .= '<li>Our team will review your application within <strong style="color:#ffffff;">24-48 hours</strong>.</li>';
+    $message .= '<li>You will receive an email notification once your application is approved.</li>';
+    $message .= '<li>After approval, you can log in to your <a href="' . esc_url($affiliate_area) . '" style="color:#ff66c4;text-decoration:underline;">affiliate dashboard</a> to access your referral link and track earnings.</li>';
+    $message .= '</ul>';
+
+    $message .= '<p style="color:#94a3b8;font-size:15px;line-height:1.6;">';
+    $message .= 'If you have any questions in the meantime, simply reply to this email or contact us at ' . esc_html($admin_email) . '.';
+    $message .= '</p>';
+    $message .= '</td></tr>';
+
+    // Footer
+    $message .= '<tr><td style="padding:20px 30px;text-align:center;border-top:1px solid #1f2b47;background-color:#0a0514;">';
+    $message .= '<p style="margin:0;color:#64748b;font-size:12px;">' . esc_html($site_name) . ' &bull; <a href="' . esc_url($site_url) . '" style="color:#64748b;text-decoration:none;">' . esc_url($site_url) . '</a></p>';
+    $message .= '</td></tr>';
+
+    $message .= '</table>';
+    $message .= '</td></tr></table>';
+    $message .= '</body></html>';
+
+    $headers = array(
+        'Content-Type: text/html; charset=UTF-8',
+        'From: ' . $site_name . ' <' . $admin_email . '>',
+    );
+
+    wp_mail($email, $subject, $message, $headers);
+}
+
+// ============================================
+// AFFILIATE LOGIN REDIRECT
+// Redirect affiliates to /affiliate-area/ after login
+// ============================================
+
+add_filter('login_redirect', 'microdos_affiliate_login_redirect', 10, 3);
+function microdos_affiliate_login_redirect($redirect_to, $request, $user) {
+    // Must be a valid user
+    if (!is_a($user, 'WP_User')) {
+        return $redirect_to;
+    }
+
+    // Check if user is an affiliate
+    if (function_exists('affwp_is_affiliate') && affwp_is_affiliate($user->ID)) {
+        $affiliate_area = get_permalink(get_page_by_path('affiliate-area'));
+        if ($affiliate_area) {
+            return $affiliate_area;
+        }
+    }
+
+    return $redirect_to;
+}
+
+// ============================================
+// AFFILIATEWP EMAIL LOGO SIZE FIX
+// Prevent oversized logo in affiliate emails
+// ============================================
+
+add_filter('affwp_email_logo', 'microdos_fix_affiliate_email_logo');
+function microdos_fix_affiliate_email_logo($logo) {
+    if (empty($logo)) {
+        return $logo;
+    }
+    // Inject max-width and height constraint into the logo image
+    $logo = str_replace('<img', '<img style="max-width:200px;height:auto;display:block;margin:0 auto;" ', $logo);
+    return $logo;
 }
 
 // ============================================
