@@ -1325,7 +1325,7 @@ function microdos_create_affiliate_from_form($entry, $form) {
 // GRAVITY FORMS TEXT COLOR FIX (v3 - Ultra Strong)
 // ============================================
 
-add_action('wp_head', 'microdos_gravity_forms_css_fix', 100);
+add_action('wp_head', 'microdos_gravity_forms_css_fix', 999);
 
 function microdos_gravity_forms_css_fix() {
     echo '<style>
