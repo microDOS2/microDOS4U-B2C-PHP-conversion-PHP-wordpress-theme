@@ -50,33 +50,103 @@ get_header();
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background-color: #44f80c20; color: #44f80c;">1</div>
                         <div>
-                            <p class="text-white font-medium">Share Your Link or QR Code</p>
-                            <p class="text-slate-400 text-sm">Post your unique referral link or QR code on social media, your website, or anywhere your audience will see it.</p>
+                            <p class="text-white font-medium">Register</p>
+                            <p class="text-slate-400 text-sm">Fill out the affiliate application form below. All applications require admin approval.</p>
                         </div>
                     </div>
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background-color: #9a02d020; color: #9a02d0;">2</div>
                         <div>
-                            <p class="text-white font-medium">Customer Clicks and Purchases</p>
-                            <p class="text-slate-400 text-sm">When someone clicks your link, a tracking cookie is placed on their browser. If they purchase within 45 days, you earn a commission.</p>
+                            <p class="text-white font-medium">Get Approved</p>
+                            <p class="text-slate-400 text-sm">We'll review and approve your application within 24-48 hours.</p>
                         </div>
                     </div>
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background-color: #ff66c420; color: #ff66c4;">3</div>
                         <div>
-                            <p class="text-white font-medium">Earn on Renewals for 24 Months</p>
-                            <p class="text-slate-400 text-sm">After the first purchase, your referral is linked to you for 24 months. Every subscription renewal pays you a recurring commission automatically.</p>
+                            <p class="text-white font-medium">Share Your Link</p>
+                            <p class="text-slate-400 text-sm">Post your unique referral link or QR code on social media, blogs, or email.</p>
                         </div>
                     </div>
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background-color: #44f80c20; color: #44f80c;">4</div>
                         <div>
-                            <p class="text-white font-medium">Get Paid Monthly</p>
-                            <p class="text-slate-400 text-sm">Commissions are paid via PayPal on the 15th of each month for the previous month's earnings.</p>
+                            <p class="text-white font-medium">Earn Commissions</p>
+                            <p class="text-slate-400 text-sm">Get paid for every sale and subscription renewal your referrals make.</p>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- ====== AFFILIATE PORTAL ====== -->
+            <div class="mb-10 p-6 rounded-lg" style="background-color: #0a0514; border: 1px solid #1f2b47;">
+                
+                <?php if (!is_user_logged_in()) : ?>
+                    <!-- NOT LOGGED IN: Show login + registration -->
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <!-- Login Side -->
+                        <div>
+                            <h2 class="text-xl font-bold text-white mb-4">Affiliate Login</h2>
+                            <p class="text-slate-400 text-sm mb-4">Already an affiliate? Log in to access your dashboard.</p>
+                            
+                            <?php
+                            wp_login_form([
+                                'redirect'       => get_permalink(),
+                                'form_id'        => 'affiliate-login',
+                                'label_username' => __('Username or Email', 'microdos4u'),
+                                'label_password' => __('Password', 'microdos4u'),
+                                'label_remember' => __('Remember me', 'microdos4u'),
+                                'label_log_in'   => __('Log In', 'microdos4u'),
+                                'remember'       => true,
+                            ]);
+                            ?>
+                            <p class="text-center mt-3">
+                                <a href="<?php echo esc_url(wp_lostpassword_url(get_permalink())); ?>" style="color: #38bdf8; font-size: 13px;">Lost your password?</a>
+                            </p>
+                        </div>
+                        
+                        <!-- Registration Side -->
+                        <div>
+                            <h2 class="text-xl font-bold text-white mb-4">Apply to Become an Affiliate</h2>
+                            <p class="text-slate-400 text-sm mb-4">New here? Fill out the application below to get started.</p>
+                            
+                            <?php
+                            if (function_exists('gravity_form')) {
+                                gravity_form_enqueue_scripts(2, true);
+                                gravity_form(2, false, false, false, '', true, 1);
+                            } else {
+                                echo '<p style="color:#ff4444;text-align:center;">Gravity Forms is not active.</p>';
+                            }
+                            ?>
+                        </div>
+                    </div>
+                    
+                <?php elseif (function_exists('affwp_is_affiliate') && affwp_is_affiliate()) : ?>
+                    <!-- LOGGED IN AS AFFILIATE: Show dashboard -->
+                    
+                    <h2 class="text-xl font-bold text-white mb-4">Affiliate Dashboard</h2>
+                    <?php echo do_shortcode('[affiliate_area]'); ?>
+                    
+                <?php else : ?>
+                    <!-- LOGGED IN BUT NOT AFFILIATE: Show registration -->
+                    
+                    <h2 class="text-xl font-bold text-white mb-2">Apply to Become an Affiliate</h2>
+                    <p class="text-slate-400 text-sm mb-4">You're logged in as <strong style="color: #44f80c;"><?php echo esc_html(wp_get_current_user()->display_name); ?></strong>. Complete the application below to join our affiliate program.</p>
+                    
+                    <?php
+                    if (function_exists('gravity_form')) {
+                        gravity_form_enqueue_scripts(2, true);
+                        gravity_form(2, false, false, false, '', true, 1);
+                    } else {
+                        echo '<p style="color:#ff4444;text-align:center;">Gravity Forms is not active.</p>';
+                    }
+                    ?>
+                    
+                <?php endif; ?>
+                
+            </div>
+            <!-- ====== END PORTAL ====== -->
 
             <!-- FAQ -->
             <div class="mb-10 p-6 rounded-lg" style="background-color: #0a0514; border: 1px solid #1f2b47;">
@@ -86,24 +156,24 @@ get_header();
                 </h2>
                 <div class="space-y-4">
                     <div>
+                        <h3 class="text-white font-medium mb-1">How do I get paid?</h3>
+                        <p class="text-slate-400 text-sm">Commissions are paid monthly via PayPal or bank transfer once you reach the $50 minimum payout threshold. You must complete a W-9 form (US affiliates) before your first payout can be issued.</p>
+                    </div>
+                    <div>
                         <h3 class="text-white font-medium mb-1">How long does the referral cookie last?</h3>
                         <p class="text-slate-400 text-sm">When someone clicks your referral link, a 45-day cookie is placed on their browser. If they purchase within 45 days, you get the commission.</p>
                     </div>
                     <div>
-                        <h3 class="text-white font-medium mb-1">How do I get paid?</h3>
-                        <p class="text-slate-400 text-sm">Commissions are paid monthly on the 15th of the following month that a referral purchases, via your PayPal once you reach the minimum payout threshold.</p>
+                        <h3 class="text-white font-medium mb-1">What are recurring commissions?</h3>
+                        <p class="text-slate-400 text-sm">For subscription products, you earn a commission not just on the initial sale but on every monthly renewal for up to 24 months.</p>
                     </div>
                     <div>
-                        <h3 class="text-white font-medium mb-1">What happens if my referral cancels?</h3>
-                        <p class="text-slate-400 text-sm">You earn recurring commissions for up to 24 months from the initial purchase date. If the customer cancels before 24 months, commissions stop at cancellation.</p>
+                        <h3 class="text-white font-medium mb-1">Why do I need to submit a W-9 form?</h3>
+                        <p class="text-slate-400 text-sm">US tax law requires us to collect a completed W-9 form from all US-based affiliates before we can issue commission payments totaling $600 or more in a calendar year. This allows us to file the required 1099-NEC tax form.</p>
                     </div>
                     <div>
-                        <h3 class="text-white font-medium mb-1">Can I see who purchased through my link?</h3>
-                        <p class="text-slate-400 text-sm">No. For privacy reasons, you can only see the order total and commission amount. Customer personal information is never shared with affiliates.</p>
-                    </div>
-                    <div>
-                        <h3 class="text-white font-medium mb-1">Do I need a website to be an affiliate?</h3>
-                        <p class="text-slate-400 text-sm">No. You can share your link or QR code on social media, email, messaging apps, or any other channel where you have an audience.</p>
+                        <h3 class="text-white font-medium mb-1">Can I promote on social media?</h3>
+                        <p class="text-slate-400 text-sm">Yes! You can share your referral link on any platform — Instagram, TikTok, Twitter/X, Facebook, blogs, email newsletters, Discord, Reddit, and more. Just follow our <a href="/affiliate-terms" style="color: #ff66c4; text-decoration: underline;">Affiliate Terms</a>.</p>
                     </div>
                 </div>
             </div>
@@ -111,21 +181,40 @@ get_header();
         </div>
     </section>
 
-    <!-- Affiliate Portal -->
-    <section class="affiliate-portal py-12" style="background-color: #0a0514;">
-        <div class="container mx-auto px-4 max-w-4xl">
-            <?php
-            if (function_exists('gravity_form')) {
-                gravity_form_enqueue_scripts(2, true);
-                gravity_form(2, false, false, false, '', true, 1);
-            } else {
-                echo '<p style="color:#ff4444;text-align:center;padding:20px;">Gravity Forms is not active.</p>';
-            }
-            ?>
-        </div>
-    </section>
-
 </main>
+
+<style>
+    /* Login form dark theme styling */
+    #affiliate-login label {
+        display: block;
+        color: #94a3b8;
+        font-size: 14px;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+    #affiliate-login input[type="text"],
+    #affiliate-login input[type="password"] {
+        background-color: #150f24 !important;
+        border: 1px solid #1f2b47 !important;
+        color: #e2e8f0 !important;
+        padding: 0.75rem !important;
+        border-radius: 0.375rem !important;
+        font-size: 1rem !important;
+        width: 100% !important;
+    }
+    #affiliate-login input[type="submit"] {
+        background-color: #44f80c !important;
+        color: #0a0514 !important;
+        font-weight: 700 !important;
+        padding: 0.75rem 2rem !important;
+        border: none !important;
+        border-radius: 0.5rem !important;
+        font-size: 1rem !important;
+        cursor: pointer !important;
+        width: 100% !important;
+        margin-top: 12px;
+    }
+</style>
 
 <?php
 get_footer();
