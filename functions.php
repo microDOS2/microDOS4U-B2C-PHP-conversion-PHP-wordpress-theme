@@ -1244,7 +1244,7 @@ function microdos_save_w9_on_affiliate_register($user_id) {
 // https://docs.gravityforms.com/gform_after_submission/
 // ============================================
 
-add_action('gform_after_submission_1', 'microdos_create_affiliate_from_form', 10, 2);
+add_action('gform_after_submission_2', 'microdos_create_affiliate_from_form', 10, 2);
 
 function microdos_create_affiliate_from_form($entry, $form) {
     // Extract values using rgar() per Gravity Forms docs
@@ -1360,6 +1360,13 @@ function microdos_gravity_forms_css_fix() {
         --gf-ctrl-color: #ffffff;  /* WHITE text on dark background = VISIBLE */
     }
     .gform-theme--framework#gform_wrapper_2 .gfield--type-select select {
+        color: #ffffff !important;
+        background-color: #1a1040 !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
+    /* Force override any JavaScript inline styles */
+    .gform-theme--framework#gform_wrapper_2 .gfield--type-select select option {
+        background-color: #1a1040 !important;
         color: #ffffff !important;
     }
     .gform-theme--framework#gform_wrapper_2 .gfield--type-select select option {
