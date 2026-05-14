@@ -1138,12 +1138,18 @@ function microdos_render_w9_form($atts) {
  */
 add_filter('gform_default_styles', 'microdos_gform_dark_theme_styles', 10, 1);
 function microdos_gform_dark_theme_styles($styles) {
-    $style_array = json_decode($styles, true);
-    if (!is_array($style_array)) {
+    // Per docs: $styles can be array, JSON string, or false
+    if (is_array($styles)) {
+        $style_array = $styles;
+    } elseif (is_string($styles)) {
+        $style_array = json_decode($styles, true);
+    }
+    if (empty($style_array) || !is_array($style_array)) {
         $style_array = array();
     }
-    
-    // Set input text color to white for dark theme visibility
+
+    // CRITICAL: Set input text color to white for dark theme visibility
+    // inputColor sets --gf-color-in-ctrl-contrast which drives --gf-ctrl-color
     $style_array['inputColor'] = '#ffffff';
     $style_array['theme'] = 'orbital';
     $style_array['inputBackgroundColor'] = '#1a1040';
@@ -1151,13 +1157,9 @@ function microdos_gform_dark_theme_styles($styles) {
     $style_array['inputPrimaryColor'] = '#44f80c';
     $style_array['labelColor'] = '#ffffff';
     $style_array['descriptionColor'] = '#d1d5db';
-    
-    return json_encode($style_array);
-}
 
-/**
- * CSS fallback for enhanced select dropdowns and all Gravity Forms inputs
- */
+    return $style_array; // Return array per official docs Example 1
+}
 add_action('wp_head', 'microdos_gravity_forms_select_fix', 100);
 function microdos_gravity_forms_select_fix() {
     echo '<style>
@@ -1168,19 +1170,48 @@ function microdos_gravity_forms_select_fix() {
     .gform-theme--framework textarea {
         color: #ffffff !important;
     }
-    
-    /* Enhanced select (dropdown) specific fixes */
-    .gform-theme--framework .gfield_select .gform-theme-field-control,
-    .gform-theme--framework .gfield--type-select .gform-theme-field-control {
+
+    /* Enhanced select (Chosen) - selected value text */
+    .gform-theme--framework .chosen-container-single .chosen-single {
         color: #ffffff !important;
-        --gf-local-color: #ffffff !important;
+        background: #1a1040 !important;
+        border-color: #2d2255 !important;
     }
-    
+    .gform-theme--framework .chosen-container-single .chosen-single span {
+        color: #ffffff !important;
+    }
+
+    /* Enhanced select (Chosen) - dropdown results */
+    .gform-theme--framework .chosen-container .chosen-results li {
+        color: #ffffff !important;
+        background: #1a1040 !important;
+    }
+    .gform-theme--framework .chosen-container .chosen-results li.highlighted {
+        background: #2d2255 !important;
+        color: #ffffff !important;
+    }
+    .gform-theme--framework .chosen-container .chosen-results li.active-result {
+        color: #ffffff !important;
+    }
+
+    /* Enhanced select (Chosen) - search field */
+    .gform-theme--framework .chosen-container .chosen-search input {
+        color: #ffffff !important;
+        background: #1a1040 !important;
+        border-color: #2d2255 !important;
+    }
+
+    /* Enhanced select (Chosen) - dropdown container */
+    .gform-theme--framework .chosen-container .chosen-drop {
+        background: #1a1040 !important;
+        border-color: #2d2255 !important;
+    }
+
     /* Placeholder text */
     .gform-theme--framework ::placeholder {
         color: rgba(255,255,255,0.6) !important;
     }
-    
+
     /* Submit button */
     .gform-theme--framework .gform_footer input[type="submit"] {
         background: #44f80c !important;
@@ -1188,14 +1219,14 @@ function microdos_gravity_forms_select_fix() {
         font-weight: 700 !important;
         width: 100% !important;
     }
-    
+
     /* Checkboxes */
     .gform-theme--framework input[type="checkbox"] {
         accent-color: #44f80c !important;
         width: 18px !important;
         height: 18px !important;
     }
-    
+
     /* Error messages */
     .gform-theme--framework .gfield_validation_message,
     .gform-theme--framework .gform_validation_errors {
@@ -1204,4 +1235,5 @@ function microdos_gravity_forms_select_fix() {
         color: #ff4444 !important;
     }
     </style>';
+}
 }
