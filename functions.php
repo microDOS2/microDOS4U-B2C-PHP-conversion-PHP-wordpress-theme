@@ -1367,74 +1367,45 @@ function microdos_create_affiliate_from_form($entry, $form) {
 // GRAVITY FORMS TEXT COLOR FIX (v3 - Ultra Strong)
 // ============================================
 
-add_action('wp_head', 'microdos_gravity_forms_css_fix', 999);
+add_action('wp_head', 'microdos_gravity_forms_css_fix', 100);
 
 function microdos_gravity_forms_css_fix() {
     echo '<style>
-    /* Labels */
-    .gform_wrapper label,
-    .gform_wrapper .gfield_label,
-    .gform_wrapper .gsection_title,
-    .gform_wrapper .gsection_description,
-    .gform_wrapper .gfield_description {
-        color: #ffffff !important;
+    /* GRAVITY FORMS CSS API OVERRIDE */
+    /* Docs: https://docs.css.gravity.com/ */
+    /*
+     * --gf-ctrl-color defaults to var(--gf-color-in-ctrl-contrast) = #112337 (dark)
+     * --gf-ctrl-bg-color defaults to var(--gf-color-in-ctrl) = #fff (white)
+     * Override at global .gform-theme--framework level for dark theme
+     */
+    .gform-theme--framework {
+        --gf-ctrl-bg-color: #1a1040 !important;        /* Dark background */
+        --gf-ctrl-color: #ffffff !important;             /* WHITE text */
+        --gf-ctrl-color-hover: #ffffff !important;       /* WHITE on hover */
+        --gf-ctrl-color-focus: #ffffff !important;       /* WHITE on focus */
+        --gf-ctrl-border-color: #2d2255 !important;      /* Dark border */
+        --gf-ctrl-icon-color: #ffffff !important;        /* WHITE icons */
+        /* Override label colors */
+        --gf-ctrl-label-color-primary: #ffffff !important;
+        --gf-ctrl-label-color-secondary: #d1d5db !important;
     }
-    .gform_wrapper .gsection_title {
-        color: #44f80c !important;
-    }
-    .gform_wrapper .gsection_description,
-    .gform_wrapper .gfield_description {
-        color: #d1d5db !important;
-    }
-    /* Inputs */
-    .gform_wrapper input[type="text"],
-    .gform_wrapper input[type="email"],
-    .gform_wrapper input[type="password"],
-    .gform_wrapper input[type="url"],
-    .gform_wrapper textarea {
-        background-color: #1a1040 !important;
-        border: 1px solid #2d2255 !important;
-        color: #ffffff !important;
-    }
-    /* SELECT - CSS API: --gf-ctrl-color controls selected text */
-    .gform-theme--framework#gform_wrapper_2 .gfield--type-select {
-        --gf-ctrl-bg-color: #1a1040;
-        --gf-ctrl-color: #ffffff;  /* WHITE text on dark background = VISIBLE */
-    }
-    .gform-theme--framework#gform_wrapper_2 .gfield--type-select select {
-        color: #ffffff !important;
-        background-color: #1a1040 !important;
-        -webkit-text-fill-color: #ffffff !important;
-    }
-    /* Force override any JavaScript inline styles */
-    .gform-theme--framework#gform_wrapper_2 .gfield--type-select select option {
-        background-color: #1a1040 !important;
-        color: #ffffff !important;
-    }
-    .gform-theme--framework#gform_wrapper_2 .gfield--type-select select option {
-        background-color: #1a1040;
-        color: #ffffff;
-    }
-    /* Checkboxes */
-    .gform_wrapper input[type="checkbox"] {
-        width: 18px !important;
-        height: 18px !important;
-        accent-color: #44f80c !important;
-    }
-    /* Submit */
+    /* Submit button */
     .gform_wrapper .gform_footer input[type="submit"] {
         background: #44f80c !important;
         color: #0a0514 !important;
         font-weight: 700 !important;
         width: 100% !important;
     }
+    /* Checkboxes */
+    .gform_wrapper input[type="checkbox"] {
+        accent-color: #44f80c !important;
+        width: 18px !important;
+        height: 18px !important;
+    }
     /* Errors */
-    .gform_wrapper .gform_validation_errors {
+    .gform_validation_errors {
         background: #150f24 !important;
         border-color: #ff4444 !important;
-        color: #ff4444 !important;
-    }
-    .gform_wrapper .validation_message {
         color: #ff4444 !important;
     }
     </style>';
