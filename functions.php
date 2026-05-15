@@ -2023,61 +2023,44 @@ function microdos_get_marketing_guide_content() {
 
 
 ================================================================================
+// 
+
+// ================================================================================
 // AFFILIATE DASHBOARD GUIDE FEATURES (auto-appended)
-// Source: functions-dashboard-guide.php
-================================================================================
+// ================================================================================
 
 <?php
 /**
- * ============================================
- * AFFILIATE DASHBOARD GUIDE — FUNCTIONS
- * ============================================
- * This file contains all functions for the Affiliate Dashboard Guide feature:
+ * Affiliate Dashboard Guide — Feature Functions
+ *
  * 1. Auto-creation of the guide page
  * 2. Shepherd.js CDN loading on affiliate dashboard
  * 3. Updated Getting Started panel with tour/guide buttons
- * 4. Floating help button
- *
- * Append this file's contents to the end of your theme's functions.php
- * or include it via: require_once get_template_directory() . '/functions-dashboard-guide.php';
- *
- * @version 1.0.0
- * @package microDOS4U
+ * 4. Admin tour reset tool
  */
 
-// Prevent direct access
-if (!defined('ABSPATH')) {
-    exit;
-}
+if (!defined('ABSPATH')) exit;
 
 // ============================================
 // 1. AUTO-CREATE DASHBOARD GUIDE PAGE
 // ============================================
 
-/**
- * Create the Affiliate Dashboard Guide page if it doesn't exist.
- * Runs on wp_loaded (same pattern as Marketing Guide).
- */
 add_action('wp_loaded', 'microdos_create_dashboard_guide_page', 20);
 
 function microdos_create_dashboard_guide_page() {
-    if (wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
-        return;
-    }
+    if (wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) return;
+    if (is_admin() || is_customize_preview()) return;
 
-    // Check if page already exists
     $existing = get_page_by_path('affiliate-dashboard-guide');
-    if ($existing) {
-        return;
-    }
+    if ($existing) return;
 
     wp_insert_post(array(
-        'post_title'   => 'Affiliate Dashboard Guide',
-        'post_name'    => 'affiliate-dashboard-guide',
-        'post_content' => '', // Content is rendered by the page template
-        'post_status'  => 'publish',
-        'post_type'    => 'page',
-        'post_author'  => 1,
+        'post_title'    => 'Affiliate Dashboard Guide',
+        'post_name'     => 'affiliate-dashboard-guide',
+        'post_content'  => '',
+        'post_status'   => 'publish',
+        'post_type'     => 'page',
+        'post_author'   => 1,
         'page_template' => 'page-affiliate-dashboard-guide.php',
     ));
 }
@@ -2086,71 +2069,46 @@ function microdos_create_dashboard_guide_page() {
 // 2. LOAD SHEPHERD.JS CDN + TOUR SCRIPT
 // ============================================
 
-/**
- * Enqueue Shepherd.js from CDN and our tour script on affiliate dashboard pages.
- */
 add_action('wp_enqueue_scripts', 'microdos_enqueue_affiliate_tour', 100);
 
 function microdos_enqueue_affiliate_tour() {
-    // Only load on affiliate area pages
-    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    if (is_admin() || is_customize_preview()) return;
+
+    $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
     $is_affiliate_area = (
         strpos($uri, '/affiliate-area') !== false ||
-        strpos($uri, '/affiliate-dashboard-guide') !== false ||
-        is_page_template('page-affiliate-area.php') ||
-        is_page_template('page-affiliate-dashboard-guide.php')
+        strpos($uri, '/affiliate-dashboard-guide') !== false
     );
 
-    if (!$is_affiliate_area) {
-        return;
+    if (!$is_affiliate_area && is_page()) {
+        $template = get_page_template_slug();
+        if ($template === 'page-affiliate-area.php' || $template === 'page-affiliate-dashboard-guide.php') {
+            $is_affiliate_area = true;
+        }
     }
 
-    // Only load for logged-in affiliates
-    if (!is_user_logged_in()) {
-        return;
-    }
+    if (!$is_affiliate_area) return;
+    if (!is_user_logged_in()) return;
+    if (!function_exists('affwp_is_affiliate') || !affwp_is_affiliate()) return;
 
-    if (!function_exists('affwp_is_affiliate') || !affwp_is_affiliate()) {
-        return;
-    }
-
-    // Shepherd.js from CDN (v11.2.0 — latest stable)
     wp_enqueue_script(
         'shepherd-js',
         'https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js',
-        array(),
-        '11.2.0',
-        true
+        array(), '11.2.0', true
     );
 
     wp_enqueue_style(
         'shepherd-css',
         'https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css',
-        array(),
-        '11.2.0'
+        array(), '11.2.0'
     );
 
-    // Our custom tour script
     wp_enqueue_script(
         'microdos-affiliate-tour',
         get_template_directory_uri() . '/js/affiliate-dashboard-tour.js',
-        array('shepherd-js'),
-        MICRODOS_VERSION,
-        true
+        array('shepherd-js'), MICRODOS_VERSION, true
     );
 }
-
-// ============================================
-// 3. UPDATED GETTING STARTED PANEL
-// ============================================
-
-/**
- * Render the enhanced Getting Started panel on the affiliate dashboard.
- * Replaces the original microdos_render_getting_started_panel().
- *
- * Priority 15 ensures this runs after the W-9 notice (which runs at default priority).
- */
-add_action('affwp_affiliate_dashboard_top', 'microdos_render_enhanced_getting_started_panel', 15);
 
 function microdos_render_enhanced_getting_started_panel() {
     // Only show on the main dashboard tab (no ?tab= parameter)
@@ -2435,4 +2393,3 @@ function microdos_admin_tour_reset_notice() {
     </div>
     <?php
 }
-
