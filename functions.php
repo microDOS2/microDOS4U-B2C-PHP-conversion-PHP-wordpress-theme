@@ -1434,64 +1434,6 @@ function microdos_create_shipping_portal_page() {
 // AUTO-CREATE AFFILIATE GUIDE PAGES + MENU LINKS
 // ============================================
 
-add_action('wp_loaded', 'microdos_setup_affiliate_guides', 20);
-
-function microdos_setup_affiliate_guides() {
-    if (wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) return;
-    if (!function_exists('affwp_get_settings') || !function_exists('affwp_update_settings')) return;
-
-    // --- Create Getting Started page ---
-    $gs = get_page_by_path('getting-started');
-    if (!$gs) {
-        $gs_id = wp_insert_post(array(
-            'post_title'   => 'Getting Started',
-            'post_name'    => 'getting-started',
-            'post_content' => microdos_get_getting_started_content(),
-            'post_status'  => 'publish',
-            'post_type'    => 'page',
-            'post_author'  => 1,
-        ));
-    } else {
-        $gs_id = $gs->ID;
-    }
-
-    // --- Create Marketing Guide page ---
-    $mg = get_page_by_path('marketing-guide');
-    if (!$mg) {
-        $mg_id = wp_insert_post(array(
-            'post_title'   => 'Marketing Guide',
-            'post_name'    => 'marketing-guide',
-            'post_content' => microdos_get_marketing_guide_content(),
-            'post_status'  => 'publish',
-            'post_type'    => 'page',
-            'post_author'  => 1,
-        ));
-    } else {
-        $mg_id = $mg->ID;
-    }
-
-    // --- Add Menu Links to Affiliate Portal ---
-    $settings = get_option('affwp_settings', array());
-    $menu_links = isset($settings['portal_menu_links']) ? $settings['portal_menu_links'] : array();
-
-    $has_gs = false;
-    $has_mg = false;
-    foreach ($menu_links as $link) {
-        if (isset($link['name']) && $link['name'] === 'Getting Started') $has_gs = true;
-        if (isset($link['name']) && $link['name'] === 'Marketing Guide') $has_mg = true;
-    }
-
-    if (!$has_gs && $gs_id) {
-        $menu_links[] = array('name' => 'Getting Started', 'url' => get_permalink($gs_id));
-    }
-    if (!$has_mg && $mg_id) {
-        $menu_links[] = array('name' => 'Marketing Guide', 'url' => get_permalink($mg_id));
-    }
-
-    $settings['portal_menu_links'] = $menu_links;
-    update_option('affwp_settings', $settings);
-}
-
 function microdos_get_getting_started_content() {
     return '<!-- wp:html -->
 <div style="max-width:800px;">
