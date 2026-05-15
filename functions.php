@@ -159,12 +159,11 @@ function microdos4u_scripts() {
         true
     );
 
-    // Affiliate creatives page enhancement
+    // Affiliate creatives page enhancement — load on any affiliate area page
+    // JS self-detects creatives tab; CSS styles both creatives and guide
     $uri = $_SERVER['REQUEST_URI'] ?? '';
-    $is_creatives_page = function_exists('affwp_is_affiliate') && affwp_is_affiliate() && (
-        strpos($uri, '/creatives/') !== false || is_page_template('page-affiliate-marketing-guide.php')
-    );
-    if ($is_creatives_page) {
+    $is_affiliate_area = strpos($uri, '/affiliate-area') !== false || is_page_template('page-affiliate-marketing-guide.php');
+    if ($is_affiliate_area) {
         wp_enqueue_script(
             'microdos-creatives',
             get_template_directory_uri() . '/js/affiliate-creatives.js',
