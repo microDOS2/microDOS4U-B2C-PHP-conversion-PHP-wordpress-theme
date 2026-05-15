@@ -81,6 +81,74 @@ if (isset($_GET['action']) && $_GET['action'] === 'packing-slip' && isset($_GET[
     }
 }
 
+// ─── SAVE ORDER NOTE ───
+if (isset($_POST['microdos_save_note']) && check_admin_referer('microdos_portal_nonce')) {
+    $note_order_id = intval($_POST['note_order_id']);
+    $note_text = sanitize_textarea_field($_POST['order_note_text'] ?? '');
+    $note_order = wc_get_order($note_order_id);
+    if ($note_order) {
+        $note_order->update_meta_data('_microdos_shipping_note', $note_text);
+        $note_order->save();
+        $notice = '<div class="portal-notice portal-success">Note saved for Order #' . esc_html($note_order->get_order_number()) . '</div>';
+    }
+}
+
+// ─── EXPORT CSV ───
+if (isset($_GET['export']) && $_GET['export'] === 'csv' && check_admin_referer('microdos_export_nonce')) {
+    $export_status = isset($_GET['tab']) && $_GET['tab'] === 'shipped' ? ['shipped','completed'] : 'processing';
+    $export_orders = wc_get_orders([
+        'status'   => $export_status,
+        'limit'    => -1,
+        'orderby'  => 'date',
+        'order'    => 'DESC',
+    ]);
+
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="orders-' . sanitize_title($tab) . '-' . date('Y-m-d') . '.csv"');
+    $output = fopen('php://output', 'w');
+    fputcsv($output, ['Order #', 'Date', 'Customer', 'Email', 'Items', 'Total', 'Address', 'City', 'State', 'ZIP', 'Tracking', 'Affiliate', 'Notes']);
+
+    foreach ($export_orders as $eo) {
+        $e_items = [];
+        foreach ($eo->get_items() as $ei) {
+            $e_items[] = $ei->get_name() . ' x' . $ei->get_quantity();
+        }
+        $e_tracking = $eo->get_meta('_microdos_tracking_number', true);
+        $e_note = $eo->get_meta('_microdos_shipping_note', true);
+
+        // Get affiliate
+        $e_affiliate = '';
+        if (function_exists('affiliate_wp')) {
+            $referrals = affiliate_wp()->referrals->get_referrals(['reference' => $eo->get_id(), 'number' => 1]);
+            if (!empty($referrals)) {
+                                $aff = affiliate_wp()->affiliates->get_affiliate($referrals[0]->affiliate_id);
+                if ($aff) {
+                    $aff_user = get_userdata($aff->user_id);
+                    $e_affiliate = $aff_user ? $aff_user->display_name : '';
+                }
+            }
+        }
+
+        fputcsv($output, [
+            $eo->get_order_number(),
+            $eo->get_date_created()->date('Y-m-d H:i:s'),
+            $eo->get_formatted_billing_full_name(),
+            $eo->get_billing_email(),
+            implode('; ', $e_items),
+            $eo->get_total(),
+            $eo->get_shipping_address_1(),
+            $eo->get_shipping_city(),
+            $eo->get_shipping_state(),
+            $eo->get_shipping_postcode(),
+            $e_tracking,
+            $e_affiliate,
+            $e_note,
+        ]);
+    }
+    fclose($output);
+    exit;
+}
+
 // ─── CREATE ORDER ───
 $create_notice = '';
 if (isset($_POST['microdos_create_order']) && check_admin_referer('microdos_create_order_nonce')) {
@@ -133,10 +201,32 @@ if (isset($_POST['microdos_create_order']) && check_admin_referer('microdos_crea
 // ─── SEARCH ───
 $search = isset($_GET['q']) ? sanitize_text_field($_GET['q']) : '';
 
-// ─── TAB / PAGINATION ───
-$tab  = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'ready';
-$page = isset($_GET['portal_page']) ? max(1, intval($_GET['portal_page'])) : 1;
-$per  = 25;
+// ─── TAB / PAGINATION / FILTERS ───
+$tab    = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'ready';
+$page   = isset($_GET['portal_page']) ? max(1, intval($_GET['portal_page'])) : 1;
+$per    = 25;
+$range  = isset($_GET['range']) ? sanitize_text_field($_GET['range']) : '';
+$sort   = isset($_GET['sort']) ? sanitize_text_field($_GET['sort']) : 'date_asc';
+
+// ─── DATE RANGE ───
+$date_after = '';
+$date_before = '';
+switch ($range) {
+    case 'today':
+        $date_after = date('Y-m-d 00:00:00');
+        $date_before = date('Y-m-d 23:59:59');
+        break;
+    case 'yesterday':
+        $date_after = date('Y-m-d 00:00:00', strtotime('-1 day'));
+        $date_before = date('Y-m-d 23:59:59', strtotime('-1 day'));
+        break;
+    case 'week':
+        $date_after = date('Y-m-d 00:00:00', strtotime('-7 days'));
+        break;
+    case 'month':
+        $date_after = date('Y-m-d 00:00:00', strtotime('-30 days'));
+        break;
+}
 
 // ─── STATS ───
 $processing_ids = wc_get_orders(['status' => 'processing', 'limit' => -1, 'return' => 'ids']);
@@ -146,10 +236,30 @@ $today_end      = date('Y-m-d 23:59:59');
 $shipped_today  = wc_get_orders(['status' => ['shipped','completed'], 'date_modified' => $today_start . '...' . $today_end, 'limit' => -1, 'return' => 'ids']);
 
 // ─── QUERY ARGS ───
+$sort_field = 'date';
+$sort_dir   = 'ASC';
+switch ($sort) {
+    case 'date_desc':   $sort_field = 'date'; $sort_dir = 'DESC'; break;
+    case 'total_asc':   $sort_field = 'total'; $sort_dir = 'ASC'; break;
+    case 'total_desc':  $sort_field = 'total'; $sort_dir = 'DESC'; break;
+    case 'name_asc':    $sort_field = 'billing_last_name'; $sort_dir = 'ASC'; break;
+    case 'name_desc':   $sort_field = 'billing_last_name'; $sort_dir = 'DESC'; break;
+    default:            $sort_field = 'date'; $sort_dir = ($tab === 'ready') ? 'ASC' : 'DESC';
+}
+
 if ($tab === 'ready') {
-    $query_args = ['status' => 'processing', 'limit' => $per, 'page' => $page, 'orderby' => 'date', 'order' => 'ASC'];
+    $query_args = ['status' => 'processing', 'limit' => $per, 'page' => $page, 'orderby' => $sort_field, 'order' => $sort_dir];
 } else {
-    $query_args = ['status' => ['shipped','completed'], 'limit' => $per, 'page' => $page, 'orderby' => 'date', 'order' => 'DESC'];
+    $query_args = ['status' => ['shipped','completed'], 'limit' => $per, 'page' => $page, 'orderby' => $sort_field, 'order' => $sort_dir];
+}
+
+// Apply date range
+if ($date_after || $date_before) {
+    if ($date_after && $date_before) {
+        $query_args['date_created'] = $date_after . '...' . $date_before;
+    } elseif ($date_after) {
+        $query_args['date_after'] = $date_after;
+    }
 }
 
 // Apply search
@@ -365,7 +475,24 @@ body{background:#0a0514;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFo
 .portal-hints{display:flex;gap:16px;margin-top:12px;font-size:11px;color:#64748b}
 .portal-hints kbd{background:#1f2b47;padding:2px 6px;border-radius:4px;font-family:inherit;font-size:11px}
 
+/* Sortable headers */
+.sort-link{color:#94a3b8;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:color .2s}
+.sort-link:hover{color:#44f80c}
+.sort-link.active{color:#44f80c;font-weight:600}
+
+/* Affiliate */
+.cell-affiliate{white-space:nowrap}
+
+/* Note input */
+.portal-note-input{width:100%;padding:5px 8px;border:1px solid transparent;background:transparent;color:#94a3b8;font-size:11px;border-radius:4px;cursor:text;transition:all .2s;font-family:inherit}
+.portal-note-input:hover{border-color:#1f2b47;background:#0a0514}
+.portal-note-input:focus{outline:none;border-color:#44f80c;background:#0a0514;color:#e2e8f0}
+.portal-note-input::placeholder{color:#3a3450;font-size:10px}
+
 /* Mobile */
+@media(max-width:1024px){
+.portal-table th:nth-child(11),.portal-table td:nth-child(11),.portal-table th:nth-child(12),.portal-table td:nth-child(12){display:none}
+}
 @media(max-width:768px){
 .portal-stats{grid-template-columns:repeat(2,1fr)}
 .portal-search{width:100%}
@@ -440,6 +567,39 @@ body{background:#0a0514;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFo
             <a href="?tab=<?php echo esc_attr($tab); ?>" style="color:#64748b;text-decoration:none;font-size:13px;padding:2px 4px;">Clear</a>
         <?php endif; ?>
     </form>
+
+    <div style="display:flex;gap:8px;align-items:center;">
+        <!-- Date Range -->
+        <form method="get" style="margin:0;">
+            <input type="hidden" name="tab" value="<?php echo esc_attr($tab); ?>">
+            <?php if ($search) : ?><input type="hidden" name="q" value="<?php echo esc_attr($search); ?>"><?php endif; ?>
+            <select name="range" onchange="this.form.submit()" style="background:#150f24;border:1px solid #1f2b47;color:#e2e8f0;padding:7px 10px;border-radius:6px;font-size:12px;cursor:pointer;">
+                <option value="" <?php selected($range, ''); ?>>All Time</option>
+                <option value="today" <?php selected($range, 'today'); ?>>Today</option>
+                <option value="yesterday" <?php selected($range, 'yesterday'); ?>>Yesterday</option>
+                <option value="week" <?php selected($range, 'week'); ?>>Last 7 Days</option>
+                <option value="month" <?php selected($range, 'month'); ?>>Last 30 Days</option>
+            </select>
+        </form>
+
+        <!-- Sort -->
+        <form method="get" style="margin:0;">
+            <input type="hidden" name="tab" value="<?php echo esc_attr($tab); ?>">
+            <?php if ($search) : ?><input type="hidden" name="q" value="<?php echo esc_attr($search); ?>"><?php endif; ?>
+            <?php if ($range) : ?><input type="hidden" name="range" value="<?php echo esc_attr($range); ?>"><?php endif; ?>
+            <select name="sort" onchange="this.form.submit()" style="background:#150f24;border:1px solid #1f2b47;color:#e2e8f0;padding:7px 10px;border-radius:6px;font-size:12px;cursor:pointer;">
+                <option value="date_asc" <?php selected($sort, 'date_asc'); ?>><?php echo $tab === 'ready' ? 'Oldest First' : 'Newest First'; ?></option>
+                <option value="date_desc" <?php selected($sort, 'date_desc'); ?>><?php echo $tab === 'ready' ? 'Newest First' : 'Oldest First'; ?></option>
+                <option value="total_desc" <?php selected($sort, 'total_desc'); ?>>Highest Total</option>
+                <option value="total_asc" <?php selected($sort, 'total_asc'); ?>>Lowest Total</option>
+                <option value="name_asc" <?php selected($sort, 'name_asc'); ?>>Name A-Z</option>
+                <option value="name_desc" <?php selected($sort, 'name_desc'); ?>>Name Z-A</option>
+            </select>
+        </form>
+
+        <!-- Export CSV -->
+        <a href="?tab=<?php echo esc_attr($tab); ?>&amp;export=csv&amp;<?php echo wp_create_nonce('microdos_export_nonce'); ?>" class="portal-btn portal-btn-view" style="font-size:12px;">&#11015; Export CSV</a>
+    </div>
 </div>
 
 <?php if ($tab === 'ready' || $tab === 'shipped') : ?>
@@ -471,18 +631,20 @@ body{background:#0a0514;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFo
                 <thead>
                     <tr>
                         <?php if ($tab === 'ready') : ?><th style="width:30px"><input type="checkbox" class="portal-check" id="selectAll" title="Select all"></th><?php endif; ?>
-                        <th style="width:70px">Order</th>
-                        <th style="width:110px">Date</th>
-                        <th>Customer</th>
+                        <th style="width:65px;"><a href="?tab=<?php echo $tab; ?>&amp;sort=<?php echo $sort === 'date_asc' ? 'date_desc' : 'date_asc'; ?><?php echo $search ? '&amp;q=' . urlencode($search) : ''; ?><?php echo $range ? '&amp;range=' . $range : ''; ?>" class="sort-link <?php echo strpos($sort, 'date') === 0 ? 'active' : ''; ?>">Order <?php echo strpos($sort, 'date') === 0 ? ($sort === 'date_asc' ? '&#9650;' : '&#9660;') : ''; ?></a></th>
+                        <th style="width:110px;">Date</th>
+                        <th><a href="?tab=<?php echo $tab; ?>&amp;sort=<?php echo $sort === 'name_asc' ? 'name_desc' : 'name_asc'; ?><?php echo $search ? '&amp;q=' . urlencode($search) : ''; ?><?php echo $range ? '&amp;range=' . $range : ''; ?>" class="sort-link <?php echo strpos($sort, 'name') === 0 ? 'active' : ''; ?>">Customer <?php echo strpos($sort, 'name') === 0 ? ($sort === 'name_asc' ? '&#9650;' : '&#9660;') : ''; ?></a></th>
                         <th>Items</th>
-                        <th style="width:70px">Total</th>
+                        <th style="width:75px;"><a href="?tab=<?php echo $tab; ?>&amp;sort=<?php echo $sort === 'total_desc' ? 'total_asc' : 'total_desc'; ?><?php echo $search ? '&amp;q=' . urlencode($search) : ''; ?><?php echo $range ? '&amp;range=' . $range : ''; ?>" class="sort-link <?php echo strpos($sort, 'total') === 0 ? 'active' : ''; ?>">Total <?php echo strpos($sort, 'total') === 0 ? ($sort === 'total_desc' ? '&#9660;' : '&#9650;') : ''; ?></a></th>
                         <th style="width:130px">Ship To</th>
                         <th style="width:80px">Est. Weight</th>
+                        <th style="width:100px;">Affiliate</th>
+                        <th style="width:110px;">Notes</th>
                         <?php if ($tab === 'ready') : ?>
-                            <th style="width:170px">Tracking #</th>
+                            <th style="width:160px">Tracking #</th>
                             <th style="width:90px"></th>
                         <?php else : ?>
-                            <th style="width:170px">Tracking</th>
+                            <th style="width:160px">Tracking</th>
                             <th style="width:80px">Status</th>
                         <?php endif; ?>
                     </tr>
@@ -528,7 +690,37 @@ body{background:#0a0514;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFo
                         <td class="cell-address"><?php echo esc_html($address); ?><br><?php echo esc_html("{$city}, {$state} {$zip}"); ?></td>
                         <td class="cell-weight">
                             <?php echo $weight['g']; ?>g<br>
-                            <span class="detail"><?php echo $weight['oz']; ?> oz / <?php echo $weight['bottles']; ?> bot, <?php echo $weight['cards']; ?> card</span>
+                            <span class="detail"><?php echo $weight['oz']; ?> oz</span>
+                        </td>
+                        <td class="cell-affiliate">
+                            <?php
+                            $aff_name = '';
+                            if (function_exists('affiliate_wp')) {
+                                $referrals = affiliate_wp()->referrals->get_referrals(['reference' => $oid, 'number' => 1]);
+                                if (!empty($referrals)) {
+                                    $aff = affiliate_wp()->affiliates->get_affiliate($referrals[0]->affiliate_id);
+                                    if ($aff) {
+                                        $aff_user = get_userdata($aff->user_id);
+                                        $aff_name = $aff_user ? $aff_user->display_name : '';
+                                    }
+                                }
+                            }
+                            echo $aff_name ? '<span style="color:#ff66c4;font-size:12px;">' . esc_html($aff_name) . '</span>' : '<span style="color:#64748b;font-size:12px;">--</span>';
+                            ?>
+                        </td>
+                        <td class="cell-note">
+                            <?php
+                            $order_note = $order->get_meta('_microdos_shipping_note', true);
+                            if ($tab === 'ready') : ?>
+                                <form method="post" style="margin:0;">
+                                    <?php wp_nonce_field('microdos_portal_nonce'); ?>
+                                    <input type="hidden" name="microdos_save_note" value="1">
+                                    <input type="hidden" name="note_order_id" value="<?php echo $oid; ?>">
+                                    <input type="text" name="order_note_text" value="<?php echo esc_attr($order_note); ?>" placeholder="Add note..." class="portal-note-input" onchange="this.form.submit()">
+                                </form>
+                            <?php else :
+                                echo $order_note ? '<span style="color:#94a3b8;font-size:12px;">' . esc_html($order_note) . '</span>' : '<span style="color:#64748b;font-size:12px;">--</span>';
+                            endif; ?>
                         </td>
 
                         <?php if ($tab === 'ready') : ?>
