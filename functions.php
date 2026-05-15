@@ -1789,13 +1789,18 @@ function microdos_create_shipping_portal_page() {
 // ============================================
 // AUTO-CREATE AFFILIATE GUIDE PAGES + MENU LINKS
 // Creates pages with tutorial content and adds them to Affiliate Portal sidebar
+// Runs on every page load until setup is complete (idempotent)
 // ============================================
-add_action('after_switch_theme', 'microdos_setup_affiliate_guides');
-add_action('admin_init', 'microdos_setup_affiliate_guides');
+add_action('init', 'microdos_setup_affiliate_guides', 99);
 
 function microdos_setup_affiliate_guides() {
-    // Prevent re-running
-    if (get_option('microdos_guides_setup_complete')) {
+    // Only run in admin or on frontend (not during AJAX/REST)
+    if (wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
+        return;
+    }
+    
+    // Need AffiliateWP active
+    if (!function_exists('affwp_get_settings') || !function_exists('affwp_update_settings')) {
         return;
     }
 
@@ -1861,8 +1866,7 @@ function microdos_setup_affiliate_guides() {
         affwp_update_settings($settings);
     }
 
-    // Mark as complete
-    update_option('microdos_guides_setup_complete', true);
+    // Setup complete — pages exist and menu links are added
 }
 
 // ============================================
