@@ -159,6 +159,21 @@ function microdos4u_scripts() {
         true
     );
 
+    // Affiliate creatives page enhancement
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    $is_creatives_page = function_exists('affwp_is_affiliate') && affwp_is_affiliate() && (
+        strpos($uri, '/creatives/') !== false || is_page_template('page-affiliate-marketing-guide.php')
+    );
+    if ($is_creatives_page) {
+        wp_enqueue_script(
+            'microdos-creatives',
+            get_template_directory_uri() . '/js/affiliate-creatives.js',
+            array(),
+            MICRODOS_VERSION,
+            true
+        );
+    }
+
     // Pass config to JS
     wp_localize_script('microdos4u-scripts', 'microdos4uConfig', array(
         'ajaxUrl'   => admin_url('admin-ajax.php'),
