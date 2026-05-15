@@ -1787,45 +1787,314 @@ function microdos_create_shipping_portal_page() {
 }
 
 // ============================================
-// CLEANUP: Delete standalone guide pages created by previous version
+// AUTO-CREATE AFFILIATE GUIDE PAGES + MENU LINKS
+// Creates pages with tutorial content and adds them to Affiliate Portal sidebar
 // ============================================
-add_action('after_switch_theme', 'microdos_cleanup_guide_pages');
+add_action('after_switch_theme', 'microdos_setup_affiliate_guides');
+add_action('admin_init', 'microdos_setup_affiliate_guides');
 
-function microdos_cleanup_guide_pages() {
-    // Delete standalone Getting Started page
+function microdos_setup_affiliate_guides() {
+    // Prevent re-running
+    if (get_option('microdos_guides_setup_complete')) {
+        return;
+    }
+
+    // --- Create Getting Started page ---
     $gs = get_page_by_path('getting-started');
-    if ($gs) {
-        wp_delete_post($gs->ID, true);
+    if (!$gs) {
+        $gs_content = microdos_get_getting_started_content();
+        $gs_id = wp_insert_post(array(
+            'post_title'   => 'Getting Started',
+            'post_name'    => 'getting-started',
+            'post_content' => $gs_content,
+            'post_status'  => 'publish',
+            'post_type'    => 'page',
+            'post_author'  => 1,
+        ));
+    } else {
+        $gs_id = $gs->ID;
     }
-    // Delete standalone Marketing Guide page
+
+    // --- Create Marketing Guide page ---
     $mg = get_page_by_path('marketing-guide');
-    if ($mg) {
-        wp_delete_post($mg->ID, true);
+    if (!$mg) {
+        $mg_content = microdos_get_marketing_guide_content();
+        $mg_id = wp_insert_post(array(
+            'post_title'   => 'Marketing Guide',
+            'post_name'    => 'marketing-guide',
+            'post_content' => $mg_content,
+            'post_status'  => 'publish',
+            'post_type'    => 'page',
+            'post_author'  => 1,
+        ));
+    } else {
+        $mg_id = $mg->ID;
     }
+
+    // --- Add Menu Links to Affiliate Portal ---
+    if (function_exists('affwp_get_settings') && function_exists('affwp_update_settings')) {
+        $settings = affwp_get_settings();
+        $menu_links = isset($settings['portal_menu_links']) ? $settings['portal_menu_links'] : array();
+
+        // Check if our links already exist
+        $has_gs = false;
+        $has_mg = false;
+        foreach ($menu_links as $link) {
+            if (isset($link['name']) && $link['name'] === 'Getting Started') $has_gs = true;
+            if (isset($link['name']) && $link['name'] === 'Marketing Guide') $has_mg = true;
+        }
+
+        if (!$has_gs && $gs_id) {
+            $menu_links[] = array(
+                'name' => 'Getting Started',
+                'url'  => get_permalink($gs_id),
+            );
+        }
+        if (!$has_mg && $mg_id) {
+            $menu_links[] = array(
+                'name' => 'Marketing Guide',
+                'url'  => get_permalink($mg_id),
+            );
+        }
+
+        $settings['portal_menu_links'] = $menu_links;
+        affwp_update_settings($settings);
+    }
+
+    // Mark as complete
+    update_option('microdos_guides_setup_complete', true);
 }
 
 // ============================================
-// AFFILIATEWP CUSTOM TABS — Getting Started + Marketing Guide
+// GETTING STARTED PAGE CONTENT
 // ============================================
+function microdos_get_getting_started_content() {
+    return '<!-- wp:html -->
+<div style="max-width:800px;">
 
-// Add tabs to affiliate sidebar
-add_filter('affwp_affiliate_area_tabs', 'microdos_add_guide_tabs', 20);
-function microdos_add_guide_tabs($tabs) {
-    $tabs['getting-started'] = 'Getting Started';
-    $tabs['marketing-guide'] = 'Marketing Guide';
-    return $tabs;
+<div style="background:linear-gradient(135deg,#1e3a5f,#0f1d3a);border:1px solid #3b82f6;border-radius:8px;padding:20px;margin-bottom:24px;">
+<strong style="color:#60a5fa;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;">Your Unique Referral Link</strong>
+<p style="color:#c7d2e8;font-size:14px;margin:8px 0;">Copy this link and share it everywhere. When someone clicks and buys, you earn 20%.</p>
+<p style="background:rgba(59,130,246,0.15);color:#93bbfc;padding:10px 14px;border-radius:6px;font-size:14px;word-break:break-all;margin:8px 0;">[affiliate_referral_url]</p>
+</div>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">How the Affiliate Program Works</h3>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li><strong style="color:#e2e8f0;">Share your link</strong> — Post it on social media, email, your website, or anywhere</li>
+<li><strong style="color:#e2e8f0;">Someone clicks</strong> — That click is tracked to your account</li>
+<li><strong style="color:#e2e8f0;">They make a purchase</strong> — Anytime in the next 60 days, you get credit</li>
+<li><strong style="color:#e2e8f0;">You earn 20% commission</strong> — On every sale. No cap.</li>
+<li><strong style="color:#e2e8f0;">Get paid monthly</strong> — Once you hit $50, we pay you on the 1st of each month</li>
+</ol>
+
+<div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#10b981;">Your cookie lasts 60 days.</strong> If someone clicks today but buys 45 days later, you still get paid.
+</div>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">Your Dashboard — Every Tab Explained</h3>
+<table style="width:100%;border-collapse:collapse;margin:12px 0;">
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;width:140px;font-size:14px;">📊 Dashboard</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Your numbers at a glance — referrals, visits, conversion rate, earnings</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">🔗 Affiliate URLs</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Your unique link. Copy it and add campaign tags to track what works</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">📈 Statistics</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Detailed breakdown of clicks, referrals, and earnings by date</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">📉 Graphs</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Visual charts showing your growth over time</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">💰 Referrals</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Every sale. Pending=processing, Unpaid=awaiting payout, Paid=sent, Rejected=refunded</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">💳 Payouts</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Payment history. Minimum $50. Paid on the 1st of each month.</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">👆 Visits</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Every click on your link. Use this to test what drives clicks.</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">🎨 Creatives</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Ready-made banners with your link built in. View to preview, Copy to share.</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">🛒 Products</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Browse what you are promoting so you can write authentic recommendations</td></tr>
+</table>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">What the Numbers Mean</h3>
+<ul style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li><strong style="color:#e2e8f0;">Visit</strong> — Someone clicked your link. Not a sale yet.</li>
+<li><strong style="color:#e2e8f0;">Referral</strong> — Someone clicked AND bought. This earns you money.</li>
+<li><strong style="color:#e2e8f0;">Conversion Rate</strong> — % of visits that turned into sales. Average is 1-3%.</li>
+<li><strong style="color:#e2e8f0;">Unpaid Earnings</strong> — Money earned but not yet paid out.</li>
+<li><strong style="color:#e2e8f0;">Paid Earnings</strong> — Money already sent to you.</li>
+</ul>
+
+<div style="background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#f59e0b;">Your numbers start at zero.</strong> That is normal. Every affiliate starts at 0. Your numbers grow as you share your link consistently.
+</div>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">Where to Share Your Link</h3>
+<ul style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li><strong style="color:#e2e8f0;">Instagram</strong> — Put your link in your bio. Mention "link in bio" in posts and stories.</li>
+<li><strong style="color:#e2e8f0;">Facebook</strong> — Share in your timeline, relevant groups, and Messenger.</li>
+<li><strong style="color:#e2e8f0;">X (Twitter)</strong> — Pin a tweet with your link. Share in threads.</li>
+<li><strong style="color:#e2e8f0;">TikTok</strong> — Add to your bio. Mention it in video descriptions.</li>
+<li><strong style="color:#e2e8f0;">Reddit</strong> — Find relevant communities and share where appropriate.</li>
+<li><strong style="color:#e2e8f0;">Email</strong> — Send to friends or your newsletter. Highest conversion rate.</li>
+<li><strong style="color:#e2e8f0;">Website / Blog</strong> — Add a banner or sidebar widget.</li>
+<li><strong style="color:#e2e8f0;">Text / WhatsApp</strong> — Personal recommendations convert best.</li>
+</ul>
+
+<div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#10b981;">Personal recommendations convert 3-5x better than generic ads.</strong> Write 1-2 sentences about why you recommend the product instead of just posting the link.
+</div>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">Quick Start Checklist</h3>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li><strong style="color:#e2e8f0;">Copy your referral link</strong> from the Affiliate URLs tab</li>
+<li><strong style="color:#e2e8f0;">Add your link to your social media bios</strong> (Instagram, TikTok, X, Facebook)</li>
+<li><strong style="color:#e2e8f0;">Go to the Creatives tab</strong> and grab a banner for your first post</li>
+<li><strong style="color:#e2e8f0;">Make your first post today</strong> with a personal recommendation</li>
+<li><strong style="color:#e2e8f0;">Check your Visits tab tomorrow</strong> to see clicks</li>
+<li><strong style="color:#e2e8f0;">Post again in 2-3 days</strong> — consistency is key</li>
+</ol>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">When You Get Paid</h3>
+<ul style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li><strong style="color:#e2e8f0;">Commission:</strong> 20% on every sale</li>
+<li><strong style="color:#e2e8f0;">Minimum payout:</strong> $50</li>
+<li><strong style="color:#e2e8f0;">Payment date:</strong> 1st of every month</li>
+<li><strong style="color:#e2e8f0;">Methods:</strong> PayPal, direct deposit</li>
+</ul>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">Best Practices for Maximum Earnings</h3>
+<ul style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li>Post 2-3 times per week across platforms</li>
+<li>Use images — posts with images get 2.3x more engagement</li>
+<li>Be genuine — write personal recommendations that build trust</li>
+<li>Target the right communities — research, wellness, cognitive enhancement</li>
+<li>Track what works — check Statistics and Visits tabs</li>
+<li>Answer questions quickly — engagement builds trust</li>
+<li>Use multiple platforms — do not rely on just one</li>
+<li>Add your link to every bio — that is passive income</li>
+</ul>
+
+<div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#10b981;">Need platform-specific help?</strong> Click the <strong>Marketing Guide</strong> link in the sidebar for step-by-step instructions for Instagram, Facebook, X, TikTok, Reddit, and more.
+</div>
+
+</div>
+<!-- /wp:html -->';
 }
 
-// Render Getting Started content
-add_action('affwp_affiliate_dashboard_getting-started', 'microdos_render_getting_started');
-function microdos_render_getting_started() {
-    $affiliate_id = affwp_get_affiliate_id();
-    $referral_url = affwp_get_affiliate_referral_url(array('affiliate_id' => $affiliate_id));
-    include get_template_directory() . '/affiliate-guides/getting-started-content.php';
-}
+// ============================================
+// MARKETING GUIDE PAGE CONTENT
+// ============================================
+function microdos_get_marketing_guide_content() {
+    return '<!-- wp:html -->
+<div style="max-width:800px;">
 
-// Render Marketing Guide content
-add_action('affwp_affiliate_dashboard_marketing-guide', 'microdos_render_marketing_guide');
-function microdos_render_marketing_guide() {
-    include get_template_directory() . '/affiliate-guides/marketing-guide-content.php';
+<h3 style="color:#e2e8f0;font-size:22px;font-weight:600;margin-bottom:12px;">Marketing Guide — Platform by Platform</h3>
+<p style="color:#94a3b8;font-size:15px;line-height:1.6;margin-bottom:20px;">Step-by-step instructions for sharing your microDOS(2) referral link on every major platform.</p>
+
+<div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#10b981;">Remember:</strong> Personal recommendations convert 3-5x better than generic ads. Always add your own sentence about why you recommend the product.
+</div>
+
+<h4 style="color:#60a5fa;font-size:17px;font-weight:600;margin:24px 0 10px;">📸 Instagram</h4>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li>Go to your profile and tap "Edit Profile"</li>
+<li>In the "Website" field, paste your referral link</li>
+<li>Save the changes</li>
+<li>Create a post or story about microDOS(2)</li>
+<li>Include "Link in bio" in your caption or on the story</li>
+<li>For stories with 10K+ followers: use the Link Sticker</li>
+</ol>
+<div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#10b981;">Pro tip:</strong> Save a creative from the Creatives tab to your phone, then upload it as your post image. Your link is already embedded.
+</div>
+
+<h4 style="color:#60a5fa;font-size:17px;font-weight:600;margin:24px 0 10px;">👍 Facebook</h4>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li>Click "What is on your mind?" to start a new post</li>
+<li>Write a personal recommendation (1-2 sentences)</li>
+<li>Paste your referral link — Facebook will show a preview</li>
+<li>Add an image from the Creatives tab for more engagement</li>
+<li>Post to your timeline or in relevant groups</li>
+</ol>
+<div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#10b981;">Pro tip:</strong> Join groups related to wellness, research, and cognitive enhancement. Share helpful content with your link where the rules allow.
+</div>
+
+<h4 style="color:#60a5fa;font-size:17px;font-weight:600;margin:24px 0 10px;">🐦 X (Twitter)</h4>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li>Click to compose a new tweet</li>
+<li>Write your personal recommendation</li>
+<li>Paste your referral link — it will auto-shorten</li>
+<li>Pin this tweet to your profile so it is always visible</li>
+<li>Reply to relevant threads with your link when appropriate</li>
+</ol>
+
+<h4 style="color:#60a5fa;font-size:17px;font-weight:600;margin:24px 0 10px;">🎵 TikTok</h4>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li>Go to your profile and tap "Edit profile"</li>
+<li>Add your referral link to the bio/website field</li>
+<li>Create a video about your experience with microDOS(2)</li>
+<li>In the video caption, write "Link in bio for more info"</li>
+<li>Save a creative image to use as your video thumbnail</li>
+</ol>
+
+<h4 style="color:#60a5fa;font-size:17px;font-weight:600;margin:24px 0 10px;">🔴 Reddit</h4>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li>Find relevant subreddits (r/Nootropics, r/researchchemicals, r/microdosing)</li>
+<li>Read the subreddit rules before posting any links</li>
+<li>Write a helpful, genuine post about your experience</li>
+<li>Include your referral link naturally in the post or as a comment</li>
+<li>Focus on being helpful first, promotional second</li>
+</ol>
+<div style="background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#f59e0b;">Warning:</strong> Reddit users hate spam. Post genuinely helpful content. Build karma first. Follow each subreddit rules or you will be banned.
+</div>
+
+<h4 style="color:#60a5fa;font-size:17px;font-weight:600;margin:24px 0 10px;">📱 Telegram / Discord</h4>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li>Join groups and channels related to your niche</li>
+<li>Participate naturally in conversations</li>
+<li>When relevant, share your link with context</li>
+<li>For Discord: pin your link in relevant channels if mods allow</li>
+<li>Direct message people who ask questions with your link</li>
+</ol>
+
+<h4 style="color:#60a5fa;font-size:17px;font-weight:600;margin:24px 0 10px;">📧 Email Newsletter</h4>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li>Copy a Text Link creative from the Creatives tab</li>
+<li>Paste it into your email editor (Gmail, Mailchimp, etc.)</li>
+<li>Write a personal subject line that sparks curiosity</li>
+<li>Add 2-3 paragraphs about why you recommend microDOS(2)</li>
+<li>Include an image creative for visual appeal</li>
+<li>Send to your list</li>
+</ol>
+<div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#10b981;">Pro tip:</strong> Email has the highest conversion rate of any channel (15-20% average). If you have an email list, this is your #1 priority.
+</div>
+
+<h4 style="color:#60a5fa;font-size:17px;font-weight:600;margin:24px 0 10px;">🌐 Website / Blog</h4>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li>Copy an Image creative from the Creatives tab</li>
+<li>Add it to your website sidebar or footer</li>
+<li>Or write a blog post reviewing microDOS(2) products</li>
+<li>Embed your referral link in the post</li>
+<li>Link to the Products page for easy browsing</li>
+</ol>
+
+<h4 style="color:#60a5fa;font-size:17px;font-weight:600;margin:24px 0 10px;">💬 Text / WhatsApp</h4>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li>Copy your referral link</li>
+<li>Send to friends or family who might be interested</li>
+<li>Write a personal message, not just the link</li>
+<li>Follow up if they have questions</li>
+</ol>
+<div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#10b981;">Pro tip:</strong> Personal recommendations to people you know convert better than any other method. Trust is already established.
+</div>
+
+<h4 style="color:#60a5fa;font-size:17px;font-weight:600;margin:24px 0 10px;">Quick Start Priority</h4>
+<p style="color:#94a3b8;font-size:15px;line-height:1.6;">If you are overwhelmed, start with just these 3:</p>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li><strong style="color:#e2e8f0;">Add your link to your Instagram bio</strong> (2 minutes)</li>
+<li><strong style="color:#e2e8f0;">Make one post</strong> on your main platform with a personal recommendation (10 minutes)</li>
+<li><strong style="color:#e2e8f0;">Pin a tweet</strong> or <strong>share with 5 friends</strong> via text (5 minutes)</li>
+</ol>
+<p style="color:#94a3b8;font-size:15px;line-height:1.6;">That is it. You are now earning. Check your Visits tab tomorrow.</p>
+
+<div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#10b981;">Questions?</strong> Email support@microdos2.com — we are here to help.
+</div>
+
+</div>
+<!-- /wp:html -->';
 }
