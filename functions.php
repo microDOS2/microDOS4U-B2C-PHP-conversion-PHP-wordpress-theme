@@ -1817,7 +1817,7 @@ function microdos_add_guide_tabs($tabs) {
 }
 
 // Render Getting Started content
-add_action('affwp_affiliate_dashboard_tab_getting-started', 'microdos_render_getting_started');
+add_action('affwp_affiliate_dashboard_getting-started', 'microdos_render_getting_started');
 function microdos_render_getting_started() {
     $affiliate_id = affwp_get_affiliate_id();
     $referral_url = affwp_get_affiliate_referral_url(array('affiliate_id' => $affiliate_id));
@@ -1825,7 +1825,7 @@ function microdos_render_getting_started() {
 }
 
 // Render Marketing Guide content
-add_action('affwp_affiliate_dashboard_tab_marketing-guide', 'microdos_render_marketing_guide');
+add_action('affwp_affiliate_dashboard_marketing-guide', 'microdos_render_marketing_guide');
 function microdos_render_marketing_guide() {
     include get_template_directory() . '/affiliate-guides/marketing-guide-content.php';
 }
