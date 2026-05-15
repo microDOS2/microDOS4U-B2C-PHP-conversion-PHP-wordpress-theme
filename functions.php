@@ -2475,3 +2475,186 @@ function microdos_admin_tour_reset_notice() {
     </div>
     <?php
 }
+
+<?php
+/**
+ * ============================================
+ * AFFILIATE PORTAL INTEGRATION
+ * ============================================
+ * 1. Affiliate Portal Menu Links (PHP filter)
+ * 2. JavaScript enqueues (Shepherd.js + tour + welcome panel)
+ * 3. Data localization for JS
+ *
+ * Append to functions.php or include.
+ * @package microDOS4U
+ */
+
+if (!defined('ABSPATH')) exit;
+
+// ============================================
+// 1. AFFILIATE PORTAL MENU LINKS
+// ============================================
+
+/**
+ * Register custom menu links in the Affiliate Portal sidebar.
+ * Uses the affwp_portal_menu_items filter.
+ */
+add_filter('affwp_portal_menu_items', 'microdos_add_portal_menu_links', 20);
+
+function microdos_add_portal_menu_links($menu_items) {
+    // Get page URLs
+    $guide_page = get_page_by_path('affiliate-dashboard-guide');
+    $mg_page = get_page_by_path('marketing-guide');
+
+    $guide_url = $guide_page ? get_permalink($guide_page) : '';
+    $mg_url = $mg_page ? get_permalink($mg_page) : '';
+
+    // SVG icons
+    $guide_icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>';
+    $marketing_icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+
+    // Add Dashboard Guide link
+    if ($guide_url) {
+        $menu_items['dashboard_guide'] = array(
+            'title'   => __('Dashboard Guide', 'microdos'),
+            'icon'    => $guide_icon,
+            'url'     => $guide_url,
+            'enabled' => true,
+        );
+    }
+
+    // Add Marketing Guide link
+    if ($mg_url) {
+        $menu_items['marketing_guide'] = array(
+            'title'   => __('Marketing Guide', 'microdos'),
+            'icon'    => $marketing_icon,
+            'url'     => $mg_url,
+            'enabled' => true,
+        );
+    }
+
+    return $menu_items;
+}
+
+// ============================================
+// 2. ENQUEUE SCRIPTS & STYLES
+// ============================================
+
+add_action('wp_enqueue_scripts', 'microdos_enqueue_portal_assets', 100);
+
+function microdos_enqueue_portal_assets() {
+    // Only on frontend
+    if (is_admin() || is_customize_preview()) return;
+
+    // Check if we're on an affiliate page
+    $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    $is_affiliate_page = (
+        strpos($uri, '/affiliate-area') !== false ||
+        strpos($uri, '/affiliate-dashboard-guide') !== false ||
+        strpos($uri, '/affiliate-portal') !== false
+    );
+
+    // Also check page template
+    if (!$is_affiliate_page && is_page()) {
+        $template = get_page_template_slug();
+        if ($template === 'page-affiliate-area.php' ||
+            $template === 'page-affiliate-dashboard-guide.php') {
+            $is_affiliate_page = true;
+        }
+    }
+
+    if (!$is_affiliate_page) return;
+
+    // Only for logged-in affiliates
+    if (!is_user_logged_in()) return;
+
+    if (!function_exists('affwp_is_affiliate') || !affwp_is_affiliate()) return;
+
+    // ---- Shepherd.js CDN ----
+    wp_enqueue_script(
+        'shepherd-js',
+        'https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js',
+        array(), '11.2.0', true
+    );
+    wp_enqueue_style(
+        'shepherd-css',
+        'https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css',
+        array(), '11.2.0'
+    );
+
+    // ---- Tour script ----
+    wp_enqueue_script(
+        'microdos-affiliate-tour',
+        get_template_directory_uri() . '/js/affiliate-dashboard-tour.js',
+        array('shepherd-js'), MICRODOS_VERSION, true
+    );
+
+    // ---- Welcome panel script ----
+    wp_enqueue_script(
+        'microdos-portal-welcome',
+        get_template_directory_uri() . '/js/affiliate-portal-welcome.js',
+        array(), MICRODOS_VERSION, true
+    );
+
+    // ---- Localized data for JS ----
+    $guide_page = get_page_by_path('affiliate-dashboard-guide');
+    $mg_page = get_page_by_path('marketing-guide');
+
+    $affiliate_id = function_exists('affwp_get_affiliate_id') ? affwp_get_affiliate_id() : 0;
+    $referral_url = '';
+    if ($affiliate_id) {
+        $referral_url = affwp_get_affiliate_referral_url(array('affiliate_id' => $affiliate_id));
+    }
+
+    wp_localize_script('microdos-portal-welcome', 'microDOSPortalData', array(
+        'guideUrl'    => $guide_page ? get_permalink($guide_page) : '',
+        'mgUrl'       => $mg_page ? get_permalink($mg_page) : '',
+        'referralUrl' => $referral_url,
+        'ajaxUrl'     => admin_url('admin-ajax.php'),
+        'nonce'       => wp_create_nonce('microdos_portal_nonce'),
+    ));
+
+    // Also localize for tour script
+    wp_localize_script('microdos-affiliate-tour', 'microDOSPortalData', array(
+        'guideUrl'    => $guide_page ? get_permalink($guide_page) : '/affiliate-dashboard-guide/',
+        'mgUrl'       => $mg_page ? get_permalink($mg_page) : '/marketing-guide/',
+        'referralUrl' => $referral_url,
+    ));
+}
+
+// ============================================
+// 3. ADMIN NOTICE: AFFILIATE PORTAL DETECTED
+// ============================================
+
+add_action('admin_notices', 'microdos_admin_portal_detected_notice');
+
+function microdos_admin_portal_detected_notice() {
+    $screen = get_current_screen();
+    if (!$screen) return;
+    if ($screen->id !== 'affiliate-wp_page_affiliate-wp-affiliates') return;
+    if (!current_user_can('manage_options')) return;
+
+    // Check if Portal is active
+    if (!class_exists('AffiliateWP_Portal')) return;
+
+    $guide_page = get_page_by_path('affiliate-dashboard-guide');
+    $mg_page = get_page_by_path('marketing-guide');
+
+    ?>
+    <div class="notice notice-success is-dismissible" style="border-left-color: #44f80c;">
+        <p>
+            <strong>microDOS(2) Affiliate Portal Integration:</strong>
+            Menu Links (Dashboard Guide, Marketing Guide) are active in the sidebar.
+            Welcome panel and tour will appear for logged-in affiliates.
+            <?php if ($guide_page && $mg_page) : ?>
+                <span style="color: #44f80c;">Both guide pages found.</span>
+            <?php elseif ($guide_page) : ?>
+                <span style="color: #ffaa00;">Dashboard Guide found. Marketing Guide missing.</span>
+            <?php else : ?>
+                <span style="color: #ef4444;">Guide pages not found. Visit any page to auto-create them.</span>
+            <?php endif; ?>
+        </p>
+    </div>
+    <?php
+}
+
