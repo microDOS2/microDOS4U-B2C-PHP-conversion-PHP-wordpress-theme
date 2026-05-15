@@ -1513,7 +1513,7 @@ function microdos_enqueue_affiliate_assets() {
     wp_enqueue_script('shepherd-js', 'https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js', array(), '11.2.0', true);
     wp_enqueue_style('shepherd-css', 'https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css', array(), '11.2.0');
 
-    // Get data for JS
+    // Data for JS
     $guide_page = get_page_by_path('affiliate-dashboard-guide');
     $mg_page = get_page_by_path('marketing-guide');
     $affiliate_id = function_exists('affwp_get_affiliate_id') ? affwp_get_affiliate_id() : 0;
@@ -1522,28 +1522,589 @@ function microdos_enqueue_affiliate_assets() {
         $referral_url = affwp_get_affiliate_referral_url(array('affiliate_id' => $affiliate_id));
     }
 
-    $data = array(
-        'guideUrl'    => $guide_page ? get_permalink($guide_page) : '',
-        'mgUrl'       => $mg_page ? get_permalink($mg_page) : '',
-        'referralUrl' => $referral_url,
+    wp_add_inline_script('shepherd-js', 'window.microDOSPortalData = {"guideUrl":"' . esc_url($guide_page ? get_permalink($guide_page) : '') . '","mgUrl":"' . esc_url($mg_page ? get_permalink($mg_page) : '') . '","referralUrl":"' . esc_url($referral_url) . '"};', 'before');
+
+    // Tour JS - embedded directly
+    wp_add_inline_script('shepherd-js', <<<'MICRODOS_TOUR'
+(function() {
+'use strict';
+var CONFIG = {
+STORAGE_KEY_COMPLETED: 'microdos_tour_completed',
+STORAGE_KEY_SKIPPED:   'microdos_tour_skipped',
+STORAGE_KEY_DISMISSED: 'microdos_help_dismissed_at',
+STORAGE_KEY_TOUR_STEP: 'microdos_tour_step',
+AUTO_LAUNCH_DELAY: 1200,
+HELP_BUTTON_HIDE_DAYS: 30,
+};
+var _isPortal = null;
+function isPortal() {
+if (_isPortal !== null) return _isPortal;
+_isPortal = !!document.querySelector('.affwp-portal, .affiliate-portal, .affwp-portal-sidebar, [class*="portal-sidebar"]');
+return _isPortal;
+}
+function isOldTabbed() {
+return !!document.querySelector('.affwp-tabs, .affwp-tab-wrapper, .affwp-wrap');
+}
+function isAffiliateDashboard() {
+return isPortal() || isOldTabbed() ||
+window.location.pathname.indexOf('affiliate') !== -1;
+}
+function isMainDashboardTab() {
+if (isPortal()) {
+var hash = window.location.hash;
+return !hash || hash === '#/' || hash === '';
+}
+return !window.location.search.match(/[?&]tab=/);
+}
+function storageGet(key) {
+try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+function storageSet(key, value) {
+try { localStorage.setItem(key, value); } catch (e) {}
+}
+function storageRemove(key) {
+try { localStorage.removeItem(key); } catch (e) {}
+}
+function shouldAutoLaunch() {
+if (storageGet(CONFIG.STORAGE_KEY_COMPLETED)) return false;
+if (storageGet(CONFIG.STORAGE_KEY_SKIPPED)) return false;
+return true;
+}
+function injectFloatingHelpButton() {
+var dismissedAt = storageGet(CONFIG.STORAGE_KEY_DISMISSED);
+if (dismissedAt) {
+var daysSince = (Date.now() - parseInt(dismissedAt, 10)) / (1000 * 60 * 60 * 24);
+if (daysSince < CONFIG.HELP_BUTTON_HIDE_DAYS) return;
+}
+if (window.location.pathname.indexOf('affiliate-dashboard-guide') !== -1) return;
+if (document.getElementById('microdos-floating-help')) return;
+var wrapper = document.createElement('div');
+wrapper.id = 'microdos-floating-help';
+wrapper.innerHTML =
+'<button id="microdos-help-btn" title="Need Help? Take a tour" aria-label="Need Help? Take a tour">' +
+'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+'<circle cx="12" cy="12" r="10"/>' +
+'<path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>' +
+'<line x1="12" y1="17" x2="12.01" y2="17"/>' +
+'</svg>' +
+'</button>' +
+'<button id="microdos-help-close" title="Dismiss" aria-label="Dismiss">' +
+'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">' +
+'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' +
+'</svg>' +
+'</button>';
+var style = document.createElement('style');
+style.textContent =
+'#microdos-floating-help{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;align-items:center;gap:8px;}' +
+'#microdos-help-btn{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#44f80c,#3ad60a);color:#0a0514;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(68,248,12,0.3);transition:transform .2s,box-shadow .2s;}' +
+'#microdos-help-btn:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(68,248,12,0.45);}' +
+'#microdos-help-close{width:24px;height:24px;border-radius:50%;background:rgba(100,116,139,0.2);color:#94a3b8;border:1px solid rgba(100,116,139,0.3);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:.7;transition:opacity .2s;padding:0;}' +
+'#microdos-help-close:hover{opacity:1;background:rgba(239,68,68,0.15);color:#ef4444;}';
+document.head.appendChild(style);
+document.body.appendChild(wrapper);
+document.getElementById('microdos-help-btn').addEventListener('click', function() {
+launchTour(true);
+});
+document.getElementById('microdos-help-close').addEventListener('click', function(e) {
+e.stopPropagation();
+wrapper.style.opacity = '0';
+wrapper.style.transform = 'translateY(10px)';
+setTimeout(function() { wrapper.remove(); }, 300);
+storageSet(CONFIG.STORAGE_KEY_DISMISSED, Date.now().toString());
+});
+}
+function injectShepherdTheme() {
+if (document.getElementById('microdos-shepherd-theme')) return;
+var css =
+'.shepherd-element{background:#150f24!important;border:1px solid #1f2b47!important;border-radius:12px!important;box-shadow:0 16px 48px rgba(0,0,0,0.5)!important;color:#d1d5db!important;max-width:380px!important;}' +
+'.shepherd-text{color:#d1d5db!important;font-size:14px!important;line-height:1.6!important;padding:20px 24px 0!important;}' +
+'.shepherd-text h3{color:#fff!important;font-size:16px!important;font-weight:700!important;margin:0 0 10px!important;}' +
+'.shepherd-text p{margin:0 0 12px!important;}' +
+'.shepherd-text p:last-child{margin-bottom:0!important;}' +
+'.shepherd-footer{padding:16px 24px 20px!important;display:flex;justify-content:space-between;align-items:center;}' +
+'.shepherd-button{padding:8px 18px!important;border-radius:6px!important;font-size:13px!important;font-weight:600!important;cursor:pointer!important;transition:opacity .2s!important;}' +
+'.shepherd-button:hover{opacity:.85!important;}' +
+'.shepherd-button.shepherd-button-primary{background:#44f80c!important;color:#0a0514!important;border:none!important;}' +
+'.shepherd-button:not(.shepherd-button-primary){background:transparent!important;color:#94a3b8!important;border:1px solid #1f2b47!important;}' +
+'.shepherd-button:not(.shepherd-button-primary):hover{background:rgba(68,248,12,.05)!important;color:#44f80c!important;}' +
+'.shepherd-cancel-icon{color:#64748b!important;font-size:20px!important;top:12px!important;right:12px!important;}' +
+'.shepherd-cancel-icon:hover{color:#ef4444!important;}' +
+'.shepherd-arrow::before{background:#150f24!important;border:1px solid #1f2b47!important;}' +
+'.shepherd-has-title .shepherd-content .shepherd-header{background:transparent!important;padding:20px 24px 0!important;}' +
+'.shepherd-title{color:#44f80c!important;font-size:16px!important;font-weight:700!important;}' +
+'.shepherd-progress{color:#64748b!important;font-size:12px!important;margin-right:auto;padding-right:12px;}';
+var style = document.createElement('style');
+style.id = 'microdos-shepherd-theme';
+style.textContent = css;
+document.head.appendChild(style);
+}
+function getTourSteps() {
+var guideUrl = window.microDOSPortalData ? window.microDOSPortalData.guideUrl : '/affiliate-dashboard-guide/';
+function sel(portalSel, oldSel) {
+return isPortal() ? portalSel : oldSel;
+}
+var steps = [
+{
+id: 'step-welcome',
+title: 'Welcome to Your Dashboard!',
+text: '<p>This is your affiliate command center. Every stat, chart, and tool you need is here. Let us show you around in <strong>10 quick steps</strong>.</p>',
+attachTo: { element: sel('.affwp-portal-content, .affwp-portal-main, .portal-content', '.affwp-wrap, .affwp-tab-content'), on: 'bottom' },
+buttons: [
+{ text: 'Skip Tour', action: function() { skipTour(); }, classes: 'shepherd-button-secondary' },
+{ text: 'Start Tour →', action: function() { Shepherd.activeTour.next(); }, classes: 'shepherd-button-primary' }
+]
+},
+{
+id: 'step-referral-url',
+title: 'Your Referral Link',
+text: '<p>This is your money link. Copy it and share it anywhere — social media, email, blog, QR code. When someone clicks and buys within 45 days, you earn <strong>20% commission</strong>.</p>',
+attachTo: { element: sel('.affwp-portal-content .affwp-referral-url, .affwp-portal-content .affwp-url', '.affwp-referral-url, .affwp-url'), on: 'bottom' },
+buttons: [
+{ text: '← Back', action: function() { Shepherd.activeTour.back(); }, classes: 'shepherd-button-secondary' },
+{ text: 'Next →', action: function() { Shepherd.activeTour.next(); }, classes: 'shepherd-button-primary' }
+]
+},
+{
+id: 'step-navigation',
+title: 'Dashboard Navigation',
+text: '<p>Use the ' + (isPortal() ? 'sidebar' : 'tabs') + ' to explore different sections:</p>' +
+'<ul style="margin:8px 0;padding-left:18px;font-size:13px;">' +
+'<li><strong>Dashboard/Home</strong> — Your stats overview</li>' +
+'<li><strong>Referral URLs</strong> — Custom links & QR codes</li>' +
+'<li><strong>Statistics</strong> — Detailed numbers</li>' +
+'<li><strong>Graphs</strong> — Visual trends</li>' +
+'<li><strong>Referrals</strong> — Your sales & statuses</li>' +
+'<li><strong>Creatives</strong> — Banners & ads</li>' +
+'<li><strong>Payouts</strong> — Payments</li>' +
+'<li><strong>Settings</strong> — Profile & payment email</li>' +
+'</ul>',
+attachTo: { element: sel('.affwp-portal-sidebar, .portal-sidebar', '.affwp-tabs, .affwp-tab-wrapper'), on: 'right' },
+buttons: [
+{ text: '← Back', action: function() { Shepherd.activeTour.back(); }, classes: 'shepherd-button-secondary' },
+{ text: 'Next →', action: function() { Shepherd.activeTour.next(); }, classes: 'shepherd-button-primary' }
+]
+},
+{
+id: 'step-stats',
+title: 'Your Stats',
+text: '<p>Your performance at a glance:</p>' +
+'<ul style="margin:8px 0;padding-left:18px;font-size:13px;">' +
+'<li><strong>Earnings</strong> — Total money earned</li>' +
+'<li><strong>Paid</strong> — Already sent to you</li>' +
+'<li><strong>Unpaid</strong> — Coming next payout</li>' +
+'<li><strong>Conversion Rate</strong> — Clicks that bought</li>' +
+'</ul>',
+attachTo: { element: sel('.affwp-portal-content .affwp-stats, .affwp-portal-content [class*="stat"]', '.affwp-stats, .affwp-dashboard-stats'), on: 'bottom' },
+buttons: [
+{ text: '← Back', action: function() { Shepherd.activeTour.back(); }, classes: 'shepherd-button-secondary' },
+{ text: 'Next →', action: function() { Shepherd.activeTour.next(); }, classes: 'shepherd-button-primary' }
+]
+},
+{
+id: 'step-referrals',
+title: 'Referral Statuses',
+text: '<p>Every sale goes through statuses:</p>' +
+'<ul style="margin:8px 0;padding-left:18px;font-size:13px;">' +
+'<li><span style="color:#ffaa00">● Pending</span> — Order processing (24-48h)</li>' +
+'<li><span style="color:#60a5fa">● Unpaid</span> — Confirmed, awaiting payout</li>' +
+'<li><span style="color:#44f80c">● Paid</span> — Money sent to you</li>' +
+'<li><span style="color:#ef4444">● Rejected</span> — Refunded or cancelled</li>' +
+'</ul>',
+attachTo: { element: sel('.affwp-portal-content .affwp-referrals, .affwp-portal-content [class*="referral"]', '.affwp-referrals'), on: 'top' },
+buttons: [
+{ text: '← Back', action: function() { Shepherd.activeTour.back(); }, classes: 'shepherd-button-secondary' },
+{ text: 'Next →', action: function() { Shepherd.activeTour.next(); }, classes: 'shepherd-button-primary' }
+]
+},
+{
+id: 'step-creatives',
+title: 'Marketing Materials',
+text: '<p>Pre-made banners and text ads with your link <strong>already built in</strong>. Click "Copy Link" to grab the code, then paste into your social post or email. No design work needed.</p>',
+attachTo: { element: sel('.affwp-portal-content .affwp-creatives', '.affwp-creatives'), on: 'bottom' },
+buttons: [
+{ text: '← Back', action: function() { Shepherd.activeTour.back(); }, classes: 'shepherd-button-secondary' },
+{ text: 'Next →', action: function() { Shepherd.activeTour.next(); }, classes: 'shepherd-button-primary' }
+]
+},
+{
+id: 'step-visits',
+title: 'Tracking Visits',
+text: '<p>See who clicked your link and where they came from. Check this 24 hours after posting to see which platforms drive the most traffic.</p>',
+attachTo: { element: sel('.affwp-portal-content .affwp-visits', '.affwp-visits'), on: 'bottom' },
+buttons: [
+{ text: '← Back', action: function() { Shepherd.activeTour.back(); }, classes: 'shepherd-button-secondary' },
+{ text: 'Next →', action: function() { Shepherd.activeTour.next(); }, classes: 'shepherd-button-primary' }
+]
+},
+{
+id: 'step-graphs',
+title: 'Growth Graphs',
+text: '<p>Watch your earnings and referral count grow over time. Use date filters to spot trends. Spikes usually happen right after you post on social media.</p>',
+attachTo: { element: sel('.affwp-portal-content .affwp-graphs', '.affwp-graphs'), on: 'bottom' },
+buttons: [
+{ text: '← Back', action: function() { Shepherd.activeTour.back(); }, classes: 'shepherd-button-secondary' },
+{ text: 'Next →', action: function() { Shepherd.activeTour.next(); }, classes: 'shepherd-button-primary' }
+]
+},
+{
+id: 'step-payouts',
+title: 'Getting Paid',
+text: '<p>Payouts happen automatically on the <strong>1st of every month</strong> via PayPal. You need at least <strong>$50</strong> to trigger a payout. Make sure your payment email is correct, and submit your <strong>W-9</strong> (US affiliates).</p>',
+attachTo: { element: sel('.affwp-portal-content .affwp-payouts', '.affwp-payouts'), on: 'bottom' },
+buttons: [
+{ text: '← Back', action: function() { Shepherd.activeTour.back(); }, classes: 'shepherd-button-secondary' },
+{ text: 'Next →', action: function() { Shepherd.activeTour.next(); }, classes: 'shepherd-button-primary' }
+]
+},
+{
+id: 'step-finish',
+title: 'You Are Ready!',
+text: '<p>That is everything. Here is your quick start:</p>' +
+'<ol style="margin:8px 0;padding-left:18px;font-size:13px;">' +
+'<li>Copy your referral link</li>' +
+'<li>Grab a banner from Creatives</li>' +
+'<li>Post with a personal recommendation</li>' +
+'<li>Check Visits tomorrow</li>' +
+'</ol>' +
+'<p style="margin-top:10px;font-size:13px;">Need a refresher? Visit the <a href="' + guideUrl + '" style="color:#44f80c;font-weight:600;">Dashboard Guide</a> anytime.</p>',
+buttons: [
+{ text: '← Back', action: function() { Shepherd.activeTour.back(); }, classes: 'shepherd-button-secondary' },
+{ text: 'Done!', action: function() { completeTour(); }, classes: 'shepherd-button-primary' }
+]
+}
+];
+return steps;
+}
+var tour = null;
+function buildTour() {
+injectShepherdTheme();
+tour = new Shepherd.Tour({
+defaultStepOptions: {
+cancelIcon: { enabled: true },
+scrollTo: { behavior: 'smooth', block: 'center' },
+when: {
+show: function() {
+var currentStep = tour.steps.indexOf(tour.getCurrentStep()) + 1;
+var totalSteps = tour.steps.length;
+var progressEl = document.createElement('span');
+progressEl.className = 'shepherd-progress';
+progressEl.textContent = currentStep + ' / ' + totalSteps;
+var footer = document.querySelector('.shepherd-footer');
+if (footer) {
+var existing = footer.querySelector('.shepherd-progress');
+if (existing) existing.remove();
+footer.insertBefore(progressEl, footer.firstChild);
+}
+storageSet(CONFIG.STORAGE_KEY_TOUR_STEP, currentStep.toString());
+}
+}
+},
+useModalOverlay: true
+});
+var steps = getTourSteps();
+steps.forEach(function(step) {
+if (step.attachTo && step.attachTo.element) {
+var el = document.querySelector(step.attachTo.element);
+if (!el) delete step.attachTo;
+}
+tour.addStep(step);
+});
+tour.on('cancel', function() {
+if (!storageGet(CONFIG.STORAGE_KEY_COMPLETED)) {
+storageSet(CONFIG.STORAGE_KEY_SKIPPED, 'true');
+}
+storageRemove(CONFIG.STORAGE_KEY_TOUR_STEP);
+});
+return tour;
+}
+window.microDOSAffiliateTour = {
+launch: function(userInitiated) {
+if (typeof Shepherd === 'undefined') { console.warn('[microDOS Tour] Shepherd.js not loaded'); return; }
+if (tour) { tour.complete(); tour = null; }
+if (userInitiated) {
+storageRemove(CONFIG.STORAGE_KEY_SKIPPED);
+storageRemove(CONFIG.STORAGE_KEY_COMPLETED);
+}
+buildTour();
+tour.start();
+},
+reset: function() {
+storageRemove(CONFIG.STORAGE_KEY_COMPLETED);
+storageRemove(CONFIG.STORAGE_KEY_SKIPPED);
+storageRemove(CONFIG.STORAGE_KEY_DISMISSED);
+storageRemove(CONFIG.STORAGE_KEY_TOUR_STEP);
+console.log('[microDOS Tour] Reset. Refresh to start over.');
+}
+};
+function completeTour() {
+storageSet(CONFIG.STORAGE_KEY_COMPLETED, 'true');
+storageRemove(CONFIG.STORAGE_KEY_SKIPPED);
+storageRemove(CONFIG.STORAGE_KEY_TOUR_STEP);
+if (tour) tour.complete();
+}
+function skipTour() {
+storageSet(CONFIG.STORAGE_KEY_SKIPPED, 'true');
+storageRemove(CONFIG.STORAGE_KEY_TOUR_STEP);
+if (tour) tour.complete();
+}
+function init() {
+if (!isAffiliateDashboard()) return;
+injectFloatingHelpButton();
+if (shouldAutoLaunch() && isMainDashboardTab()) {
+setTimeout(function() {
+if (isMainDashboardTab()) launchTour(false);
+}, CONFIG.AUTO_LAUNCH_DELAY);
+}
+}
+if (document.readyState === 'loading') {
+document.addEventListener('DOMContentLoaded', init);
+} else {
+init();
+}
+})();
+MICRODOS_TOUR
     );
-    wp_add_inline_script('shepherd-js', 'window.microDOSPortalData = ' . wp_json_encode($data) . ';', 'before');
 
-    // Inline tour script (attached to shepherd-js)
-    $tour_file = get_template_directory() . '/js/affiliate-dashboard-tour.js';
-    if (file_exists($tour_file)) {
-        $tour_js = file_get_contents($tour_file);
-        wp_add_inline_script('shepherd-js', $tour_js);
-    }
-
-    // Inline welcome panel script (dummy handle to avoid captcha on separate file load)
-    wp_register_script('microdos-inline', '', array(), MICRODOS_VERSION, true);
-    wp_enqueue_script('microdos-inline');
-    $welcome_file = get_template_directory() . '/js/affiliate-portal-welcome.js';
-    if (file_exists($welcome_file)) {
-        $welcome_js = file_get_contents($welcome_file);
-        wp_add_inline_script('microdos-inline', $welcome_js);
-    }
+    // Welcome panel JS - embedded directly
+    wp_register_script('microdos-portal', '', array(), MICRODOS_VERSION, true);
+    wp_enqueue_script('microdos-portal');
+    wp_add_inline_script('microdos-portal', <<<'MICRODOS_WELCOME'
+(function() {
+'use strict';
+var DATA = window.microDOSPortalData || {};
+var GUIDE_URL = DATA.guideUrl || '/affiliate-dashboard-guide/';
+var MG_URL = DATA.mgUrl || '/marketing-guide/';
+var REFERRAL_URL = DATA.referralUrl || '';
+function injectSidebarLinks() {
+if (document.getElementById('microdos-sidebar-links')) return;
+var sidebar = findSidebarNav();
+if (!sidebar) {
+console.log('[microDOS] Sidebar nav not found, retrying...');
+setTimeout(injectSidebarLinks, 500);
+return;
+}
+var container = document.createElement('div');
+container.id = 'microdos-sidebar-links';
+container.style.cssText = 'margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);';
+if (GUIDE_URL) {
+container.appendChild(createSidebarLink(
+GUIDE_URL,
+'Dashboard Guide',
+'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+'dashboard-guide'
+));
+}
+if (MG_URL) {
+container.appendChild(createSidebarLink(
+MG_URL,
+'Marketing Guide',
+'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+'marketing-guide'
+));
+}
+sidebar.appendChild(container);
+console.log('[microDOS] Sidebar links injected');
+}
+function findSidebarNav() {
+var selectors = [
+'.affwp-portal-sidebar nav',
+'.affiliate-portal-sidebar nav',
+'.portal-sidebar nav',
+'[class*="portal-sidebar"] nav',
+'.affwp-portal-sidebar',
+'.affiliate-portal-sidebar',
+'.portal-sidebar',
+'aside nav',
+'aside',
+'.sidebar nav',
+'.sidebar'
+];
+for (var i = 0; i < selectors.length; i++) {
+var el = document.querySelector(selectors[i]);
+if (el) return el;
+}
+var dashboardLink = findElementByText('Dashboard', 'a');
+if (dashboardLink) {
+var parent = dashboardLink.parentElement;
+while (parent && parent.tagName !== 'BODY') {
+if (parent.tagName === 'ASIDE' || parent.tagName === 'NAV' ||
+parent.classList.contains('sidebar') ||
+parent.classList.contains('portal-sidebar') ||
+parent.classList.contains('affwp-portal-sidebar')) {
+return parent;
+}
+parent = parent.parentElement;
+}
+}
+return null;
+}
+function findElementByText(text, tag) {
+var elements = document.querySelectorAll(tag);
+for (var i = 0; i < elements.length; i++) {
+if (elements[i].textContent.trim() === text) {
+return elements[i];
+}
+}
+return null;
+}
+function createSidebarLink(href, text, iconHtml, id) {
+var existingLink = document.querySelector('.affwp-portal-sidebar a, .affiliate-portal-sidebar a, .portal-sidebar a, aside a');
+var computedStyle = existingLink ? window.getComputedStyle(existingLink) : null;
+var link = document.createElement('a');
+link.href = href;
+link.id = 'microdos-link-' + id;
+link.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 20px;color:#94a3b8;text-decoration:none;font-size:14px;font-weight:500;transition:all 0.2s;border-radius:6px;margin:2px 8px;';
+link.innerHTML = '<span style="flex-shrink:0;opacity:0.7;">' + iconHtml + '</span><span>' + text + '</span>';
+link.addEventListener('mouseenter', function() {
+link.style.backgroundColor = 'rgba(68,248,12,0.06)';
+link.style.color = '#44f80c';
+});
+link.addEventListener('mouseleave', function() {
+link.style.backgroundColor = 'transparent';
+link.style.color = '#94a3b8';
+});
+if (existingLink) {
+var existingOnclick = existingLink.getAttribute('onclick');
+if (existingOnclick) {
+}
+}
+return link;
+}
+function injectWelcomePanel() {
+if (document.getElementById('microdos-welcome-panel')) return;
+var content = findContentArea();
+if (!content) {
+setTimeout(injectWelcomePanel, 500);
+return;
+}
+var panel = document.createElement('div');
+panel.id = 'microdos-welcome-panel';
+panel.style.cssText = 'background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin:0 0 24px 0;font-family:inherit;position:relative;';
+panel.innerHTML = buildWelcomeHTML();
+if (content.firstChild) {
+content.insertBefore(panel, content.firstChild);
+} else {
+content.appendChild(panel);
+}
+console.log('[microDOS] Welcome panel injected');
+}
+function findContentArea() {
+var selectors = [
+'.affwp-portal-content',
+'.affiliate-portal-content',
+'.portal-content',
+'.affwp-portal-main',
+'.affiliate-portal-main',
+'main',
+'.content-area',
+'.site-main',
+'article'
+];
+for (var i = 0; i < selectors.length; i++) {
+var el = document.querySelector(selectors[i]);
+if (el) return el;
+}
+var statCard = document.querySelector('[class*="referral"], [class*="stat"]');
+if (statCard) {
+var parent = statCard.parentElement;
+while (parent && parent.tagName !== 'BODY') {
+if (parent.children.length > 2) return parent;
+parent = parent.parentElement;
+}
+}
+return null;
+}
+function buildWelcomeHTML() {
+var refDisplay = REFERRAL_URL || 'Your referral link will appear here';
+return '<button id="mcd-dismiss" title="Hide" style="position:absolute;top:12px;right:12px;background:none;border:1px solid #cbd5e1;color:#94a3b8;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;">&times;</button>' +
+'<h3 style="margin:0 0 16px;font-size:18px;font-weight:700;color:#0f172a;">Getting Started as a microDOS(2) Affiliate</h3>' +
+'<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;margin-bottom:20px;">' +
+'<strong style="color:#44f80c;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;">Your Referral Link</strong>' +
+'<p style="color:#64748b;font-size:13px;margin:6px 0 10px;">Share this link everywhere. When someone clicks and buys, you earn 20%.</p>' +
+'<code id="mcd-ref-url" style="display:block;background:#f1f5f9;color:#0f172a;padding:10px 14px;border-radius:6px;font-size:13px;word-break:break-all;margin:0 0 10px;font-family:monospace;">' + escapeHtml(refDisplay) + '</code>' +
+'<button onclick="copyMcdRef(this)" style="padding:8px 18px;background:#44f80c;color:#0a0514;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">Copy Link</button>' +
+'</div>' +
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">' +
+'<div style="background:#f8fafc;padding:12px;border-radius:6px;">' +
+'<strong style="color:#0f172a;font-size:13px;">How It Works</strong>' +
+'<ol style="color:#64748b;font-size:12px;line-height:1.6;padding-left:16px;margin:8px 0 0;">' +
+'<li>Share your link</li><li>Someone clicks</li><li>They buy within 45 days</li><li>You earn 20%</li>' +
+'</ol>' +
+'</div>' +
+'<div style="background:#f8fafc;padding:12px;border-radius:6px;">' +
+'<strong style="color:#0f172a;font-size:13px;">Quick Start</strong>' +
+'<ol style="color:#64748b;font-size:12px;line-height:1.6;padding-left:16px;margin:8px 0 0;">' +
+'<li>Copy your link</li><li>Grab a banner from Creatives</li><li>Post with a recommendation</li><li>Check Visits tomorrow</li>' +
+'</ol>' +
+'</div>' +
+'</div>' +
+'<div style="display:flex;gap:12px;flex-wrap:wrap;">' +
+'<button onclick="launchMcdTour()" style="padding:10px 20px;background:#44f80c;color:#0a0514;font-weight:700;font-size:13px;border:none;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">' +
+'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>' +
+'Take a Tour' +
+'</button>' +
+'<a href="' + escapeHtml(GUIDE_URL) + '" style="padding:10px 20px;background:#ff66c4;color:#fff;font-weight:700;font-size:13px;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">' +
+'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>' +
+'Dashboard Guide' +
+'</a>' +
+(MG_URL ? '<a href="' + escapeHtml(MG_URL) + '" style="padding:10px 20px;background:#9a02d0;color:#fff;font-weight:700;font-size:13px;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">' +
+'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' +
+'Marketing Guide' +
+'</a>' : '') +
+'</div>';
+}
+function escapeHtml(text) {
+var div = document.createElement('div');
+div.textContent = text;
+return div.innerHTML;
+}
+window.copyMcdRef = function(btn) {
+var url = document.getElementById('mcd-ref-url').textContent;
+navigator.clipboard.writeText(url).then(function() {
+btn.textContent = 'Copied!';
+setTimeout(function() { btn.textContent = 'Copy Link'; }, 2000);
+}, function() {
+var ta = document.createElement('textarea');
+ta.value = url;
+document.body.appendChild(ta);
+ta.select();
+document.execCommand('copy');
+document.body.removeChild(ta);
+btn.textContent = 'Copied!';
+setTimeout(function() { btn.textContent = 'Copy Link'; }, 2000);
+});
+};
+window.launchMcdTour = function() {
+if (window.microDOSAffiliateTour && window.microDOSAffiliateTour.launch) {
+window.microDOSAffiliateTour.launch(true);
+} else {
+alert('Tour is loading... Please try again in a moment.');
+}
+};
+function init() {
+var path = window.location.pathname;
+var isAffiliate = path.indexOf('affiliate') !== -1 ||
+path.indexOf('portal') !== -1 ||
+document.querySelector('.affwp-portal') ||
+document.querySelector('.affiliate-portal');
+if (!isAffiliate) return;
+injectSidebarLinks();
+var isMainDash = !window.location.search.match(/[?&]tab=/) &&
+!window.location.hash.match(/tab/);
+if (isMainDash) {
+injectWelcomePanel();
+}
+}
+if (document.readyState === 'loading') {
+document.addEventListener('DOMContentLoaded', init);
+} else {
+init();
+}
+setTimeout(init, 500);
+setTimeout(init, 1500);
+})();
+MICRODOS_WELCOME
+    );
 }
 
 /**
