@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
 
 // Theme version
 if (!defined('MICRODOS_VERSION')) {
-    define('MICRODOS_VERSION', '1.3.0');
+    define('MICRODOS_VERSION', '1.3.2');
 }
 
 // ============================================
@@ -1791,7 +1791,7 @@ function microdos_create_shipping_portal_page() {
 // Creates pages with tutorial content and adds them to Affiliate Portal sidebar
 // Runs on every page load until setup is complete (idempotent)
 // ============================================
-add_action('init', 'microdos_setup_affiliate_guides', 99);
+add_action('wp_loaded', 'microdos_setup_affiliate_guides', 20);
 
 function microdos_setup_affiliate_guides() {
     // Only run in admin or on frontend (not during AJAX/REST)
@@ -1837,34 +1837,33 @@ function microdos_setup_affiliate_guides() {
     }
 
     // --- Add Menu Links to Affiliate Portal ---
-    if (function_exists('affwp_get_settings') && function_exists('affwp_update_settings')) {
-        $settings = affwp_get_settings();
-        $menu_links = isset($settings['portal_menu_links']) ? $settings['portal_menu_links'] : array();
+    // AffiliateWP stores all settings in a single option 'affwp_settings'
+    $settings = get_option('affwp_settings', array());
+    $menu_links = isset($settings['portal_menu_links']) ? $settings['portal_menu_links'] : array();
 
-        // Check if our links already exist
-        $has_gs = false;
-        $has_mg = false;
-        foreach ($menu_links as $link) {
-            if (isset($link['name']) && $link['name'] === 'Getting Started') $has_gs = true;
-            if (isset($link['name']) && $link['name'] === 'Marketing Guide') $has_mg = true;
-        }
-
-        if (!$has_gs && $gs_id) {
-            $menu_links[] = array(
-                'name' => 'Getting Started',
-                'url'  => get_permalink($gs_id),
-            );
-        }
-        if (!$has_mg && $mg_id) {
-            $menu_links[] = array(
-                'name' => 'Marketing Guide',
-                'url'  => get_permalink($mg_id),
-            );
-        }
-
-        $settings['portal_menu_links'] = $menu_links;
-        affwp_update_settings($settings);
+    // Check if our links already exist
+    $has_gs = false;
+    $has_mg = false;
+    foreach ($menu_links as $link) {
+        if (isset($link['name']) && $link['name'] === 'Getting Started') $has_gs = true;
+        if (isset($link['name']) && $link['name'] === 'Marketing Guide') $has_mg = true;
     }
+
+    if (!$has_gs && $gs_id) {
+        $menu_links[] = array(
+            'name' => 'Getting Started',
+            'url'  => get_permalink($gs_id),
+        );
+    }
+    if (!$has_mg && $mg_id) {
+        $menu_links[] = array(
+            'name' => 'Marketing Guide',
+            'url'  => get_permalink($mg_id),
+        );
+    }
+
+    $settings['portal_menu_links'] = $menu_links;
+    update_option('affwp_settings', $settings);
 
     // Setup complete — pages exist and menu links are added
 }
