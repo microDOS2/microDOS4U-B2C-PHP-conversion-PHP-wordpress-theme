@@ -1513,13 +1513,7 @@ function microdos_enqueue_affiliate_assets() {
     wp_enqueue_script('shepherd-js', 'https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js', array(), '11.2.0', true);
     wp_enqueue_style('shepherd-css', 'https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css', array(), '11.2.0');
 
-    // Tour script
-    wp_enqueue_script('microdos-affiliate-tour', get_template_directory_uri() . '/js/affiliate-dashboard-tour.js', array('shepherd-js'), MICRODOS_VERSION, true);
-
-    // Welcome panel script
-    wp_enqueue_script('microdos-portal-welcome', get_template_directory_uri() . '/js/affiliate-portal-welcome.js', array(), MICRODOS_VERSION, true);
-
-    // Localized data
+    // Get data for JS
     $guide_page = get_page_by_path('affiliate-dashboard-guide');
     $mg_page = get_page_by_path('marketing-guide');
     $affiliate_id = function_exists('affwp_get_affiliate_id') ? affwp_get_affiliate_id() : 0;
@@ -1533,9 +1527,23 @@ function microdos_enqueue_affiliate_assets() {
         'mgUrl'       => $mg_page ? get_permalink($mg_page) : '',
         'referralUrl' => $referral_url,
     );
+    wp_add_inline_script('shepherd-js', 'window.microDOSPortalData = ' . wp_json_encode($data) . ';', 'before');
 
-    wp_localize_script('microdos-portal-welcome', 'microDOSPortalData', $data);
-    wp_localize_script('microdos-affiliate-tour', 'microDOSPortalData', $data);
+    // Inline tour script (attached to shepherd-js)
+    $tour_file = get_template_directory() . '/js/affiliate-dashboard-tour.js';
+    if (file_exists($tour_file)) {
+        $tour_js = file_get_contents($tour_file);
+        wp_add_inline_script('shepherd-js', $tour_js);
+    }
+
+    // Inline welcome panel script (dummy handle to avoid captcha on separate file load)
+    wp_register_script('microdos-inline', '', array(), MICRODOS_VERSION, true);
+    wp_enqueue_script('microdos-inline');
+    $welcome_file = get_template_directory() . '/js/affiliate-portal-welcome.js';
+    if (file_exists($welcome_file)) {
+        $welcome_js = file_get_contents($welcome_file);
+        wp_add_inline_script('microdos-inline', $welcome_js);
+    }
 }
 
 /**
