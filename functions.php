@@ -1599,7 +1599,7 @@ function microdos_enqueue_affiliate_assets() {
 /**
  * 3. Affiliate Portal Menu Links
  */
-add_filter('affwp_portal_menu_items', 'microdos_add_portal_menu_links', 20);
+add_filter('affwp_portal_menu_links', 'microdos_add_portal_menu_links', 20);
 
 function microdos_add_portal_menu_links($menu_items) {
     $guide_page = get_page_by_path('affiliate-dashboard-guide');
@@ -1608,32 +1608,22 @@ function microdos_add_portal_menu_links($menu_items) {
     $guide_url = $guide_page ? get_permalink($guide_page) : '';
     $mg_url = $mg_page ? get_permalink($mg_page) : '';
 
-    $guide_icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>';
-    $marketing_icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
-
     if ($guide_url) {
         $menu_items['dashboard_guide'] = array(
-            'title'   => __('Dashboard Guide', 'microdos'),
-            'icon'    => $guide_icon,
-            'url'     => $guide_url,
-            'enabled' => true,
+            'name' => 'Dashboard Guide',
+            'url'  => $guide_url,
         );
     }
     if ($mg_url) {
         $menu_items['marketing_guide'] = array(
-            'title'   => __('Marketing Guide', 'microdos'),
-            'icon'    => $marketing_icon,
-            'url'     => $mg_url,
-            'enabled' => true,
+            'name' => 'Marketing Guide',
+            'url'  => $mg_url,
         );
     }
 
     return $menu_items;
 }
 
-/**
- * 4. Admin notice for Portal integration
- */
 add_action('admin_notices', 'microdos_admin_portal_notice');
 
 function microdos_admin_portal_notice() {
