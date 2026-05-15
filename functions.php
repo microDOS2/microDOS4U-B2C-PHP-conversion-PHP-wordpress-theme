@@ -1787,110 +1787,191 @@ function microdos_create_shipping_portal_page() {
 }
 
 // ============================================
-// AFFILIATE GETTING STARTED PANEL
-// Injects tutorial content into the top of the affiliate dashboard
-// Uses the documented affwp_affiliate_dashboard_top hook (same as W-9 notice)
+// AUTO-CREATE AFFILIATE GUIDE PAGES + MENU LINKS
+// Creates pages with tutorial content and adds them to Affiliate Portal sidebar
+// Runs on every page load until setup is complete (idempotent)
 // ============================================
-add_action('affwp_affiliate_dashboard_top', 'microdos_render_getting_started_panel', 15);
+add_action('wp_loaded', 'microdos_setup_affiliate_guides', 20);
 
-function microdos_render_getting_started_panel() {
-    // Only show on the main dashboard tab
-    $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : '';
-    if (!empty($active_tab)) {
+function microdos_setup_affiliate_guides() {
+    // Only run in admin or on frontend (not during AJAX/REST)
+    if (wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
+        return;
+    }
+    
+    // Need AffiliateWP active
+    if (!function_exists('affwp_get_settings') || !function_exists('affwp_update_settings')) {
         return;
     }
 
-    $affiliate_id = affwp_get_affiliate_id();
-    $referral_url = affwp_get_affiliate_referral_url(array('affiliate_id' => $affiliate_id));
-    $mg_page = get_page_by_path('marketing-guide');
-    $mg_url = $mg_page ? get_permalink($mg_page) : '';
-
-    echo '<div style="
-        background: linear-gradient(135deg, #150f24, #0a0514);
-        border: 1px solid #2d2255;
-        border-radius: 12px;
-        padding: 24px 28px;
-        margin: 0 0 24px 0;
-        color: #d1d5db;
-        font-family: inherit;
-    ">';
-
-    echo '<h3 style="margin: 0 0 16px; font-size: 18px; font-weight: 700; color: #44f80c;">Getting Started as a microDOS(2) Affiliate</h3>';
-
-    // Referral link box
-    echo '<div style="background: rgba(68,248,12,0.06); border: 1px solid #44f80c; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px;">';
-    echo '<strong style="color: #44f80c; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Your Referral Link</strong>';
-    echo '<p style="color: #94a3b8; font-size: 13px; margin: 6px 0 10px;">Share this link everywhere. When someone clicks and buys, you earn 20%.</p>';
-    echo '<code id="microdos-ref-url" style="display: block; background: rgba(68,248,12,0.08); color: #44f80c; padding: 10px 14px; border-radius: 6px; font-size: 13px; word-break: break-all; margin: 0 0 10px; font-family: monospace;">' . esc_html($referral_url) . '</code>';
-    echo '<button onclick="var c=document.createElement(\'textarea\');c.value=\'' . esc_js($referral_url) . '\';document.body.appendChild(c);c.select();document.execCommand(\'copy\');document.body.removeChild(c);this.textContent=\'Copied!\';setTimeout(function(){this.textContent=\'Copy Link\'}.bind(this),2000)" style="padding: 8px 18px; background: #44f80c; color: #0a0514; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">Copy Link</button>';
-    echo '</div>';
-
-    echo '<h4 style="margin: 20px 0 10px; font-size: 15px; font-weight: 700; color: #ff66c4;">How It Works</h4>';
-    echo '<ol style="color: #94a3b8; font-size: 13px; line-height: 1.7; padding-left: 20px; margin: 0 0 16px;">';
-    echo '<li style="margin-bottom: 6px;"><strong style="color: #e2e8f0;">Share your link</strong> — Post on social media, email, anywhere</li>';
-    echo '<li style="margin-bottom: 6px;"><strong style="color: #e2e8f0;">Someone clicks</strong> — Tracked to your account</li>';
-    echo '<li style="margin-bottom: 6px;"><strong style="color: #e2e8f0;">They buy within 60 days</strong> — Cookie tracks them</li>';
-    echo '<li style="margin-bottom: 6px;"><strong style="color: #e2e8f0;">You earn 20%</strong> — Every sale. No cap.</li>';
-    echo '<li><strong style="color: #e2e8f0;">Get paid monthly</strong> — $50 minimum, 1st of the month</li>';
-    echo '</ol>';
-
-    echo '<div style="background: rgba(16,185,129,0.06); border-left: 3px solid #10b981; padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 14px 0; color: #94a3b8; font-size: 13px;">';
-    echo '<strong style="color: #10b981;">Your numbers start at zero.</strong> That is normal. They grow as you share consistently.';
-    echo '</div>';
-
-    echo '<h4 style="margin: 20px 0 10px; font-size: 15px; font-weight: 700; color: #ff66c4;">Your Dashboard Tabs</h4>';
-    echo '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">';
-    echo '<div style="background: #1a1040; padding: 10px 12px; border-radius: 6px;"><strong style="color: #e2e8f0;">Dashboard</strong> — Your stats</div>';
-    echo '<div style="background: #1a1040; padding: 10px 12px; border-radius: 6px;"><strong style="color: #e2e8f0;">Affiliate URLs</strong> — Your link</div>';
-    echo '<div style="background: #1a1040; padding: 10px 12px; border-radius: 6px;"><strong style="color: #e2e8f0;">Statistics</strong> — Detailed data</div>';
-    echo '<div style="background: #1a1040; padding: 10px 12px; border-radius: 6px;"><strong style="color: #e2e8f0;">Graphs</strong> — Visual growth</div>';
-    echo '<div style="background: #1a1040; padding: 10px 12px; border-radius: 6px;"><strong style="color: #e2e8f0;">Referrals</strong> — Your sales</div>';
-    echo '<div style="background: #1a1040; padding: 10px 12px; border-radius: 6px;"><strong style="color: #e2e8f0;">Payouts</strong> — Payments</div>';
-    echo '<div style="background: #1a1040; padding: 10px 12px; border-radius: 6px;"><strong style="color: #e2e8f0;">Visits</strong> — Clicks tracked</div>';
-    echo '<div style="background: #1a1040; padding: 10px 12px; border-radius: 6px;"><strong style="color: #e2e8f0;">Creatives</strong> — Banners/images</div>';
-    echo '</div>';
-
-    echo '<div style="background: rgba(16,185,129,0.06); border-left: 3px solid #10b981; padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 14px 0; color: #94a3b8; font-size: 13px;">';
-    echo '<strong style="color: #10b981;">Personal recommendations convert 3-5x better.</strong> Write why you recommend the product, not just the link.';
-    echo '</div>';
-
-    echo '<h4 style="margin: 20px 0 10px; font-size: 15px; font-weight: 700; color: #ff66c4;">Quick Start</h4>';
-    echo '<ol style="color: #94a3b8; font-size: 13px; line-height: 1.7; padding-left: 20px; margin: 0 0 16px;">';
-    echo '<li style="margin-bottom: 4px;">Copy your link above and add to social bios</li>';
-    echo '<li style="margin-bottom: 4px;">Grab a banner from the Creatives tab</li>';
-    echo '<li style="margin-bottom: 4px;">Post with a personal recommendation today</li>';
-    echo '<li>Check Visits tomorrow to see clicks</li>';
-    echo '</ol>';
-
-    if ($mg_url) {
-        echo '<div style="text-align: center; margin-top: 16px;">';
-        echo '<a href="' . esc_url($mg_url) . '" style="display: inline-block; padding: 12px 28px; background: #ff66c4; color: #fff; font-weight: 700; font-size: 14px; border-radius: 8px; text-decoration: none;">View Full Marketing Guide &rarr;</a>';
-        echo '</div>';
+    // --- Create Getting Started page ---
+    $gs = get_page_by_path('getting-started');
+    if (!$gs) {
+        $gs_content = microdos_get_getting_started_content();
+        $gs_id = wp_insert_post(array(
+            'post_title'   => 'Getting Started',
+            'post_name'    => 'getting-started',
+            'post_content' => $gs_content,
+            'post_status'  => 'publish',
+            'post_type'    => 'page',
+            'post_author'  => 1,
+        ));
+    } else {
+        $gs_id = $gs->ID;
     }
 
-    echo '</div>';
+    // --- Create Marketing Guide page ---
+    $mg = get_page_by_path('marketing-guide');
+    if (!$mg) {
+        $mg_content = microdos_get_marketing_guide_content();
+        $mg_id = wp_insert_post(array(
+            'post_title'   => 'Marketing Guide',
+            'post_name'    => 'marketing-guide',
+            'post_content' => $mg_content,
+            'post_status'  => 'publish',
+            'post_type'    => 'page',
+            'post_author'  => 1,
+        ));
+    } else {
+        $mg_id = $mg->ID;
+    }
+
+    // --- Add Menu Links to Affiliate Portal ---
+    // AffiliateWP stores all settings in a single option 'affwp_settings'
+    $settings = get_option('affwp_settings', array());
+    $menu_links = isset($settings['portal_menu_links']) ? $settings['portal_menu_links'] : array();
+
+    // Check if our links already exist
+    $has_gs = false;
+    $has_mg = false;
+    foreach ($menu_links as $link) {
+        if (isset($link['name']) && $link['name'] === 'Getting Started') $has_gs = true;
+        if (isset($link['name']) && $link['name'] === 'Marketing Guide') $has_mg = true;
+    }
+
+    if (!$has_gs && $gs_id) {
+        $menu_links[] = array(
+            'name' => 'Getting Started',
+            'url'  => get_permalink($gs_id),
+        );
+    }
+    if (!$has_mg && $mg_id) {
+        $menu_links[] = array(
+            'name' => 'Marketing Guide',
+            'url'  => get_permalink($mg_id),
+        );
+    }
+
+    $settings['portal_menu_links'] = $menu_links;
+    update_option('affwp_settings', $settings);
+
+    // Setup complete — pages exist and menu links are added
 }
 
 // ============================================
-// AUTO-CREATE MARKETING GUIDE PAGE
+// GETTING STARTED PAGE CONTENT
 // ============================================
-add_action('wp_loaded', 'microdos_create_marketing_guide_page', 20);
+function microdos_get_getting_started_content() {
+    return '<!-- wp:html -->
+<div style="max-width:800px;">
 
-function microdos_create_marketing_guide_page() {
-    if (wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) return;
+<div style="background:linear-gradient(135deg,#1e3a5f,#0f1d3a);border:1px solid #3b82f6;border-radius:8px;padding:20px;margin-bottom:24px;">
+<strong style="color:#60a5fa;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;">Your Unique Referral Link</strong>
+<p style="color:#c7d2e8;font-size:14px;margin:8px 0;">Copy this link and share it everywhere. When someone clicks and buys, you earn 20%.</p>
+<p style="background:rgba(59,130,246,0.15);color:#93bbfc;padding:10px 14px;border-radius:6px;font-size:14px;word-break:break-all;margin:8px 0;">[affiliate_referral_url]</p>
+</div>
 
-    $mg = get_page_by_path('marketing-guide');
-    if ($mg) return; // Already exists
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">How the Affiliate Program Works</h3>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li><strong style="color:#e2e8f0;">Share your link</strong> — Post it on social media, email, your website, or anywhere</li>
+<li><strong style="color:#e2e8f0;">Someone clicks</strong> — That click is tracked to your account</li>
+<li><strong style="color:#e2e8f0;">They make a purchase</strong> — Anytime in the next 60 days, you get credit</li>
+<li><strong style="color:#e2e8f0;">You earn 20% commission</strong> — On every sale. No cap.</li>
+<li><strong style="color:#e2e8f0;">Get paid monthly</strong> — Once you hit $50, we pay you on the 1st of each month</li>
+</ol>
 
-    $content = microdos_get_marketing_guide_content();
-    wp_insert_post(array(
-        'post_title'   => 'Marketing Guide',
-        'post_name'    => 'marketing-guide',
-        'post_content' => $content,
-        'post_status'  => 'publish',
-        'post_type'    => 'page',
-        'post_author'  => 1,
-    ));
+<div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#10b981;">Your cookie lasts 60 days.</strong> If someone clicks today but buys 45 days later, you still get paid.
+</div>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">Your Dashboard — Every Tab Explained</h3>
+<table style="width:100%;border-collapse:collapse;margin:12px 0;">
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;width:140px;font-size:14px;">📊 Dashboard</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Your numbers at a glance — referrals, visits, conversion rate, earnings</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">🔗 Affiliate URLs</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Your unique link. Copy it and add campaign tags to track what works</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">📈 Statistics</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Detailed breakdown of clicks, referrals, and earnings by date</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">📉 Graphs</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Visual charts showing your growth over time</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">💰 Referrals</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Every sale. Pending=processing, Unpaid=awaiting payout, Paid=sent, Rejected=refunded</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">💳 Payouts</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Payment history. Minimum $50. Paid on the 1st of each month.</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">👆 Visits</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Every click on your link. Use this to test what drives clicks.</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">🎨 Creatives</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Ready-made banners with your link built in. View to preview, Copy to share.</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;white-space:nowrap;font-weight:500;color:#e2e8f0;font-size:14px;">🛒 Products</td><td style="padding:10px 12px;border-bottom:1px solid #2a2a4a;color:#94a3b8;font-size:14px;">Browse what you are promoting so you can write authentic recommendations</td></tr>
+</table>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">What the Numbers Mean</h3>
+<ul style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li><strong style="color:#e2e8f0;">Visit</strong> — Someone clicked your link. Not a sale yet.</li>
+<li><strong style="color:#e2e8f0;">Referral</strong> — Someone clicked AND bought. This earns you money.</li>
+<li><strong style="color:#e2e8f0;">Conversion Rate</strong> — % of visits that turned into sales. Average is 1-3%.</li>
+<li><strong style="color:#e2e8f0;">Unpaid Earnings</strong> — Money earned but not yet paid out.</li>
+<li><strong style="color:#e2e8f0;">Paid Earnings</strong> — Money already sent to you.</li>
+</ul>
+
+<div style="background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#f59e0b;">Your numbers start at zero.</strong> That is normal. Every affiliate starts at 0. Your numbers grow as you share your link consistently.
+</div>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">Where to Share Your Link</h3>
+<ul style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li><strong style="color:#e2e8f0;">Instagram</strong> — Put your link in your bio. Mention "link in bio" in posts and stories.</li>
+<li><strong style="color:#e2e8f0;">Facebook</strong> — Share in your timeline, relevant groups, and Messenger.</li>
+<li><strong style="color:#e2e8f0;">X (Twitter)</strong> — Pin a tweet with your link. Share in threads.</li>
+<li><strong style="color:#e2e8f0;">TikTok</strong> — Add to your bio. Mention it in video descriptions.</li>
+<li><strong style="color:#e2e8f0;">Reddit</strong> — Find relevant communities and share where appropriate.</li>
+<li><strong style="color:#e2e8f0;">Email</strong> — Send to friends or your newsletter. Highest conversion rate.</li>
+<li><strong style="color:#e2e8f0;">Website / Blog</strong> — Add a banner or sidebar widget.</li>
+<li><strong style="color:#e2e8f0;">Text / WhatsApp</strong> — Personal recommendations convert best.</li>
+</ul>
+
+<div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#10b981;">Personal recommendations convert 3-5x better than generic ads.</strong> Write 1-2 sentences about why you recommend the product instead of just posting the link.
+</div>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">Quick Start Checklist</h3>
+<ol style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li><strong style="color:#e2e8f0;">Copy your referral link</strong> from the Affiliate URLs tab</li>
+<li><strong style="color:#e2e8f0;">Add your link to your social media bios</strong> (Instagram, TikTok, X, Facebook)</li>
+<li><strong style="color:#e2e8f0;">Go to the Creatives tab</strong> and grab a banner for your first post</li>
+<li><strong style="color:#e2e8f0;">Make your first post today</strong> with a personal recommendation</li>
+<li><strong style="color:#e2e8f0;">Check your Visits tab tomorrow</strong> to see clicks</li>
+<li><strong style="color:#e2e8f0;">Post again in 2-3 days</strong> — consistency is key</li>
+</ol>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">When You Get Paid</h3>
+<ul style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li><strong style="color:#e2e8f0;">Commission:</strong> 20% on every sale</li>
+<li><strong style="color:#e2e8f0;">Minimum payout:</strong> $50</li>
+<li><strong style="color:#e2e8f0;">Payment date:</strong> 1st of every month</li>
+<li><strong style="color:#e2e8f0;">Methods:</strong> PayPal, direct deposit</li>
+</ul>
+
+<h3 style="color:#e2e8f0;font-size:20px;font-weight:600;margin:24px 0 12px;">Best Practices for Maximum Earnings</h3>
+<ul style="color:#94a3b8;font-size:15px;line-height:1.7;">
+<li>Post 2-3 times per week across platforms</li>
+<li>Use images — posts with images get 2.3x more engagement</li>
+<li>Be genuine — write personal recommendations that build trust</li>
+<li>Target the right communities — research, wellness, cognitive enhancement</li>
+<li>Track what works — check Statistics and Visits tabs</li>
+<li>Answer questions quickly — engagement builds trust</li>
+<li>Use multiple platforms — do not rely on just one</li>
+<li>Add your link to every bio — that is passive income</li>
+</ul>
+
+<div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;color:#94a3b8;font-size:14px;">
+<strong style="color:#10b981;">Need platform-specific help?</strong> Click the <strong>Marketing Guide</strong> link in the sidebar for step-by-step instructions for Instagram, Facebook, X, TikTok, Reddit, and more.
+</div>
+
+</div>
+<!-- /wp:html -->';
 }
 
 // ============================================
@@ -2022,24 +2103,13 @@ function microdos_get_marketing_guide_content() {
 }
 
 
-================================================================================
-// 
-
 // ================================================================================
 // AFFILIATE DASHBOARD GUIDE FEATURES (auto-appended)
 // ================================================================================
 
-<?php
 /**
  * Affiliate Dashboard Guide — Feature Functions
- *
- * 1. Auto-creation of the guide page
- * 2. Shepherd.js CDN loading on affiliate dashboard
- * 3. Updated Getting Started panel with tour/guide buttons
- * 4. Admin tour reset tool
  */
-
-if (!defined('ABSPATH')) exit;
 
 // ============================================
 // 1. AUTO-CREATE DASHBOARD GUIDE PAGE
@@ -2109,6 +2179,18 @@ function microdos_enqueue_affiliate_tour() {
         array('shepherd-js'), MICRODOS_VERSION, true
     );
 }
+
+// ============================================
+// 3. UPDATED GETTING STARTED PANEL
+// ============================================
+
+/**
+ * Render the enhanced Getting Started panel on the affiliate dashboard.
+ * Replaces the original microdos_render_getting_started_panel().
+ *
+ * Priority 15 ensures this runs after the W-9 notice (which runs at default priority).
+ */
+add_action('affwp_affiliate_dashboard_top', 'microdos_render_enhanced_getting_started_panel', 15);
 
 function microdos_render_enhanced_getting_started_panel() {
     // Only show on the main dashboard tab (no ?tab= parameter)
