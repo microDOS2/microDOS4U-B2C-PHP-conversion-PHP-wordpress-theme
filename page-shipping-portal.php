@@ -94,7 +94,7 @@ if (isset($_POST['microdos_save_note']) && check_admin_referer('microdos_portal_
 }
 
 // ─── EXPORT CSV ───
-if (isset($_GET['export']) && $_GET['export'] === 'csv' && check_admin_referer('microdos_export_nonce')) {
+if (isset($_GET['export']) && $_GET['export'] === 'csv' && isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], 'microdos_export_nonce')) {
     $export_status = isset($_GET['tab']) && $_GET['tab'] === 'shipped' ? ['shipped','completed'] : 'processing';
     $export_orders = wc_get_orders([
         'status'   => $export_status,
@@ -598,7 +598,7 @@ body{background:#0a0514;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFo
         </form>
 
         <!-- Export CSV -->
-        <a href="?tab=<?php echo esc_attr($tab); ?>&amp;export=csv&amp;<?php echo wp_create_nonce('microdos_export_nonce'); ?>" class="portal-btn portal-btn-view" style="font-size:12px;">&#11015; Export CSV</a>
+        <a href="?tab=<?php echo esc_attr($tab); ?>&amp;export=csv&amp;_wpnonce=<?php echo wp_create_nonce('microdos_export_nonce'); ?>" class="portal-btn portal-btn-view" style="font-size:12px;">&#11015; Export CSV</a>
     </div>
 </div>
 
