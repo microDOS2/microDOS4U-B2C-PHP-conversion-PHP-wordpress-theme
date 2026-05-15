@@ -2020,3 +2020,419 @@ function microdos_get_marketing_guide_content() {
 </div>
 <!-- /wp:html -->';
 }
+
+
+================================================================================
+// AFFILIATE DASHBOARD GUIDE FEATURES (auto-appended)
+// Source: functions-dashboard-guide.php
+================================================================================
+
+<?php
+/**
+ * ============================================
+ * AFFILIATE DASHBOARD GUIDE — FUNCTIONS
+ * ============================================
+ * This file contains all functions for the Affiliate Dashboard Guide feature:
+ * 1. Auto-creation of the guide page
+ * 2. Shepherd.js CDN loading on affiliate dashboard
+ * 3. Updated Getting Started panel with tour/guide buttons
+ * 4. Floating help button
+ *
+ * Append this file's contents to the end of your theme's functions.php
+ * or include it via: require_once get_template_directory() . '/functions-dashboard-guide.php';
+ *
+ * @version 1.0.0
+ * @package microDOS4U
+ */
+
+// Prevent direct access
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// ============================================
+// 1. AUTO-CREATE DASHBOARD GUIDE PAGE
+// ============================================
+
+/**
+ * Create the Affiliate Dashboard Guide page if it doesn't exist.
+ * Runs on wp_loaded (same pattern as Marketing Guide).
+ */
+add_action('wp_loaded', 'microdos_create_dashboard_guide_page', 20);
+
+function microdos_create_dashboard_guide_page() {
+    if (wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
+        return;
+    }
+
+    // Check if page already exists
+    $existing = get_page_by_path('affiliate-dashboard-guide');
+    if ($existing) {
+        return;
+    }
+
+    wp_insert_post(array(
+        'post_title'   => 'Affiliate Dashboard Guide',
+        'post_name'    => 'affiliate-dashboard-guide',
+        'post_content' => '', // Content is rendered by the page template
+        'post_status'  => 'publish',
+        'post_type'    => 'page',
+        'post_author'  => 1,
+        'page_template' => 'page-affiliate-dashboard-guide.php',
+    ));
+}
+
+// ============================================
+// 2. LOAD SHEPHERD.JS CDN + TOUR SCRIPT
+// ============================================
+
+/**
+ * Enqueue Shepherd.js from CDN and our tour script on affiliate dashboard pages.
+ */
+add_action('wp_enqueue_scripts', 'microdos_enqueue_affiliate_tour', 100);
+
+function microdos_enqueue_affiliate_tour() {
+    // Only load on affiliate area pages
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    $is_affiliate_area = (
+        strpos($uri, '/affiliate-area') !== false ||
+        strpos($uri, '/affiliate-dashboard-guide') !== false ||
+        is_page_template('page-affiliate-area.php') ||
+        is_page_template('page-affiliate-dashboard-guide.php')
+    );
+
+    if (!$is_affiliate_area) {
+        return;
+    }
+
+    // Only load for logged-in affiliates
+    if (!is_user_logged_in()) {
+        return;
+    }
+
+    if (!function_exists('affwp_is_affiliate') || !affwp_is_affiliate()) {
+        return;
+    }
+
+    // Shepherd.js from CDN (v11.2.0 — latest stable)
+    wp_enqueue_script(
+        'shepherd-js',
+        'https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js',
+        array(),
+        '11.2.0',
+        true
+    );
+
+    wp_enqueue_style(
+        'shepherd-css',
+        'https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css',
+        array(),
+        '11.2.0'
+    );
+
+    // Our custom tour script
+    wp_enqueue_script(
+        'microdos-affiliate-tour',
+        get_template_directory_uri() . '/js/affiliate-dashboard-tour.js',
+        array('shepherd-js'),
+        MICRODOS_VERSION,
+        true
+    );
+}
+
+// ============================================
+// 3. UPDATED GETTING STARTED PANEL
+// ============================================
+
+/**
+ * Render the enhanced Getting Started panel on the affiliate dashboard.
+ * Replaces the original microdos_render_getting_started_panel().
+ *
+ * Priority 15 ensures this runs after the W-9 notice (which runs at default priority).
+ */
+add_action('affwp_affiliate_dashboard_top', 'microdos_render_enhanced_getting_started_panel', 15);
+
+function microdos_render_enhanced_getting_started_panel() {
+    // Only show on the main dashboard tab (no ?tab= parameter)
+    $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : '';
+    if (!empty($active_tab)) {
+        return;
+    }
+
+    $affiliate_id = affwp_get_affiliate_id();
+    $referral_url = affwp_get_affiliate_referral_url(array('affiliate_id' => $affiliate_id));
+
+    $guide_page = get_page_by_path('affiliate-dashboard-guide');
+    $guide_url  = $guide_page ? get_permalink($guide_page) : '';
+
+    $mg_page = get_page_by_path('marketing-guide');
+    $mg_url  = $mg_page ? get_permalink($mg_page) : '';
+
+    ?>
+    <div style="
+        background: linear-gradient(135deg, #150f24, #0a0514);
+        border: 1px solid #2d2255;
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin: 0 0 24px 0;
+        color: #d1d5db;
+        font-family: inherit;
+    ">
+        <!-- Header -->
+        <h3 style="margin: 0 0 16px; font-size: 18px; font-weight: 700; color: #44f80c;">
+            Getting Started as a microDOS(2) Affiliate
+        </h3>
+
+        <!-- Referral Link Box -->
+        <div style="
+            background: rgba(68,248,12,0.06);
+            border: 1px solid #44f80c;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+        ">
+            <strong style="color: #44f80c; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Your Referral Link</strong>
+            <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 10px;">Share this link everywhere. When someone clicks and buys, you earn 20%.</p>
+            <code id="microdos-ref-url" style="
+                display: block;
+                background: rgba(68,248,12,0.08);
+                color: #44f80c;
+                padding: 10px 14px;
+                border-radius: 6px;
+                font-size: 13px;
+                word-break: break-all;
+                margin: 0 0 10px;
+                font-family: monospace;
+            "><?php echo esc_html($referral_url); ?></code>
+            <button onclick="
+                var c=document.createElement('textarea');
+                c.value='<?php echo esc_js($referral_url); ?>';
+                document.body.appendChild(c);
+                c.select();
+                document.execCommand('copy');
+                document.body.removeChild(c);
+                this.textContent='Copied!';
+                setTimeout(function(){this.textContent='Copy Link'}.bind(this),2000)
+            " style="
+                padding: 8px 18px;
+                background: #44f80c;
+                color: #0a0514;
+                border: none;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+            ">Copy Link</button>
+        </div>
+
+        <!-- How It Works -->
+        <h4 style="margin: 20px 0 10px; font-size: 15px; font-weight: 700; color: #ff66c4;">How It Works</h4>
+        <ol style="color: #94a3b8; font-size: 13px; line-height: 1.7; padding-left: 20px; margin: 0 0 16px;">
+            <li style="margin-bottom: 6px;"><strong style="color: #e2e8f0;">Share your link</strong> — Post on social media, email, anywhere</li>
+            <li style="margin-bottom: 6px;"><strong style="color: #e2e8f0;">Someone clicks</strong> — Tracked to your account</li>
+            <li style="margin-bottom: 6px;"><strong style="color: #e2e8f0;">They buy within 45 days</strong> — Cookie tracks them</li>
+            <li style="margin-bottom: 6px;"><strong style="color: #e2e8f0;">You earn 20%</strong> — Every sale. No cap.</li>
+            <li><strong style="color: #e2e8f0;">Get paid monthly</strong> — $50 minimum, 1st of the month</li>
+        </ol>
+
+        <!-- Dashboard Tabs — Enriched Grid with Learn More links -->
+        <h4 style="margin: 20px 0 10px; font-size: 15px; font-weight: 700; color: #ff66c4;">Your Dashboard Tabs</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; margin-bottom: 16px;">
+
+            <div style="background: #1a1040; padding: 12px; border-radius: 6px;">
+                <strong style="color: #e2e8f0; font-size: 13px;">Dashboard</strong>
+                <p style="color: #64748b; margin: 4px 0 6px; font-size: 11px;">Your stats overview</p>
+                <?php if ($guide_url) : ?>
+                    <a href="<?php echo esc_url($guide_url . '#section-overview'); ?>" style="color: #44f80c; text-decoration: none; font-size: 11px; font-weight: 600;">Learn more →</a>
+                <?php endif; ?>
+            </div>
+
+            <div style="background: #1a1040; padding: 12px; border-radius: 6px;">
+                <strong style="color: #e2e8f0; font-size: 13px;">Affiliate URLs</strong>
+                <p style="color: #64748b; margin: 4px 0 6px; font-size: 11px;">Your link & QR code</p>
+                <?php if ($guide_url) : ?>
+                    <a href="<?php echo esc_url($guide_url . '#section-urls'); ?>" style="color: #44f80c; text-decoration: none; font-size: 11px; font-weight: 600;">Learn more →</a>
+                <?php endif; ?>
+            </div>
+
+            <div style="background: #1a1040; padding: 12px; border-radius: 6px;">
+                <strong style="color: #e2e8f0; font-size: 13px;">Statistics</strong>
+                <p style="color: #64748b; margin: 4px 0 6px; font-size: 11px;">Detailed earnings data</p>
+                <?php if ($guide_url) : ?>
+                    <a href="<?php echo esc_url($guide_url . '#section-stats'); ?>" style="color: #44f80c; text-decoration: none; font-size: 11px; font-weight: 600;">Learn more →</a>
+                <?php endif; ?>
+            </div>
+
+            <div style="background: #1a1040; padding: 12px; border-radius: 6px;">
+                <strong style="color: #e2e8f0; font-size: 13px;">Graphs</strong>
+                <p style="color: #64748b; margin: 4px 0 6px; font-size: 11px;">Visual growth trends</p>
+                <?php if ($guide_url) : ?>
+                    <a href="<?php echo esc_url($guide_url . '#section-graphs'); ?>" style="color: #44f80c; text-decoration: none; font-size: 11px; font-weight: 600;">Learn more →</a>
+                <?php endif; ?>
+            </div>
+
+            <div style="background: #1a1040; padding: 12px; border-radius: 6px;">
+                <strong style="color: #e2e8f0; font-size: 13px;">Referrals</strong>
+                <p style="color: #64748b; margin: 4px 0 6px; font-size: 11px;">Your sales & statuses</p>
+                <?php if ($guide_url) : ?>
+                    <a href="<?php echo esc_url($guide_url . '#section-referrals'); ?>" style="color: #44f80c; text-decoration: none; font-size: 11px; font-weight: 600;">Learn more →</a>
+                <?php endif; ?>
+            </div>
+
+            <div style="background: #1a1040; padding: 12px; border-radius: 6px;">
+                <strong style="color: #e2e8f0; font-size: 13px;">Visits</strong>
+                <p style="color: #64748b; margin: 4px 0 6px; font-size: 11px;">Clicks & traffic sources</p>
+                <?php if ($guide_url) : ?>
+                    <a href="<?php echo esc_url($guide_url . '#section-visits'); ?>" style="color: #44f80c; text-decoration: none; font-size: 11px; font-weight: 600;">Learn more →</a>
+                <?php endif; ?>
+            </div>
+
+            <div style="background: #1a1040; padding: 12px; border-radius: 6px;">
+                <strong style="color: #e2e8f0; font-size: 13px;">Creatives</strong>
+                <p style="color: #64748b; margin: 4px 0 6px; font-size: 11px;">Banners & text ads</p>
+                <?php if ($guide_url) : ?>
+                    <a href="<?php echo esc_url($guide_url . '#section-creatives'); ?>" style="color: #44f80c; text-decoration: none; font-size: 11px; font-weight: 600;">Learn more →</a>
+                <?php endif; ?>
+            </div>
+
+            <div style="background: #1a1040; padding: 12px; border-radius: 6px;">
+                <strong style="color: #e2e8f0; font-size: 13px;">Payouts</strong>
+                <p style="color: #64748b; margin: 4px 0 6px; font-size: 11px;">Payment history</p>
+                <?php if ($guide_url) : ?>
+                    <a href="<?php echo esc_url($guide_url . '#section-payouts'); ?>" style="color: #44f80c; text-decoration: none; font-size: 11px; font-weight: 600;">Learn more →</a>
+                <?php endif; ?>
+            </div>
+
+        </div>
+
+        <!-- Starting note -->
+        <div style="
+            background: rgba(16,185,129,0.06);
+            border-left: 3px solid #10b981;
+            padding: 12px 16px;
+            border-radius: 0 6px 6px 0;
+            margin: 14px 0;
+            color: #94a3b8;
+            font-size: 13px;
+        ">
+            <strong style="color: #10b981;">Your numbers start at zero.</strong> That is normal. They grow as you share consistently.
+        </div>
+
+        <!-- Quick Start -->
+        <h4 style="margin: 20px 0 10px; font-size: 15px; font-weight: 700; color: #ff66c4;">Quick Start</h4>
+        <ol style="color: #94a3b8; font-size: 13px; line-height: 1.7; padding-left: 20px; margin: 0 0 16px;">
+            <li style="margin-bottom: 4px;">Copy your link above and add to social bios</li>
+            <li style="margin-bottom: 4px;">Grab a banner from the Creatives tab</li>
+            <li style="margin-bottom: 4px;">Post with a personal recommendation today</li>
+            <li>Check Visits tomorrow to see clicks</li>
+        </ol>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
+            <button onclick="if(window.microDOSAffiliateTour){window.microDOSAffiliateTour.launch(true);}else{alert('Tour loading... please try again in a moment.');}" style="
+                padding: 12px 28px;
+                background: #44f80c;
+                color: #0a0514;
+                font-weight: 700;
+                font-size: 14px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            ">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Take a Tour
+            </button>
+
+            <?php if ($guide_url) : ?>
+                <a href="<?php echo esc_url($guide_url); ?>" style="
+                    padding: 12px 28px;
+                    background: #ff66c4;
+                    color: #fff;
+                    font-weight: 700;
+                    font-size: 14px;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    text-decoration: none;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                ">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    View Dashboard Guide
+                </a>
+            <?php endif; ?>
+        </div>
+
+        <!-- Help link -->
+        <div style="margin-top: 12px; text-align: right;">
+            <?php if ($mg_url) : ?>
+                <a href="<?php echo esc_url($mg_url); ?>" style="color: #64748b; text-decoration: none; font-size: 12px;">Marketing Guide →</a>
+            <?php endif; ?>
+        </div>
+
+    </div>
+    <?php
+}
+
+// ============================================
+// 4. ADD "DON'T SHOW AGAIN" TO GETTING STARTED PANEL
+// ============================================
+
+/**
+ * Handle the "Hide Getting Started Panel" preference via AJAX.
+ */
+add_action('wp_ajax_microdos_hide_getting_started', 'microdos_ajax_hide_getting_started');
+
+function microdos_ajax_hide_getting_started() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error('Not logged in');
+    }
+
+    $user_id = get_current_user_id();
+    update_user_meta($user_id, 'microdos_hide_getting_started', '1');
+    wp_send_json_success();
+}
+
+// ============================================
+// 5. INJECT TOUR RESET TOOL IN ADMIN FOOTER
+// ============================================
+
+/**
+ * Add a small admin notice/tool for resetting the tour state.
+ * Visible only to admins on the AffiliateWP > Affiliates page.
+ */
+add_action('admin_notices', 'microdos_admin_tour_reset_notice');
+
+function microdos_admin_tour_reset_notice() {
+    $screen = get_current_screen();
+    if (!$screen || $screen->id !== 'affiliate-wp_page_affiliate-wp-affiliates') {
+        return;
+    }
+
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    // Check if reset was requested
+    if (isset($_GET['microdos_reset_tour']) && wp_verify_nonce($_GET['_wpnonce'], 'microdos_reset_tour')) {
+        global $wpdb;
+        $wpdb->query("DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE 'microdos_tour_%'");
+        $wpdb->query("DELETE FROM {$wpdb->usermeta} WHERE meta_key = 'microdos_hide_getting_started'");
+        echo '<div class="notice notice-success is-dismissible"><p><strong>Affiliate tour state reset for all users.</strong></p></div>';
+    }
+    ?>
+    <div class="notice notice-info is-dismissible" style="border-left-color: #44f80c;">
+        <p>
+            <strong>Dashboard Tour:</strong> Affiliates see an interactive tour on their first visit.
+            <a href="<?php echo esc_url(wp_nonce_url(add_query_arg('microdos_reset_tour', '1'), 'microdos_reset_tour')); ?>" style="color: #d63638; margin-left: 12px;">Reset tour for all users</a>
+            <span style="color: #94a3b8; font-size: 12px; margin-left: 8px;">(useful for testing)</span>
+        </p>
+    </div>
+    <?php
+}
+
