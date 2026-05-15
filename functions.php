@@ -1787,55 +1787,45 @@ function microdos_create_shipping_portal_page() {
 }
 
 // ============================================
-// AUTO-CREATE AFFILIATE GUIDE PAGES
+// CLEANUP: Delete standalone guide pages created by previous version
 // ============================================
-add_action('after_switch_theme', 'microdos_create_affiliate_guide_pages');
-add_action('admin_init', 'microdos_create_affiliate_guide_pages');
+add_action('after_switch_theme', 'microdos_cleanup_guide_pages');
 
-function microdos_create_affiliate_guide_pages() {
-    // --- Getting Started Page ---
-    $existing_gs = get_page_by_path('getting-started');
-    if (!$existing_gs) {
-        $pages = get_pages([
-            'meta_key'   => '_wp_page_template',
-            'meta_value' => 'page-affiliate-getting-started.php',
-        ]);
-        if (empty($pages)) {
-            $gs_id = wp_insert_post([
-                'post_title'   => 'Getting Started',
-                'post_name'    => 'getting-started',
-                'post_content' => '',
-                'post_status'  => 'publish',
-                'post_type'    => 'page',
-                'post_author'  => 1,
-                'page_template'=> 'page-affiliate-getting-started.php',
-            ]);
-            if ($gs_id && !is_wp_error($gs_id)) {
-                update_post_meta($gs_id, '_wp_page_template', 'page-affiliate-getting-started.php');
-            }
-        }
+function microdos_cleanup_guide_pages() {
+    // Delete standalone Getting Started page
+    $gs = get_page_by_path('getting-started');
+    if ($gs) {
+        wp_delete_post($gs->ID, true);
     }
+    // Delete standalone Marketing Guide page
+    $mg = get_page_by_path('marketing-guide');
+    if ($mg) {
+        wp_delete_post($mg->ID, true);
+    }
+}
 
-    // --- Marketing Guide Page ---
-    $existing_mg = get_page_by_path('marketing-guide');
-    if (!$existing_mg) {
-        $pages = get_pages([
-            'meta_key'   => '_wp_page_template',
-            'meta_value' => 'page-affiliate-marketing-guide.php',
-        ]);
-        if (empty($pages)) {
-            $mg_id = wp_insert_post([
-                'post_title'   => 'Marketing Guide',
-                'post_name'    => 'marketing-guide',
-                'post_content' => '',
-                'post_status'  => 'publish',
-                'post_type'    => 'page',
-                'post_author'  => 1,
-                'page_template'=> 'page-affiliate-marketing-guide.php',
-            ]);
-            if ($mg_id && !is_wp_error($mg_id)) {
-                update_post_meta($mg_id, '_wp_page_template', 'page-affiliate-marketing-guide.php');
-            }
-        }
-    }
+// ============================================
+// AFFILIATEWP CUSTOM TABS — Getting Started + Marketing Guide
+// ============================================
+
+// Add tabs to affiliate sidebar
+add_filter('affwp_affiliate_area_tabs', 'microdos_add_guide_tabs', 20);
+function microdos_add_guide_tabs($tabs) {
+    $tabs['getting-started'] = 'Getting Started';
+    $tabs['marketing-guide'] = 'Marketing Guide';
+    return $tabs;
+}
+
+// Render Getting Started content
+add_action('affwp_affiliate_dashboard_tab_getting-started', 'microdos_render_getting_started');
+function microdos_render_getting_started() {
+    $affiliate_id = affwp_get_affiliate_id();
+    $referral_url = affwp_get_affiliate_referral_url(array('affiliate_id' => $affiliate_id));
+    include get_template_directory() . '/affiliate-guides/getting-started-content.php';
+}
+
+// Render Marketing Guide content
+add_action('affwp_affiliate_dashboard_tab_marketing-guide', 'microdos_render_marketing_guide');
+function microdos_render_marketing_guide() {
+    include get_template_directory() . '/affiliate-guides/marketing-guide-content.php';
 }
