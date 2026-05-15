@@ -1,283 +1,250 @@
 /**
- * microDOS(2) Affiliate Portal Welcome Panel
- * ============================================
- * Injects a Getting Started panel into the Affiliate Portal dashboard.
- * Works with AffiliateWP Affiliate Portal v1.3.x (sidebar-based UI).
- *
- * Features:
- * - Injects welcome card above the main content area
- * - Shows referral link with copy button
- * - "Take a Tour" and "View Dashboard Guide" buttons
- * - Auto-detects Portal vs old tabbed interface
- * - Only runs for logged-in affiliates
- *
- * @version 1.0.0
- * @package microDOS4U
+ * microDOS(2) Affiliate Portal Integration
+ * =========================================
+ * Injects menu links into the Affiliate Portal sidebar and
+ * displays a Getting Started welcome panel on the dashboard.
+ * Works with any AffiliateWP version — no PHP filters needed.
  */
 (function() {
     'use strict';
 
-    // ============================================
-    // CONFIG
-    // ============================================
-    var CONFIG = {
-        // Portal DOM selectors (Affiliate Portal v1.3.x)
-        PORTAL_CONTENT: '.affwp-portal-content, .affwp-portal-main, .portal-content, #affwp-portal-content',
-        PORTAL_SIDEBAR: '.affwp-portal-sidebar, .portal-sidebar, #affwp-portal-sidebar',
-        PORTAL_HEADER: '.affwp-portal-header, .portal-header',
+    // Config from PHP
+    var DATA = window.microDOSPortalData || {};
+    var GUIDE_URL = DATA.guideUrl || '/affiliate-dashboard-guide/';
+    var MG_URL = DATA.mgUrl || '/marketing-guide/';
+    var REFERRAL_URL = DATA.referralUrl || '';
 
-        // Fallback: old tabbed interface
-        TAB_CONTENT: '.affwp-wrap, .affwp-tab-content',
+    // =========================
+    // 1. INJECT SIDEBAR LINKS
+    // =========================
+    function injectSidebarLinks() {
+        // Already injected?
+        if (document.getElementById('microdos-sidebar-links')) return;
 
-        // URLs (set via wp_localize_script)
-        GUIDE_URL: window.microDOSPortalData ? window.microDOSPortalData.guideUrl : '/affiliate-dashboard-guide/',
-        MG_URL: window.microDOSPortalData ? window.microDOSPortalData.mgUrl : '/marketing-guide/',
-        REFERRAL_URL: window.microDOSPortalData ? window.microDOSPortalData.referralUrl : '',
-
-        // localStorage key for "don't show again"
-        HIDE_KEY: 'microdos_welcome_hidden',
-
-        // Colors
-        COLORS: {
-            bg: '#150f24',
-            border: '#2d2255',
-            accent: '#44f80c',
-            pink: '#ff66c4',
-            text: '#d1d5db',
-            textDim: '#94a3b8',
-            cardBg: '#1a1040'
+        // Find the sidebar navigation
+        var sidebar = findSidebarNav();
+        if (!sidebar) {
+            console.log('[microDOS] Sidebar nav not found, retrying...');
+            setTimeout(injectSidebarLinks, 500);
+            return;
         }
-    };
 
-    // ============================================
-    // DETECTION
-    // ============================================
-    function isAffiliatePortal() {
-        // Check for Portal-specific elements
-        return !!document.querySelector('.affwp-portal, .affiliate-portal, .affwp-portal-sidebar, [class*="portal-sidebar"], [class*="portal-content"]');
+        // Create container
+        var container = document.createElement('div');
+        container.id = 'microdos-sidebar-links';
+        container.style.cssText = 'margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);';
+
+        // Add Dashboard Guide link
+        if (GUIDE_URL) {
+            container.appendChild(createSidebarLink(
+                GUIDE_URL,
+                'Dashboard Guide',
+                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+                'dashboard-guide'
+            ));
+        }
+
+        // Add Marketing Guide link
+        if (MG_URL) {
+            container.appendChild(createSidebarLink(
+                MG_URL,
+                'Marketing Guide',
+                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+                'marketing-guide'
+            ));
+        }
+
+        // Insert at bottom of sidebar
+        sidebar.appendChild(container);
+        console.log('[microDOS] Sidebar links injected');
     }
 
-    function isOldTabbedInterface() {
-        // Check for old tabbed Affiliate Area
-        return !!document.querySelector('.affwp-tabs, .affwp-tab-wrapper, .affwp-wrap');
+    function findSidebarNav() {
+        // Try multiple selectors for the sidebar navigation area
+        var selectors = [
+            '.affwp-portal-sidebar nav',
+            '.affiliate-portal-sidebar nav',
+            '.portal-sidebar nav',
+            '[class*="portal-sidebar"] nav',
+            '.affwp-portal-sidebar',
+            '.affiliate-portal-sidebar',
+            '.portal-sidebar',
+            'aside nav',
+            'aside',
+            '.sidebar nav',
+            '.sidebar'
+        ];
+
+        for (var i = 0; i < selectors.length; i++) {
+            var el = document.querySelector(selectors[i]);
+            if (el) return el;
+        }
+
+        // Fallback: find the sidebar by looking for known menu items
+        var dashboardLink = findElementByText('Dashboard', 'a');
+        if (dashboardLink) {
+            // Walk up to find the parent container
+            var parent = dashboardLink.parentElement;
+            while (parent && parent.tagName !== 'BODY') {
+                if (parent.tagName === 'ASIDE' || parent.tagName === 'NAV' ||
+                    parent.classList.contains('sidebar') ||
+                    parent.classList.contains('portal-sidebar') ||
+                    parent.classList.contains('affwp-portal-sidebar')) {
+                    return parent;
+                }
+                parent = parent.parentElement;
+            }
+        }
+
+        return null;
     }
 
-    function shouldShowPanel() {
-        // Check if user has dismissed it
-        try {
-            if (localStorage.getItem(CONFIG.HIDE_KEY) === '1') return false;
-        } catch(e) {}
-        return true;
+    function findElementByText(text, tag) {
+        var elements = document.querySelectorAll(tag);
+        for (var i = 0; i < elements.length; i++) {
+            if (elements[i].textContent.trim() === text) {
+                return elements[i];
+            }
+        }
+        return null;
     }
 
-    // ============================================
-    // CSS INJECTION
-    // ============================================
-    function injectStyles() {
-        var styleId = 'microdos-portal-welcome-styles';
-        if (document.getElementById(styleId)) return;
+    function createSidebarLink(href, text, iconHtml, id) {
+        // Get an existing link to copy styles from
+        var existingLink = document.querySelector('.affwp-portal-sidebar a, .affiliate-portal-sidebar a, .portal-sidebar a, aside a');
+        var computedStyle = existingLink ? window.getComputedStyle(existingLink) : null;
 
-        var css = `
-            #microdos-welcome-panel {
-                background: linear-gradient(135deg, #150f24, #0a0514);
-                border: 1px solid #2d2255;
-                border-radius: 12px;
-                padding: 24px 28px;
-                margin: 0 0 24px 0;
-                color: #d1d5db;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                font-size: 14px;
-                line-height: 1.5;
-                position: relative;
-            }
-            #microdos-welcome-panel h3 {
-                color: #44f80c;
-                font-size: 18px;
-                font-weight: 700;
-                margin: 0 0 16px 0;
-            }
-            #microdos-welcome-panel .mcd-ref-box {
-                background: rgba(68,248,12,0.06);
-                border: 1px solid #44f80c;
-                border-radius: 8px;
-                padding: 14px 18px;
-                margin-bottom: 20px;
-            }
-            #microdos-welcome-panel .mcd-ref-box strong {
-                color: #44f80c;
-                font-size: 12px;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-            }
-            #microdos-welcome-panel .mcd-ref-box p {
-                color: #94a3b8;
-                font-size: 13px;
-                margin: 6px 0 10px;
-            }
-            #microdos-welcome-panel .mcd-ref-box code {
-                display: block;
-                background: rgba(68,248,12,0.08);
-                color: #44f80c;
-                padding: 10px 14px;
-                border-radius: 6px;
-                font-size: 13px;
-                word-break: break-all;
-                margin: 0 0 10px;
-                font-family: monospace;
-            }
-            #microdos-welcome-panel .mcd-ref-box button {
-                padding: 8px 18px;
-                background: #44f80c;
-                color: #0a0514;
-                border: none;
-                border-radius: 6px;
-                font-size: 13px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: opacity 0.2s;
-            }
-            #microdos-welcome-panel .mcd-ref-box button:hover { opacity: 0.85; }
-            #microdos-welcome-panel .mcd-section-title {
-                color: #ff66c4;
-                font-size: 15px;
-                font-weight: 700;
-                margin: 20px 0 10px;
-            }
-            #microdos-welcome-panel ol, #microdos-welcome-panel ul {
-                color: #94a3b8;
-                font-size: 13px;
-                line-height: 1.7;
-                padding-left: 20px;
-                margin: 0 0 16px;
-            }
-            #microdos-welcome-panel li { margin-bottom: 4px; }
-            #microdos-welcome-panel li strong { color: #e2e8f0; }
-            #microdos-welcome-panel .mcd-note {
-                background: rgba(16,185,129,0.06);
-                border-left: 3px solid #10b981;
-                border-radius: 0 6px 6px 0;
-                padding: 12px 16px;
-                margin: 14px 0;
-                color: #94a3b8;
-                font-size: 13px;
-            }
-            #microdos-welcome-panel .mcd-note strong { color: #10b981; }
-            #microdos-welcome-panel .mcd-buttons {
-                display: flex;
-                gap: 12px;
-                margin-top: 16px;
-                flex-wrap: wrap;
-            }
-            #microdos-welcome-panel .mcd-btn {
-                padding: 12px 28px;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 700;
-                text-decoration: none;
-                cursor: pointer;
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                transition: opacity 0.2s;
-                border: none;
-            }
-            #microdos-welcome-panel .mcd-btn:hover { opacity: 0.85; }
-            #microdos-welcome-panel .mcd-btn-green {
-                background: #44f80c;
-                color: #0a0514;
-            }
-            #microdos-welcome-panel .mcd-btn-pink {
-                background: #ff66c4;
-                color: #fff;
-            }
-            #microdos-welcome-panel .mcd-dismiss {
-                position: absolute;
-                top: 12px;
-                right: 12px;
-                background: none;
-                border: 1px solid #475569;
-                color: #94a3b8;
-                border-radius: 50%;
-                width: 28px;
-                height: 28px;
-                cursor: pointer;
-                font-size: 16px;
-                line-height: 1;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0;
-                transition: all 0.2s;
-            }
-            #microdos-welcome-panel .mcd-dismiss:hover {
-                background: rgba(239,68,68,0.1);
-                color: #ef4444;
-                border-color: #ef4444;
-            }
-            @media (max-width: 600px) {
-                #microdos-welcome-panel { padding: 16px; }
-                #microdos-welcome-panel .mcd-buttons { flex-direction: column; }
-            }
-        `;
+        var link = document.createElement('a');
+        link.href = href;
+        link.id = 'microdos-link-' + id;
+        link.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 20px;color:#94a3b8;text-decoration:none;font-size:14px;font-weight:500;transition:all 0.2s;border-radius:6px;margin:2px 8px;';
 
-        var style = document.createElement('style');
-        style.id = styleId;
-        style.textContent = css;
-        document.head.appendChild(style);
+        link.innerHTML = '<span style="flex-shrink:0;opacity:0.7;">' + iconHtml + '</span><span>' + text + '</span>';
+
+        // Hover effects
+        link.addEventListener('mouseenter', function() {
+            link.style.backgroundColor = 'rgba(68,248,12,0.06)';
+            link.style.color = '#44f80c';
+        });
+        link.addEventListener('mouseleave', function() {
+            link.style.backgroundColor = 'transparent';
+            link.style.color = '#94a3b8';
+        });
+
+        // Copy click behavior from existing links if possible
+        if (existingLink) {
+            // Some portals use JS navigation - check if existing links have onclick handlers
+            var existingOnclick = existingLink.getAttribute('onclick');
+            if (existingOnclick) {
+                // Let the browser handle it normally (our link has a real href)
+            }
+        }
+
+        return link;
     }
 
-    // ============================================
-    // PANEL HTML BUILDER
-    // ============================================
-    function buildPanelHTML() {
-        var guideUrl = CONFIG.GUIDE_URL;
-        var mgUrl = CONFIG.MG_URL;
-        var refUrl = CONFIG.REFERRAL_URL;
+    // =========================
+    // 2. INJECT WELCOME PANEL
+    // =========================
+    function injectWelcomePanel() {
+        if (document.getElementById('microdos-welcome-panel')) return;
 
-        return `
-            <button class="mcd-dismiss" title="Hide this panel" aria-label="Hide">&times;</button>
-            <h3>Getting Started as a microDOS(2) Affiliate</h3>
+        var content = findContentArea();
+        if (!content) {
+            setTimeout(injectWelcomePanel, 500);
+            return;
+        }
 
-            <div class="mcd-ref-box">
-                <strong>Your Referral Link</strong>
-                <p>Share this link everywhere. When someone clicks and buys, you earn 20%.</p>
-                <code id="mcd-ref-url">${escapeHtml(refUrl)}</code>
-                <button onclick="copyRefLink(this)">Copy Link</button>
-            </div>
+        var panel = document.createElement('div');
+        panel.id = 'microdos-welcome-panel';
+        panel.style.cssText = 'background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin:0 0 24px 0;font-family:inherit;position:relative;';
 
-            <div class="mcd-section-title">How It Works</div>
-            <ol>
-                <li><strong>Share your link</strong> — Post on social media, email, anywhere</li>
-                <li><strong>Someone clicks</strong> — Tracked to your account</li>
-                <li><strong>They buy within 45 days</strong> — Cookie tracks them</li>
-                <li><strong>You earn 20%</strong> — Every sale. No cap.</li>
-                <li><strong>Get paid monthly</strong> — $50 minimum, 1st of the month</li>
-            </ol>
+        panel.innerHTML = buildWelcomeHTML();
 
-            <div class="mcd-note">
-                <strong>Your numbers start at zero.</strong> That is normal. They grow as you share consistently.
-            </div>
+        // Insert as first child of content area
+        if (content.firstChild) {
+            content.insertBefore(panel, content.firstChild);
+        } else {
+            content.appendChild(panel);
+        }
 
-            <div class="mcd-section-title">Quick Start</div>
-            <ol>
-                <li>Copy your link above and add to social bios</li>
-                <li>Grab a banner from the Creatives tab</li>
-                <li>Post with a personal recommendation today</li>
-                <li>Check Visits tomorrow to see clicks</li>
-            </ol>
+        console.log('[microDOS] Welcome panel injected');
+    }
 
-            <div class="mcd-buttons">
-                <button class="mcd-btn mcd-btn-green" onclick="launchTour()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Take a Tour
-                </button>
-                <a href="${escapeHtml(guideUrl)}" class="mcd-btn mcd-btn-pink">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                    View Dashboard Guide
-                </a>
-                ${mgUrl ? '<a href="' + escapeHtml(mgUrl) + '" class="mcd-btn mcd-btn-pink" style="background:#9a02d0;">Marketing Guide</a>' : ''}
-            </div>
-        `;
+    function findContentArea() {
+        var selectors = [
+            '.affwp-portal-content',
+            '.affiliate-portal-content',
+            '.portal-content',
+            '.affwp-portal-main',
+            '.affiliate-portal-main',
+            'main',
+            '.content-area',
+            '.site-main',
+            'article'
+        ];
+
+        for (var i = 0; i < selectors.length; i++) {
+            var el = document.querySelector(selectors[i]);
+            if (el) return el;
+        }
+
+        // Fallback: find by dashboard stats cards
+        var statCard = document.querySelector('[class*="referral"], [class*="stat"]');
+        if (statCard) {
+            var parent = statCard.parentElement;
+            while (parent && parent.tagName !== 'BODY') {
+                if (parent.children.length > 2) return parent;
+                parent = parent.parentElement;
+            }
+        }
+
+        return null;
+    }
+
+    function buildWelcomeHTML() {
+        var refDisplay = REFERRAL_URL || 'Your referral link will appear here';
+
+        return '<button id="mcd-dismiss" title="Hide" style="position:absolute;top:12px;right:12px;background:none;border:1px solid #cbd5e1;color:#94a3b8;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;">&times;</button>' +
+
+        '<h3 style="margin:0 0 16px;font-size:18px;font-weight:700;color:#0f172a;">Getting Started as a microDOS(2) Affiliate</h3>' +
+
+        '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;margin-bottom:20px;">' +
+            '<strong style="color:#44f80c;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;">Your Referral Link</strong>' +
+            '<p style="color:#64748b;font-size:13px;margin:6px 0 10px;">Share this link everywhere. When someone clicks and buys, you earn 20%.</p>' +
+            '<code id="mcd-ref-url" style="display:block;background:#f1f5f9;color:#0f172a;padding:10px 14px;border-radius:6px;font-size:13px;word-break:break-all;margin:0 0 10px;font-family:monospace;">' + escapeHtml(refDisplay) + '</code>' +
+            '<button onclick="copyMcdRef(this)" style="padding:8px 18px;background:#44f80c;color:#0a0514;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">Copy Link</button>' +
+        '</div>' +
+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">' +
+            '<div style="background:#f8fafc;padding:12px;border-radius:6px;">' +
+                '<strong style="color:#0f172a;font-size:13px;">How It Works</strong>' +
+                '<ol style="color:#64748b;font-size:12px;line-height:1.6;padding-left:16px;margin:8px 0 0;">' +
+                    '<li>Share your link</li><li>Someone clicks</li><li>They buy within 45 days</li><li>You earn 20%</li>' +
+                '</ol>' +
+            '</div>' +
+            '<div style="background:#f8fafc;padding:12px;border-radius:6px;">' +
+                '<strong style="color:#0f172a;font-size:13px;">Quick Start</strong>' +
+                '<ol style="color:#64748b;font-size:12px;line-height:1.6;padding-left:16px;margin:8px 0 0;">' +
+                    '<li>Copy your link</li><li>Grab a banner from Creatives</li><li>Post with a recommendation</li><li>Check Visits tomorrow</li>' +
+                '</ol>' +
+            '</div>' +
+        '</div>' +
+
+        '<div style="display:flex;gap:12px;flex-wrap:wrap;">' +
+            '<button onclick="launchMcdTour()" style="padding:10px 20px;background:#44f80c;color:#0a0514;font-weight:700;font-size:13px;border:none;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>' +
+                'Take a Tour' +
+            '</button>' +
+            '<a href="' + escapeHtml(GUIDE_URL) + '" style="padding:10px 20px;background:#ff66c4;color:#fff;font-weight:700;font-size:13px;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>' +
+                'Dashboard Guide' +
+            '</a>' +
+            (MG_URL ? '<a href="' + escapeHtml(MG_URL) + '" style="padding:10px 20px;background:#9a02d0;color:#fff;font-weight:700;font-size:13px;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' +
+                'Marketing Guide' +
+            '</a>' : '') +
+        '</div>';
     }
 
     function escapeHtml(text) {
@@ -286,16 +253,16 @@
         return div.innerHTML;
     }
 
-    // ============================================
-    // GLOBAL FUNCTIONS (called from HTML onclick)
-    // ============================================
-    window.copyRefLink = function(btn) {
+    // =========================
+    // 3. GLOBAL FUNCTIONS
+    // =========================
+
+    window.copyMcdRef = function(btn) {
         var url = document.getElementById('mcd-ref-url').textContent;
         navigator.clipboard.writeText(url).then(function() {
             btn.textContent = 'Copied!';
             setTimeout(function() { btn.textContent = 'Copy Link'; }, 2000);
         }, function() {
-            // Fallback for older browsers
             var ta = document.createElement('textarea');
             ta.value = url;
             document.body.appendChild(ta);
@@ -307,7 +274,7 @@
         });
     };
 
-    window.launchTour = function() {
+    window.launchMcdTour = function() {
         if (window.microDOSAffiliateTour && window.microDOSAffiliateTour.launch) {
             window.microDOSAffiliateTour.launch(true);
         } else {
@@ -315,160 +282,35 @@
         }
     };
 
-    // ============================================
-    // PANEL INJECTION
-    // ============================================
-    function injectPanel() {
-        // Already injected?
-        if (document.getElementById('microdos-welcome-panel')) return;
-
-        // Inject CSS
-        injectStyles();
-
-        // Build panel
-        var panel = document.createElement('div');
-        panel.id = 'microdos-welcome-panel';
-        panel.innerHTML = buildPanelHTML();
-
-        // Find insertion point
-        var insertionPoint = null;
-        var container = null;
-
-        if (isAffiliatePortal()) {
-            // Portal: try main content area
-            container = document.querySelector('.affwp-portal-content') ||
-                        document.querySelector('.affwp-portal-main') ||
-                        document.querySelector('[class*="portal-content"]') ||
-                        document.querySelector('.affwp-portal') ||
-                        document.querySelector('.affiliate-portal') ||
-                        document.querySelector('main') ||
-                        document.querySelector('.content-area');
-
-            if (container) {
-                // Insert as first child of content area
-                if (container.firstChild) {
-                    container.insertBefore(panel, container.firstChild);
-                } else {
-                    container.appendChild(panel);
-                }
-                console.log('[microDOS Welcome] Injected into Affiliate Portal');
-            } else {
-                // Fallback: inject at top of body content
-                var bodyFirst = document.body.querySelector('div');
-                if (bodyFirst && bodyFirst.parentNode) {
-                    bodyFirst.parentNode.insertBefore(panel, bodyFirst);
-                } else {
-                    document.body.insertBefore(panel, document.body.firstChild);
-                }
-            }
-        } else if (isOldTabbedInterface()) {
-            // Old tabbed: use the affwp_affiliate_dashboard_top hook approach
-            // This is handled by PHP. JS won't inject here.
-            console.log('[microDOS Welcome] Old tabbed interface detected - panel handled by PHP');
-            return;
-        } else {
-            // Unknown interface - try generic content area
-            container = document.querySelector('.content-area') ||
-                        document.querySelector('main') ||
-                        document.querySelector('.site-main') ||
-                        document.querySelector('article');
-            if (container) {
-                container.insertBefore(panel, container.firstChild);
-            }
-        }
-
-        // Dismiss handler
-        var dismissBtn = panel.querySelector('.mcd-dismiss');
-        if (dismissBtn) {
-            dismissBtn.addEventListener('click', function() {
-                panel.style.opacity = '0';
-                panel.style.transform = 'translateY(-10px)';
-                panel.style.transition = 'all 0.3s ease';
-                setTimeout(function() {
-                    panel.remove();
-                }, 300);
-                try {
-                    localStorage.setItem(CONFIG.HIDE_KEY, '1');
-                } catch(e) {}
-            });
-        }
-    }
-
-    // ============================================
-    // SIDEBAR MENU INJECTION (JS Fallback)
-    // ============================================
-    function injectSidebarMenuLinks() {
-        // Only inject if they don't already exist
-        if (document.querySelector('.mcd-portal-menu-link')) return;
-
-        var sidebar = document.querySelector('.affwp-portal-sidebar') ||
-                      document.querySelector('.portal-sidebar') ||
-                      document.querySelector('[class*="portal-sidebar"]') ||
-                      document.querySelector('.affwp-portal nav') ||
-                      document.querySelector('nav[role="navigation"]');
-
-        if (!sidebar) return;
-
-        var guideUrl = CONFIG.GUIDE_URL;
-        var mgUrl = CONFIG.MG_URL;
-
-        // Create menu items
-        var items = [
-            { url: guideUrl, label: 'Dashboard Guide', icon: '📖' },
-            { url: mgUrl, label: 'Marketing Guide', icon: '🚀' }
-        ];
-
-        items.forEach(function(item) {
-            if (!item.url) return;
-
-            var link = document.createElement('a');
-            link.href = item.url;
-            link.className = 'mcd-portal-menu-link';
-            link.innerHTML = item.icon + ' ' + escapeHtml(item.label);
-
-            // Try to match Portal's existing link styles
-            var existingLinks = sidebar.querySelectorAll('a');
-            if (existingLinks.length > 0) {
-                var firstLink = existingLinks[0];
-                link.style.cssText = window.getComputedStyle(firstLink).cssText;
-            }
-
-            sidebar.appendChild(link);
-        });
-
-        console.log('[microDOS Welcome] Injected sidebar menu links');
-    }
-
-    // ============================================
+    // =========================
     // INIT
-    // ============================================
+    // =========================
     function init() {
-        // Only run on affiliate pages
         var path = window.location.pathname;
-        var isAffiliatePage = path.indexOf('affiliate') !== -1 ||
-                              path.indexOf('portal') !== -1 ||
-                              document.querySelector('.affwp-portal, .affiliate-portal, .affwp-wrap');
+        var isAffiliate = path.indexOf('affiliate') !== -1 ||
+                          path.indexOf('portal') !== -1 ||
+                          document.querySelector('.affwp-portal') ||
+                          document.querySelector('.affiliate-portal');
 
-        if (!isAffiliatePage) return;
+        if (!isAffiliate) return;
 
-        // Inject welcome panel
-        if (shouldShowPanel()) {
-            injectPanel();
+        injectSidebarLinks();
+
+        // Only show welcome panel on main dashboard page
+        var isMainDash = !window.location.search.match(/[?&]tab=/) &&
+                         !window.location.hash.match(/tab/);
+        if (isMainDash) {
+            injectWelcomePanel();
         }
-
-        // Inject sidebar links (always)
-        injectSidebarMenuLinks();
     }
 
-    // Run when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
     }
 
-    // Also try after a short delay (Portal may load content via JS)
+    // Retry for AJAX-loaded content
     setTimeout(init, 500);
     setTimeout(init, 1500);
-
 })();
