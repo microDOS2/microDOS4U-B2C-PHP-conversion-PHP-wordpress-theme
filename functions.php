@@ -1724,3 +1724,10 @@ function microdos_thankyou_shipping_notice($order_id) {
         echo '</div>';
     }
 }
+
+// ============================================
+// SHIPPING DASHBOARD ADMIN PAGE
+// Centralized shipping management interface
+// ============================================
+
+require_once get_template_directory() . '/admin-shipping.php';
