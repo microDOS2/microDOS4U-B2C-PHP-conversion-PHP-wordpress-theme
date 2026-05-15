@@ -6,7 +6,6 @@
  * Phase 1: Bulk ship, search/filter, estimated weight, auto-refresh
  *
  * @package microDOS4U
- * UPDATED: 2025-05-16 16:45 UTC - Phase 1+2 confirmed pushed
  */
 
 // Require login
@@ -79,6 +78,55 @@ if (isset($_GET['action']) && $_GET['action'] === 'packing-slip' && isset($_GET[
         <div class="section"><h3>Items</h3><table><thead><tr><th>Product</th><th style="text-align:center">Qty</th></tr></thead><tbody><?php foreach ($slip_order->get_items() as $item) : ?><tr><td><?php echo esc_html($item->get_name()); ?></td><td style="text-align:center;font-weight:700"><?php echo $item->get_quantity(); ?></td></tr><?php endforeach; ?></tbody></table></div>
         <div class="footer">microDOS(2) &middot; Thank you for your order &middot; For research purposes only</div>
         </body></html><?php exit;
+    }
+}
+
+// ─── CREATE ORDER ───
+$create_notice = '';
+if (isset($_POST['microdos_create_order']) && check_admin_referer('microdos_create_order_nonce')) {
+    $billing_first = sanitize_text_field($_POST['billing_first_name'] ?? '');
+    $billing_last  = sanitize_text_field($_POST['billing_last_name'] ?? '');
+    $billing_email = sanitize_email($_POST['billing_email'] ?? '');
+    $billing_phone = sanitize_text_field($_POST['billing_phone'] ?? '');
+    $address_1     = sanitize_text_field($_POST['shipping_address_1'] ?? '');
+    $address_2     = sanitize_text_field($_POST['shipping_address_2'] ?? '');
+    $city          = sanitize_text_field($_POST['shipping_city'] ?? '');
+    $state         = sanitize_text_field($_POST['shipping_state'] ?? '');
+    $postcode      = sanitize_text_field($_POST['shipping_postcode'] ?? '');
+    $product_id    = intval($_POST['product_id'] ?? 0);
+    $quantity      = max(1, intval($_POST['quantity'] ?? 1));
+    $order_note    = sanitize_textarea_field($_POST['order_note'] ?? '');
+
+    if ($billing_first && $billing_last && $billing_email && $address_1 && $city && $product_id) {
+        $new_order = wc_create_order();
+        $product = wc_get_product($product_id);
+        if ($product && $new_order) {
+            $new_order->add_product($product, $quantity);
+            $new_order->set_billing_first_name($billing_first);
+            $new_order->set_billing_last_name($billing_last);
+            $new_order->set_billing_email($billing_email);
+            $new_order->set_billing_phone($billing_phone);
+            $new_order->set_shipping_first_name($billing_first);
+            $new_order->set_shipping_last_name($billing_last);
+            $new_order->set_shipping_address_1($address_1);
+            $new_order->set_shipping_address_2($address_2);
+            $new_order->set_shipping_city($city);
+            $new_order->set_shipping_state($state);
+            $new_order->set_shipping_postcode($postcode);
+            $new_order->set_shipping_country('US');
+            $new_order->set_payment_method('');
+            $new_order->set_created_via('shipping_portal');
+            if ($order_note) {
+                $new_order->add_order_note($order_note, false, false);
+            }
+            $new_order->calculate_totals();
+            $new_order->update_status('processing', __('Created via Shipping Portal.', 'microdos4u'));
+            $create_notice = '<div class="portal-notice portal-success">Order #' . esc_html($new_order->get_order_number()) . ' created successfully.</div>';
+        } else {
+            $create_notice = '<div class="portal-notice portal-error">Invalid product selected.</div>';
+        }
+    } else {
+        $create_notice = '<div class="portal-notice portal-error">Please fill in all required fields.</div>';
     }
 }
 
@@ -298,6 +346,21 @@ body{background:#0a0514;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFo
 /* Empty */
 .portal-empty{padding:50px 20px;text-align:center}.portal-empty p{color:#64748b;font-size:15px}
 
+/* Create Order Form */
+.portal-create-form{max-width:700px}
+.portal-form-section{background:#150f24;border:1px solid #1f2b47;border-radius:10px;padding:20px;margin-bottom:16px}
+.portal-form-section h3{color:#44f80c;font-size:14px;margin:0 0 14px;text-transform:uppercase;letter-spacing:1px}
+.portal-form-row{display:flex;gap:12px;margin-bottom:12px}
+.portal-form-row.three-col .portal-form-field{flex:1}
+.portal-form-field{flex:1;display:flex;flex-direction:column}
+.portal-form-field label{color:#94a3b8;font-size:12px;margin-bottom:5px;font-weight:500}
+.portal-form-field input,.portal-form-field select,.portal-form-field textarea{background:#0a0514;border:1px solid #1f2b47;color:#e2e8f0;padding:10px 12px;border-radius:6px;font-size:13px;outline:none;transition:border-color .2s;width:100%}
+.portal-form-field input:focus,.portal-form-field select:focus,.portal-form-field textarea:focus{border-color:#44f80c;box-shadow:0 0 0 2px #44f80c20}
+.portal-form-field input::placeholder{color:#64748b}
+.portal-form-field select option{background:#0a0514;color:#e2e8f0}
+.portal-form-field textarea{resize:vertical;min-height:80px}
+.portal-form-actions{display:flex;gap:12px;margin-top:20px;align-items:center}
+
 /* Keyboard hint */
 .portal-hints{display:flex;gap:16px;margin-top:12px;font-size:11px;color:#64748b}
 .portal-hints kbd{background:#1f2b47;padding:2px 6px;border-radius:4px;font-family:inherit;font-size:11px}
@@ -363,6 +426,9 @@ body{background:#0a0514;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFo
         </a>
         <a href="?tab=shipped" class="portal-tab <?php echo $tab === 'shipped' ? 'active' : ''; ?>">
             Shipped Orders
+        </a>
+        <a href="?tab=create" class="portal-tab <?php echo $tab === 'create' ? 'active' : ''; ?>">
+            <span style="font-size:14px;">+</span> Create Order
         </a>
     </div>
 
@@ -503,6 +569,103 @@ body{background:#0a0514;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFo
         <?php endfor; ?>
     </div>
     <?php endif; ?>
+<?php elseif ($tab === 'create') : ?>
+    <!-- Create Order Tab -->
+    <div class="portal-tab-content">
+        <h2 style="color:#e2e8f0;margin:0 0 16px;font-size:18px;">Create New Order</h2>
+        <?php echo $create_notice; ?>
+
+        <form method="post" class="portal-create-form">
+            <?php wp_nonce_field('microdos_create_order_nonce'); ?>
+            <input type="hidden" name="microdos_create_order" value="1">
+
+            <div class="portal-form-section">
+                <h3>Customer Information</h3>
+                <div class="portal-form-row">
+                    <div class="portal-form-field">
+                        <label>First Name *</label>
+                        <input type="text" name="billing_first_name" required placeholder="John">
+                    </div>
+                    <div class="portal-form-field">
+                        <label>Last Name *</label>
+                        <input type="text" name="billing_last_name" required placeholder="Doe">
+                    </div>
+                </div>
+                <div class="portal-form-row">
+                    <div class="portal-form-field">
+                        <label>Email *</label>
+                        <input type="email" name="billing_email" required placeholder="john@example.com">
+                    </div>
+                    <div class="portal-form-field">
+                        <label>Phone</label>
+                        <input type="tel" name="billing_phone" placeholder="(555) 123-4567">
+                    </div>
+                </div>
+            </div>
+
+            <div class="portal-form-section">
+                <h3>Shipping Address</h3>
+                <div class="portal-form-field">
+                    <label>Address Line 1 *</label>
+                    <input type="text" name="shipping_address_1" required placeholder="123 Main St">
+                </div>
+                <div class="portal-form-field">
+                    <label>Address Line 2</label>
+                    <input type="text" name="shipping_address_2" placeholder="Apt 4B">
+                </div>
+                <div class="portal-form-row three-col">
+                    <div class="portal-form-field">
+                        <label>City *</label>
+                        <input type="text" name="shipping_city" required placeholder="Dallas">
+                    </div>
+                    <div class="portal-form-field">
+                        <label>State *</label>
+                        <input type="text" name="shipping_state" required placeholder="TX" maxlength="2" style="text-transform:uppercase;">
+                    </div>
+                    <div class="portal-form-field">
+                        <label>ZIP Code *</label>
+                        <input type="text" name="shipping_postcode" required placeholder="75201" maxlength="10">
+                    </div>
+                </div>
+            </div>
+
+            <div class="portal-form-section">
+                <h3>Order Items</h3>
+                <div class="portal-form-row">
+                    <div class="portal-form-field" style="flex:2;">
+                        <label>Product *</label>
+                        <select name="product_id" required>
+                            <option value="">-- Select Product --</option>
+                            <?php
+                            $products = wc_get_products(['status' => 'publish', 'limit' => -1, 'orderby' => 'name', 'order' => 'ASC']);
+                            foreach ($products as $product) {
+                                echo '<option value="' . esc_attr($product->get_id()) . '">' . esc_html($product->get_name()) . ' - ' . wc_price($product->get_price()) . '</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="portal-form-field" style="flex:1;">
+                        <label>Quantity *</label>
+                        <input type="number" name="quantity" value="1" min="1" max="99" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="portal-form-section">
+                <h3>Notes</h3>
+                <div class="portal-form-field">
+                    <label>Order Note (internal)</label>
+                    <textarea name="order_note" rows="3" placeholder="Any special instructions..."></textarea>
+                </div>
+            </div>
+
+            <div class="portal-form-actions">
+                <button type="submit" class="portal-btn portal-btn-ship" style="width:auto;padding:12px 32px;font-size:14px;">Create Order</button>
+                <a href="?tab=ready" class="portal-btn portal-btn-view" style="width:auto;padding:12px 24px;font-size:14px;">Cancel</a>
+            </div>
+        </form>
+    </div>
+<?php endif; ?>
 </div>
 
 <!-- Keyboard hints -->
