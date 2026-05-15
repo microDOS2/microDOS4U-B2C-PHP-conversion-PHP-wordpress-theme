@@ -1731,3 +1731,43 @@ function microdos_thankyou_shipping_notice($order_id) {
 // ============================================
 
 require_once get_template_directory() . '/admin-shipping.php';
+
+// ============================================
+// AUTO-CREATE SHIPPING PORTAL PAGE
+// Creates the page on theme activation if it doesn't exist
+// ============================================
+
+add_action('after_switch_theme', 'microdos_create_shipping_portal_page');
+add_action('admin_init', 'microdos_create_shipping_portal_page');
+
+function microdos_create_shipping_portal_page() {
+    // Check if page already exists
+    $existing = get_page_by_path('shipping-portal');
+    if ($existing) {
+        return; // Page already exists
+    }
+
+    // Check if a page with this template already exists
+    $pages = get_pages([
+        'meta_key'   => '_wp_page_template',
+        'meta_value' => 'page-shipping-portal.php',
+    ]);
+    if (!empty($pages)) {
+        return; // A page with this template already exists
+    }
+
+    // Create the page
+    $page_id = wp_insert_post([
+        'post_title'   => 'Shipping Portal',
+        'post_name'    => 'shipping-portal',
+        'post_content' => '',
+        'post_status'  => 'publish',
+        'post_type'    => 'page',
+        'post_author'  => 1,
+        'page_template'=> 'page-shipping-portal.php',
+    ]);
+
+    if ($page_id && !is_wp_error($page_id)) {
+        update_post_meta($page_id, '_wp_page_template', 'page-shipping-portal.php');
+    }
+}
