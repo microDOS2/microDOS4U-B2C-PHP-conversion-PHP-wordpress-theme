@@ -54,6 +54,33 @@ if (isset($_POST['microdos_portal_ship']) && check_admin_referer('microdos_porta
     }
 }
 
+// ─── PACKING SLIP ───
+if (isset($_GET['action']) && $_GET['action'] === 'packing-slip' && isset($_GET['order_id'])) {
+    $slip_order = wc_get_order(intval($_GET['order_id']));
+    if ($slip_order && current_user_can('manage_woocommerce')) {
+        $sw = microdos_estimated_weight($slip_order);
+        ?><!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing Slip #<?php echo $slip_order->get_order_number(); ?></title>
+        <style>body{font-family:Arial,sans-serif;font-size:13px;color:#333;max-width:600px;margin:40px auto;padding:20px;border:1px solid #ddd}
+        .header{text-align:center;border-bottom:2px solid #44f80c;padding-bottom:15px;margin-bottom:20px}
+        .header h1{color:#44f80c;margin:0;font-size:22px}.header p{color:#666;margin:4px 0}
+        .section{margin-bottom:18px}.section h3{border-bottom:1px solid #eee;padding-bottom:6px;margin-bottom:10px;color:#333;font-size:14px}
+        .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0}
+        .row:last-child{border-bottom:none}.label{color:#666}.value{font-weight:600}
+        table{width:100%;border-collapse:collapse;margin-top:10px}th{text-align:left;border-bottom:2px solid #333;padding:8px;font-size:12px}td{padding:8px;border-bottom:1px solid #eee}
+        .footer{margin-top:30px;text-align:center;color:#999;font-size:11px;border-top:1px solid #eee;padding-top:15px}
+        @media print{body{border:none;margin:0;padding:0}.no-print{display:none}}.no-print{text-align:center;margin-bottom:20px}
+        .no-print button{background:#44f80c;color:#0a0514;border:none;padding:10px 24px;border-radius:6px;font-weight:700;cursor:pointer}
+        </style></head><body>
+        <div class="no-print"><button onclick="window.print()">&#128424; Print Packing Slip</button></div>
+        <div class="header"><h1>microDOS(2)</h1><p>Packing Slip &middot; Order #<?php echo $slip_order->get_order_number(); ?></p><p><?php echo date('F j, Y g:i A'); ?></p></div>
+        <div class="section"><h3>Ship To</h3><strong><?php echo esc_html($slip_order->get_formatted_shipping_full_name()); ?></strong><br><?php echo esc_html($slip_order->get_shipping_address_1()); ?><br><?php if($slip_order->get_shipping_address_2()) echo esc_html($slip_order->get_shipping_address_2()) . '<br>'; ?><?php echo esc_html($slip_order->get_shipping_city() . ', ' . $slip_order->get_shipping_state() . ' ' . $slip_order->get_shipping_postcode()); ?><br><?php echo esc_html($slip_order->get_shipping_country()); ?></div>
+        <div class="section"><h3>Order Details</h3><div class="row"><span class="label">Order Date</span><span class="value"><?php echo $slip_order->get_date_created()->date('M j, Y'); ?></span></div><div class="row"><span class="label">Est. Weight</span><span class="value"><?php echo $sw['g']; ?>g / <?php echo $sw['oz']; ?> oz</span></div></div>
+        <div class="section"><h3>Items</h3><table><thead><tr><th>Product</th><th style="text-align:center">Qty</th></tr></thead><tbody><?php foreach ($slip_order->get_items() as $item) : ?><tr><td><?php echo esc_html($item->get_name()); ?></td><td style="text-align:center;font-weight:700"><?php echo $item->get_quantity(); ?></td></tr><?php endforeach; ?></tbody></table></div>
+        <div class="footer">microDOS(2) &middot; Thank you for your order &middot; For research purposes only</div>
+        </body></html><?php exit;
+    }
+}
+
 // ─── SEARCH ───
 $search = isset($_GET['q']) ? sanitize_text_field($_GET['q']) : '';
 
@@ -440,7 +467,10 @@ body{background:#0a0514;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFo
                                 <input type="text" name="tracking_<?php echo $oid; ?>" class="portal-tracking-input" placeholder="940011..." value="<?php echo esc_attr($tracking); ?>" id="tracking_<?php echo $oid; ?>">
                             </td>
                             <td>
-                                <button type="submit" name="microdos_portal_ship" value="1" class="portal-btn portal-btn-ship" onclick="document.getElementById('bulkForm').action='';return true;">Ship</button>
+                                <div style="display:flex;gap:4px;flex-direction:column;">
+                                    <button type="submit" name="microdos_portal_ship" value="1" class="portal-btn portal-btn-ship" onclick="document.getElementById('bulkForm').action='';return true;">Ship</button>
+                                    <a href="?tab=ready&amp;action=packing-slip&amp;order_id=<?php echo $oid; ?>" target="_blank" class="portal-btn portal-btn-view">&#128424; Print Slip</a>
+                                </div>
                                 <input type="hidden" name="order_id" value="<?php echo $oid; ?>">
                             </td>
                         <?php else : ?>
