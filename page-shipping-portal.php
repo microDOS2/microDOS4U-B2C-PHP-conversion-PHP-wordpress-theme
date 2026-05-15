@@ -442,6 +442,8 @@ body{background:#0a0514;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFo
     </form>
 </div>
 
+<?php if ($tab === 'ready' || $tab === 'shipped') : ?>
+
 <!-- Bulk Ship Bar -->
 <div class="portal-bulk-bar" id="bulkBar">
     <span id="bulkCount">0 orders selected</span>
@@ -569,7 +571,8 @@ body{background:#0a0514;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFo
         <?php endfor; ?>
     </div>
     <?php endif; ?>
-<?php elseif ($tab === 'create') : ?>
+<?php endif; ?>
+<?php if ($tab === 'create') : ?>
     <!-- Create Order Tab -->
     <div class="portal-tab-content">
         <h2 style="color:#e2e8f0;margin:0 0 16px;font-size:18px;">Create New Order</h2>
