@@ -43,21 +43,6 @@ Copy-paste each row into a new creative:
 
 ---
 
-### Banner 2: Leaderboard (728x90)
-
-| Field | Value |
-|-------|-------|
-| **Name** | microDOS(2) 728x90 Leaderboard |
-| **Category** | Banners |
-| **Description** | Wide horizontal banner ideal for page headers, top navigation areas, and forum signatures. |
-| **Type** | Image |
-| **Image** | *(Paste Media Library URL for banner-728x90.jpg)* |
-| **Alt Text** | Unlock Your Mind's Potential - Shop microDOS(2) |
-| **URL** | https://lynnp74.sg-host.com |
-| **Privacy** | Public |
-| **Status** | Active |
-| **Notes** | Best placement: above or below navigation, in forum signatures. |
-
 ---
 
 ### Banner 3: Wide Skyscraper (160x600)
@@ -211,7 +196,7 @@ Copy-paste each row into a new creative:
 
 - [ ] Upload 6 banner images to WordPress Media Library
 - [ ] Create 3 creative categories (Banners, Text Links, Social Media)
-- [ ] Add 6 banner creatives (copy-paste from above)
+- [ ] Add 5 banner creatives (copy-paste from above)
 - [ ] Add 5 text link creatives (copy-paste from above)
 - [ ] Verify all creatives show as "Active"
 - [ ] Test by viewing Creatives tab in affiliate dashboard
