@@ -402,6 +402,48 @@ get_header();
     .mcd-guide__cta { padding: 24px; }
     .mcd-guide__badges { flex-direction: column; }
 }
+/* Numbered legend grid */
+.mcd-guide__number-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 20px 0;
+}
+@media (min-width: 768px) {
+    .mcd-guide__number-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+}
+.mcd-guide__number-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(68, 248, 12, 0.05);
+    border: 1px solid rgba(68, 248, 12, 0.15);
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #a0b3d6;
+}
+.mcd-guide__number-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    background: #ff6b35;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+.mcd-guide__number-item strong {
+    color: #e2e8f0;
+}
 </style>
 
 <div class="mcd-guide">
@@ -453,13 +495,40 @@ get_header();
             <div class="mcd-guide__explanation">
                 <p>When you log into your affiliate dashboard, you land on the <strong>Dashboard</strong> tab. This is your command center. Every other tab feeds data into what you see here.</p>
                 <p>Here is what each number on the screenshot means:</p>
-                <ul>
-                    <li><strong>Stats cards (top row):</strong> These four cards show your lifetime and current earnings at a glance.</li>
-                    <li><strong>Navigation tabs:</strong> Click any tab to drill into detailed data. Each tab is explained in its own section below.</li>
-                    <li><strong>Your referral link:</strong> This is your unique URL. When someone clicks it and buys, you get credit.</li>
-                    <li><strong>Copy button:</strong> One-click copy your link to clipboard.</li>
-                    <li><strong>QR Code:</strong> Generate a QR code for in-person sharing (business cards, flyers).</li>
-                </ul>
+                <div class="mcd-guide__number-grid">
+                    <div class="mcd-guide__number-item">
+                        <span class="mcd-guide__number-circle">1</span>
+                        <strong>Unpaid Earnings</strong> — Total commission you have earned but not yet been paid. Becomes payable on the 1st of the month if you hit the $50 minimum.
+                    </div>
+                    <div class="mcd-guide__number-item">
+                        <span class="mcd-guide__number-circle">2</span>
+                        <strong>Paid Referrals</strong> — Number of confirmed purchases that have been paid out to you.
+                    </div>
+                    <div class="mcd-guide__number-item">
+                        <span class="mcd-guide__number-circle">3</span>
+                        <strong>Unpaid Referrals</strong> — Confirmed purchases waiting for the next payout cycle.
+                    </div>
+                    <div class="mcd-guide__number-item">
+                        <span class="mcd-guide__number-circle">4</span>
+                        <strong>Conversion Rate</strong> — Percentage of clicks that turned into purchases. Above 3% means your audience is highly engaged.
+                    </div>
+                    <div class="mcd-guide__number-item">
+                        <span class="mcd-guide__number-circle">5</span>
+                        <strong>Navigation Tabs</strong> — Click any tab to drill into detailed data. Dashboard (home), Affiliate URLs (your links), Statistics (numbers), Graphs (charts), Referrals (transactions), Visits (clicks), Payouts (payments), Settings (profile).
+                    </div>
+                    <div class="mcd-guide__number-item">
+                        <span class="mcd-guide__number-circle">6</span>
+                        <strong>Your Referral URL</strong> — Your unique tracking link. When someone clicks it and buys, you get credit. The 45-day cookie is set automatically.
+                    </div>
+                    <div class="mcd-guide__number-item">
+                        <span class="mcd-guide__number-circle">7</span>
+                        <strong>Copy Button</strong> — One-click copy your referral link to clipboard. Paste it anywhere — social media, email, blog posts.
+                    </div>
+                    <div class="mcd-guide__number-item">
+                        <span class="mcd-guide__number-circle">8</span>
+                        <strong>QR Code</strong> — Generate a scannable QR code for in-person sharing. Download it for business cards, flyers, posters, or events.
+                    </div>
+                </div>
             </div>
 
             <div class="mcd-guide__tip">
