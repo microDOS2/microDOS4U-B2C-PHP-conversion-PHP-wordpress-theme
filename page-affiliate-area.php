@@ -91,15 +91,22 @@ get_header();
                             <p class="text-slate-400 text-sm mb-4">Already an affiliate? Log in to access your dashboard.</p>
                             
                             <?php
-                            wp_login_form([
-                                'redirect'       => get_permalink(),
-                                'form_id'        => 'affiliate-login',
-                                'label_username' => __('Username or Email', 'microdos4u'),
-                                'label_password' => __('Password', 'microdos4u'),
-                                'label_remember' => __('Remember me', 'microdos4u'),
-                                'label_log_in'   => __('Log In', 'microdos4u'),
-                                'remember'       => true,
-                            ]);
+                            // Use AffiliateWP native login form instead of wp_login_form()
+                            // so users are authenticated into the affiliate system properly
+                            if (function_exists('affiliate_wp')) {
+                                $affwp_redirect = get_permalink(affiliate_wp()->settings->get('affiliates_page'));
+                                echo affiliate_wp()->login->login_form($affwp_redirect);
+                            } else {
+                                wp_login_form([
+                                    'redirect'       => get_permalink(),
+                                    'form_id'        => 'affiliate-login',
+                                    'label_username' => __('Username or Email', 'microdos4u'),
+                                    'label_password' => __('Password', 'microdos4u'),
+                                    'label_remember' => __('Remember me', 'microdos4u'),
+                                    'label_log_in'   => __('Log In', 'microdos4u'),
+                                    'remember'       => true,
+                                ]);
+                            }
                             ?>
                             <p class="text-center mt-3">
                                 <a href="<?php echo esc_url(wp_lostpassword_url(get_permalink())); ?>" style="color: #38bdf8; font-size: 13px;">Lost your password?</a>
