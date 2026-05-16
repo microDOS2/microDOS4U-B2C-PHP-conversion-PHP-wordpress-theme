@@ -859,7 +859,7 @@ get_header();
             <div class="mcd-guide__faq-item">
                 <div class="mcd-guide__faq-toggle">When will I get paid?</div>
                 <div class="mcd-guide__faq-content">
-                    <p>Payouts are sent automatically on the <strong>1st of every month</strong> via PayPal. You must have at least <strong>$50</strong> in unpaid earnings to receive a payout. If you are below $50, your balance rolls over to the next month. Make sure your <a href="#section-settings">payment email</a> is correct and your <a href="/affiliate-w9">W-9 is submitted</a> (US affiliates).</p>
+                    <p>Payouts are sent automatically on the <strong>15th of every month</strong> via PayPal. You must have at least <strong>$50</strong> in unpaid earnings to receive a payout. If you are below $50, your balance rolls over to the next month. Make sure your <a href="#section-settings">payment email</a> is correct and your <a href="/affiliate-w9">W-9 is submitted</a> (US affiliates).</p>
                 </div>
             </div>
 
