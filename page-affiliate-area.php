@@ -20,7 +20,41 @@ get_header();
     <section class="affiliate-content py-12" style="background-color: #150f24;">
         <div class="container mx-auto px-4 max-w-4xl">
 
-            <!-- Commission Structure -->
+                        <!-- AFFILIATE LOGIN -->
+            <?php if (!is_user_logged_in()) : ?>
+            <div class="mb-10 p-6 rounded-lg" style="background-color: #0a0514; border: 1px solid #1f2b47;">
+                <div class="max-w-md mx-auto">
+                    <h2 class="text-xl font-bold text-white mb-4">Affiliate Login</h2>
+                    <p class="text-slate-400 text-sm mb-4">Already an affiliate? Log in to access your dashboard.</p>
+
+                    <?php
+                    if (function_exists('affiliate_wp')) {
+                        $affwp_redirect = get_permalink(affiliate_wp()->settings->get('affiliates_page'));
+                        echo affiliate_wp()->login->login_form($affwp_redirect);
+                    } else {
+                        wp_login_form([
+                            'redirect'       => get_permalink(),
+                            'form_id'        => 'affiliate-login',
+                            'label_username' => __('Username or Email', 'microdos4u'),
+                            'label_password' => __('Password', 'microdos4u'),
+                            'label_remember' => __('Remember me', 'microdos4u'),
+                            'label_log_in'   => __('Log In', 'microdos4u'),
+                            'remember'       => true,
+                        ]);
+                    }
+                    ?>
+                    <p class="text-center mt-3">
+                        <a href="<?php echo esc_url(wp_lostpassword_url(get_permalink())); ?>" style="color: #38bdf8; font-size: 13px;">Lost your password?</a>
+                    </p>
+                    <p class="text-center mt-4" style="border-top: 1px solid #1f2b47; padding-top: 16px;">
+                        <a href="<?php echo esc_url(get_permalink(get_page_by_path('affiliate-dashboard-guide')) ?: ''); ?>" style="color: #44f80c; font-size: 20px; font-weight: 700; display: block; margin-bottom: 12px; padding: 8px 0;">&#128214; Dashboard Guide</a>
+                        <a href="<?php echo esc_url(get_permalink(get_page_by_path('marketing-guide')) ?: ''); ?>" style="color: #ff66c4; font-size: 20px; font-weight: 700; display: block; padding: 8px 0;">&#127760; Marketing Guide</a>
+                    </p>
+                </div>
+            </div>
+            <?php endif; ?>
+
+<!-- Commission Structure -->
             <div class="mb-10 p-6 rounded-lg" style="background-color: #0a0514; border: 1px solid #1f2b47;">
                 <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#44f80c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -78,62 +112,24 @@ get_header();
                 </div>
             </div>
 
-            <!-- ====== AFFILIATE PORTAL ====== -->
+                        <!-- ====== AFFILIATE PORTAL ====== -->
+            <?php if (!is_user_logged_in()) : ?>
             <div class="mb-10 p-6 rounded-lg" style="background-color: #0a0514; border: 1px solid #1f2b47;">
-                
-                <?php if (!is_user_logged_in()) : ?>
-                    <!-- NOT LOGGED IN: Show login + registration -->
-                    
-                    <div class="grid md:grid-cols-2 gap-8">
-                        <!-- Login Side -->
-                        <div>
-                            <h2 class="text-xl font-bold text-white mb-4">Affiliate Login</h2>
-                            <p class="text-slate-400 text-sm mb-4">Already an affiliate? Log in to access your dashboard.</p>
-                            
-                            <?php
-                            // Use AffiliateWP native login form instead of wp_login_form()
-                            // so users are authenticated into the affiliate system properly
-                            if (function_exists('affiliate_wp')) {
-                                $affwp_redirect = get_permalink(affiliate_wp()->settings->get('affiliates_page'));
-                                echo affiliate_wp()->login->login_form($affwp_redirect);
-                            } else {
-                                wp_login_form([
-                                    'redirect'       => get_permalink(),
-                                    'form_id'        => 'affiliate-login',
-                                    'label_username' => __('Username or Email', 'microdos4u'),
-                                    'label_password' => __('Password', 'microdos4u'),
-                                    'label_remember' => __('Remember me', 'microdos4u'),
-                                    'label_log_in'   => __('Log In', 'microdos4u'),
-                                    'remember'       => true,
-                                ]);
-                            }
-                            ?>
-                            <p class="text-center mt-3">
-                                <a href="<?php echo esc_url(wp_lostpassword_url(get_permalink())); ?>" style="color: #38bdf8; font-size: 13px;">Lost your password?</a>
-                            </p>
-                            <p class="text-center mt-4" style="border-top: 1px solid #1f2b47; padding-top: 16px;">
-                                <a href="<?php echo esc_url(get_permalink(get_page_by_path('affiliate-dashboard-guide')) ?: ''); ?>" style="color: #44f80c; font-size: 20px; font-weight: 700; display: block; margin-bottom: 12px; padding: 8px 0;">&#128214; Dashboard Guide</a>
-                                <a href="<?php echo esc_url(get_permalink(get_page_by_path('marketing-guide')) ?: ''); ?>" style="color: #ff66c4; font-size: 20px; font-weight: 700; display: block; padding: 8px 0;">&#127760; Marketing Guide</a>
-                            </p>
-                        </div>
-                        
-                        <!-- Registration Side -->
-                        <div>
-                            <h2 class="text-xl font-bold text-white mb-4">Apply to Become an Affiliate</h2>
-                            <p class="text-slate-400 text-sm mb-4">New here? Fill out the application below to get started.</p>
-                            
-                            <?php
-                            if (function_exists('gravity_form')) {
-                                gravity_form_enqueue_scripts(2, true);
-                                gravity_form(2, false, false, false, '', true, 1);
-                            } else {
-                                echo '<p style="color:#ff4444;text-align:center;">Gravity Forms is not active.</p>';
-                            }
-                            ?>
-                        </div>
-                    </div>
-                    
-                <?php elseif (function_exists('affwp_is_affiliate') && affwp_is_affiliate()) : ?>
+
+                    <h2 class="text-xl font-bold text-white mb-4">Apply to Become an Affiliate</h2>
+                    <p class="text-slate-400 text-sm mb-4">New here? Fill out the application below to get started.</p>
+
+                    <?php
+                    if (function_exists('gravity_form')) {
+                        gravity_form_enqueue_scripts(2, true);
+                        gravity_form(2, false, false, false, '', true, 1);
+                    } else {
+                        echo '<p style="color:#ff4444;text-align:center;">Gravity Forms is not active.</p>';
+                    }
+                    ?>
+
+            </div>
+            <?php elseif (function_exists('affwp_is_affiliate') && affwp_is_affiliate()) : ?>
                     <!-- LOGGED IN AS AFFILIATE: Show dashboard -->
                     
                     <h2 class="text-xl font-bold text-white mb-4">Affiliate Dashboard</h2>
@@ -155,11 +151,11 @@ get_header();
                     ?>
                     
                 <?php endif; ?>
-                
-            </div>
+    
+
             <!-- ====== END PORTAL ====== -->
 
-            <!-- FAQ -->
+<!-- FAQ -->
             <div class="mb-10 p-6 rounded-lg" style="background-color: #0a0514; border: 1px solid #1f2b47;">
                 <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff66c4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
