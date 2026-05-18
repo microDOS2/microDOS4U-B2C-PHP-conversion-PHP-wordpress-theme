@@ -2271,9 +2271,11 @@ add_filter('affwp_portal_menu_links', 'microdos_add_portal_menu_links', 20);
 function microdos_add_portal_menu_links($menu_items) {
     $guide_page = get_page_by_path('affiliate-dashboard-guide');
     $mg_page = get_page_by_path('marketing-guide');
+    $easy_creatives = get_page_by_path('creatives-easy');
 
     $guide_url = $guide_page ? get_permalink($guide_page) : '';
     $mg_url = $mg_page ? get_permalink($mg_page) : '';
+    $easy_url = $easy_creatives ? get_permalink($easy_creatives) : '';
 
     if ($guide_url) {
         $menu_items['dashboard_guide'] = array(
@@ -2285,6 +2287,12 @@ function microdos_add_portal_menu_links($menu_items) {
         $menu_items['marketing_guide'] = array(
             'name' => 'Marketing Guide',
             'url'  => $mg_url,
+        );
+    }
+    if ($easy_url) {
+        $menu_items['quick_creatives'] = array(
+            'name' => '📋 Quick Copy Creatives',
+            'url'  => $easy_url,
         );
     }
 
