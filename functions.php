@@ -2249,6 +2249,18 @@ function microdos_enqueue_creative_copy_assets() {
             true
         );
     }
+
+        // Enqueue Portal creative copy buttons (for Affiliate Portal React modal)
+        $portal_js = '/js/affiliate-portal-copy-buttons.js';
+        if (file_exists($theme_dir . $portal_js)) {
+            wp_enqueue_script(
+                'microdos-portal-copy-buttons',
+                $theme_uri . $portal_js,
+                array(),
+                MICRODOS_VERSION,
+                true
+            );
+        }
 }
 
 /**
