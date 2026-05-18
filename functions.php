@@ -2165,6 +2165,28 @@ MICRODOS_WELCOME
     }
 }
 
+// Creative copy buttons - separate enqueue that always loads on affiliate pages
+add_action('wp_enqueue_scripts', 'microdos_enqueue_creative_buttons', 102);
+
+function microdos_enqueue_creative_buttons() {
+    $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    $is_affiliate_page = (
+        strpos($uri, '/affiliate-area') !== false ||
+        strpos($uri, '/affiliate-dashboard-guide') !== false ||
+        strpos($uri, '/affiliate-portal') !== false
+    );
+
+    if (!$is_affiliate_page) return;
+
+    wp_enqueue_script(
+        'microdos-creative-copy',
+        get_template_directory_uri() . '/js/affiliate-creative-copy-buttons.js',
+        array(),
+        MICRODOS_VERSION,
+        true
+    );
+}
+
 /**
  * 3. Affiliate Portal Menu Links
  */
