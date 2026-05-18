@@ -2153,14 +2153,8 @@ MICRODOS_WELCOME
     );
 
     // 3. Creative Easy Copy Buttons (for non-technical affiliates using email)
-    $creative_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
-    $is_creatives_tab = (
-        strpos($creative_uri, '/affiliate-area/creatives') !== false ||
-        strpos($creative_uri, 'tab=creatives') !== false ||
-        strpos($creative_uri, '/creatives') !== false
-    );
-
-    if ($is_creatives_tab || $is_affiliate_page) {
+    // Loads on all affiliate area pages - JS detects when creative modal opens
+    if ($is_affiliate_page) {
         wp_enqueue_script(
             'microdos-creative-copy',
             get_template_directory_uri() . '/js/affiliate-creative-copy-buttons.js',
