@@ -1,144 +1,166 @@
 /**
  * Affiliate Creative Easy Copy Buttons
- * Adds "Copy Image URL", "Copy My Link", and "Copy for Email" buttons
- * to AffiliateWP's creative modal for easy email/Gmail usage.
+ * Adds Copy Image URL, Copy My Link, and Copy for Email buttons
+ * to AffiliateWP's creative modal - based on actual DOM structure
  */
 (function() {
     'use strict';
 
-    // Wait for modal to open
-    function initCopyButtons() {
-        // Check if creative modal is visible (AffiliateWP uses #creative-modal or .creative-modal)
-        var modal = document.querySelector('#creative-modal') || 
-                    document.querySelector('.creative-modal') ||
-                    document.querySelector('[class*="creative"][class*="modal"]');
-        
-        if (!modal || !modal.offsetParent) return;
-        
-        // Prevent duplicate buttons
-        if (modal.querySelector('.mcd-copy-image-url')) return;
+    var LABELS = {
+        image: '📋 Copy Image URL',
+        link: '📋 Copy My Link', 
+        email: '📧 Copy for Email',
+        copied: '✓ Copied!',
+        guide: '✓ Guide copied!'
+    };
 
-        // Find the HTML code block
-        var codeBlock = modal.querySelector('pre code, .creative-code, [class*="code"]');
-        if (!codeBlock) return;
-
-        var htmlCode = codeBlock.textContent || codeBlock.innerText;
-        if (!htmlCode) return;
-
-        // Extract URLs from HTML
-        var hrefMatch = htmlCode.match(/href=["']([^"']+)["']/i);
-        var srcMatch = htmlCode.match(/src=["']([^"']+)["']/i);
-
-        if (!hrefMatch || !srcMatch) return;
-
-        var linkUrl = hrefMatch[1];  // e.g. https://site.com/ref/10/
-        var imageUrl = srcMatch[1];  // e.g. https://site.com/wp-content/uploads/banner.jpg
-
-        // Create button container
-        var btnContainer = document.createElement('div');
-        btnContainer.className = 'mcd-copy-buttons';
-        btnContainer.style.cssText = 'margin-top:12px;padding:12px;background:#0a0514;border:1px solid #1f2b47;border-radius:8px;';
-
-        // Label
-        var label = document.createElement('div');
-        label.textContent = 'For Email (Gmail, Outlook, etc.)';
-        label.style.cssText = 'color:#a0b3d6;font-size:13px;margin-bottom:10px;font-weight:600;';
-        btnContainer.appendChild(label);
-
-        // Button styles
-        var btnStyle = 'display:inline-block;padding:8px 16px;margin:4px;border:1px solid #44f80c;border-radius:6px;background:transparent;color:#44f80c;font-size:13px;cursor:pointer;transition:all 0.2s;font-weight:600;';
-        var btnHoverStyle = 'background:#44f80c;color:#0a0514;';
-
-        // --- Button 1: Copy Image URL ---
-        var btn1 = document.createElement('button');
-        btn1.className = 'mcd-copy-image-url';
-        btn1.textContent = '📋 Copy Image URL';
-        btn1.style.cssText = btnStyle;
-        btn1.onmouseenter = function() { this.style.cssText = btnStyle + btnHoverStyle; };
-        btn1.onmouseleave = function() { this.style.cssText = btnStyle; };
-        btn1.onclick = function() {
-            copyToClipboard(imageUrl);
-            showFeedback(this, 'Copied!');
-        };
-        btnContainer.appendChild(btn1);
-
-        // --- Button 2: Copy My Link ---
-        var btn2 = document.createElement('button');
-        btn2.className = 'mcd-copy-my-link';
-        btn2.textContent = '📋 Copy My Link';
-        btn2.style.cssText = btnStyle;
-        btn2.onmouseenter = function() { this.style.cssText = btnStyle + btnHoverStyle; };
-        btn2.onmouseleave = function() { this.style.cssText = btnStyle; };
-        btn2.onclick = function() {
-            copyToClipboard(linkUrl);
-            showFeedback(this, 'Copied!');
-        };
-        btnContainer.appendChild(btn2);
-
-        // --- Button 3: Copy for Email ---
-        var btn3 = document.createElement('button');
-        btn3.className = 'mcd-copy-for-email';
-        btn3.textContent = '📧 Copy for Email';
-        btn3.style.cssText = 'display:block;padding:8px 16px;margin:8px 4px 4px;border:1px solid #38bdf8;border-radius:6px;background:transparent;color:#38bdf8;font-size:13px;cursor:pointer;transition:all 0.2s;font-weight:600;';
-        var btn3Hover = 'background:#38bdf8;color:#0a0514;';
-        btn3.onmouseenter = function() { this.style.cssText = btn3.style.cssText + btn3Hover; };
-        btn3.onmouseleave = function() { this.style.cssText = btn3.style.cssText; };
-        btn3.onclick = function() {
-            var emailText = 'Image URL:\n' + imageUrl + '\n\nYour Affiliate Link:\n' + linkUrl + '\n\nGmail Steps:\n1. Insert Photo > By URL > paste Image URL\n2. Click image > Link icon > paste Affiliate Link';
-            copyToClipboard(emailText);
-            showFeedback(this, 'Email guide copied!');
-        };
-        btnContainer.appendChild(btn3);
-
-        // --- Insert into modal ---
-        var insertAfter = codeBlock.closest('.creative-code-wrapper, .creative-code, [class*="code"]');
-        if (insertAfter && insertAfter.parentNode) {
-            insertAfter.parentNode.insertBefore(btnContainer, insertAfter.nextSibling);
-        } else if (codeBlock.parentNode) {
-            codeBlock.parentNode.insertBefore(btnContainer, codeBlock.nextSibling);
-        }
-    }
-
-    // Utility: Copy to clipboard
-    function copyToClipboard(text) {
+    // Copy text to clipboard
+    function copy(text) {
         if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(text);
-        } else {
+            return navigator.clipboard.writeText(text);
+        }
+        return new Promise(function(resolve) {
             var ta = document.createElement('textarea');
             ta.value = text;
-            ta.style.position = 'fixed';
-            ta.style.opacity = '0';
+            ta.style.cssText = 'position:fixed;left:-9999px;opacity:0;';
             document.body.appendChild(ta);
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
+            resolve();
+        });
+    }
+
+    // Show feedback on button
+    function feedback(btn, msg) {
+        var orig = btn.textContent;
+        btn.textContent = msg;
+        btn.style.opacity = '0.8';
+        setTimeout(function() {
+            btn.textContent = orig;
+            btn.style.opacity = '1';
+        }, 2000);
+    }
+
+    // Create a styled button
+    function makeBtn(text, color, borderColor) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = text;
+        btn.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:10px 18px;margin:6px 4px;border:2px solid ' + borderColor + ';border-radius:8px;background:transparent;color:' + color + ';font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;font-family:inherit;';
+        btn.onmouseenter = function() {
+            this.style.background = color;
+            this.style.color = '#0a0514';
+        };
+        btn.onmouseleave = function() {
+            this.style.background = 'transparent';
+            this.style.color = color;
+        };
+        return btn;
+    }
+
+    // Main injection function
+    function inject() {
+        // Find all code blocks that contain affiliate HTML
+        var allPres = document.querySelectorAll('pre, code, .creative-code, [class*="code"]');
+        
+        for (var i = 0; i < allPres.length; i++) {
+            var block = allPres[i];
+            var text = block.textContent || block.innerText || '';
+            
+            // Check if this block contains affiliate HTML with both href and src
+            if (text.indexOf('<a') === -1 || text.indexOf('href=') === -1 || text.indexOf('<img') === -1 || text.indexOf('src=') === -1) {
+                continue;
+            }
+            
+            // Extract URLs
+            var hrefMatch = text.match(/href=["']([^"']+)["']/);
+            var srcMatch = text.match(/src=["']([^"']+)["']/);
+            
+            if (!hrefMatch || !srcMatch) continue;
+            
+            var linkUrl = hrefMatch[1];
+            var imageUrl = srcMatch[1];
+            
+            // Find where to insert - look for the button container or the code block's parent
+            var insertTarget = null;
+            
+            // Try to find the button container (where "Copy to clipboard" button is)
+            var parent = block.parentElement;
+            for (var p = 0; p < 5 && parent; p++) {
+                var btns = parent.querySelectorAll('button, .button, [role="button"], a[class*="copy"], a[class*="button"]');
+                for (var b = 0; b < btns.length; b++) {
+                    var btnText = btns[b].textContent || '';
+                    if (btnText.toLowerCase().indexOf('copy') >= 0 || btnText.toLowerCase().indexOf('clipboard') >= 0 || btnText.toLowerCase().indexOf('download') >= 0) {
+                        insertTarget = btns[b].parentElement;
+                        break;
+                    }
+                }
+                if (insertTarget) break;
+                parent = parent.parentElement;
+            }
+            
+            // Fallback: use the code block's parent
+            if (!insertTarget) {
+                insertTarget = block.parentElement;
+            }
+            
+            if (!insertTarget) continue;
+            
+            // Check if already injected
+            if (insertTarget.querySelector('.mcd-email-buttons')) continue;
+            
+            // Create button container
+            var container = document.createElement('div');
+            container.className = 'mcd-email-buttons';
+            container.style.cssText = 'margin-top:16px;padding:16px;background:rgba(10,5,20,0.95);border:2px solid #1f2b47;border-radius:12px;';
+            
+            // Label
+            var label = document.createElement('div');
+            label.textContent = '📧 For Email (Gmail, Outlook)';
+            label.style.cssText = 'color:#a0b3d6;font-size:13px;font-weight:600;margin-bottom:12px;display:block;';
+            container.appendChild(label);
+            
+            // Copy Image URL button
+            var btnImg = makeBtn(LABELS.image, '#44f80c', '#44f80c');
+            btnImg.onclick = function() {
+                copy(imageUrl).then(function() { feedback(btnImg, LABELS.copied); });
+            };
+            container.appendChild(btnImg);
+            
+            // Copy My Link button
+            var btnLink = makeBtn(LABELS.link, '#44f80c', '#44f80c');
+            btnLink.onclick = function() {
+                copy(linkUrl).then(function() { feedback(btnLink, LABELS.copied); });
+            };
+            container.appendChild(btnLink);
+            
+            // Copy for Email button (with full instructions)
+            var btnEmail = makeBtn(LABELS.email, '#38bdf8', '#38bdf8');
+            btnEmail.onclick = function() {
+                var guide = 'IMAGE URL (paste in Gmail > Insert Photo > By URL):\n' + imageUrl +
+                           '\n\nYOUR AFFILIATE LINK (paste in Gmail > click image > Link icon):\n' + linkUrl;
+                copy(guide).then(function() { feedback(btnEmail, LABELS.guide); });
+            };
+            container.appendChild(btnEmail);
+            
+            // Insert after the button container
+            insertTarget.parentElement.insertBefore(container, insertTarget.nextSibling);
+            
+            console.log('[microDOS] Creative copy buttons injected');
         }
     }
 
-    // Utility: Show feedback on button
-    function showFeedback(btn, msg) {
-        var original = btn.textContent;
-        btn.textContent = msg;
-        btn.style.borderColor = '#44f80c';
-        setTimeout(function() {
-            btn.textContent = original;
-            btn.style.borderColor = '';
-        }, 1500);
-    }
-
     // Watch for modal to appear
-    var observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length) {
-                setTimeout(initCopyButtons, 200);
-            }
-        });
+    var observer = new MutationObserver(function() {
+        clearTimeout(window._mcdTimer);
+        window._mcdTimer = setTimeout(inject, 300);
     });
+    
     observer.observe(document.body, { childList: true, subtree: true });
-
-    // Also try on click events
-    document.addEventListener('click', function() {
-        setTimeout(initCopyButtons, 300);
-    });
-
+    
+    // Also try immediately
+    setTimeout(inject, 500);
+    setTimeout(inject, 1500);
+    
 })();
