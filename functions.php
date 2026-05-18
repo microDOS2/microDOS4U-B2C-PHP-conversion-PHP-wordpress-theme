@@ -958,7 +958,7 @@ function microdos_render_w9_form($atts) {
                 </div>
                 <div>
                     <label style="display:block;color:#d1d5db;font-size:13px;margin-bottom:6px;font-weight:600;">State <span style="color:#ff4444;">*</span></label>
-                    <select name="w9_state" required style="width:100%;padding:10px 12px;background:#0a0514;border:1px solid #1f2b47;border-radius:6px;color:#fff;font-size:14px;box-sizing:border-box;height:40px;">
+                    <select name="w9_state" required style="width:100%;padding:10px 12px;background:#0a0514;border:1px solid #1f2b47;border-radius:6px;color:#e2e8f0;font-size:14px;box-sizing:border-box;height:40px;">
                         <option value="">--</option>
                         <?php
                         $states = array('AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC');
