@@ -71,7 +71,7 @@ function microdos4u_setup() {
 
 // ============================================
 // AFFILIATE ROLE & ACCESS CONTROL
-n// ============================================
+// ============================================
 
 // 1. Create 'Affiliate' WordPress role on theme setup
 add_action('after_setup_theme', 'microdos_create_affiliate_role');
