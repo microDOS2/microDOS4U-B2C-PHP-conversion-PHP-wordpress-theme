@@ -2152,39 +2152,103 @@ setTimeout(init, 1500);
 MICRODOS_WELCOME
     );
 
-    // 3. Creative Easy Copy Buttons (for non-technical affiliates using email)
-    // Loads on all affiliate area pages - JS detects when creative modal opens
-    if ($is_affiliate_page) {
+    // 3. Creative Easy Copy Buttons (Template Override approach)
+    // Template: affiliatewp/creative.php overrides AffiliateWP's default
+    // Docs: https://affiliatewp.com/docs/modifying-template-files/
+    // CSS and JS are enqueued separately via microdos_enqueue_creative_copy_assets()
+}
+
+/**
+ * Enqueue creative copy button assets (CSS + JS)
+ *
+ * Uses AffiliateWP's official template override system:
+ * - Template: your-theme/affiliatewp/creative.php
+ * - CSS: your-theme/css/affiliate-copy-buttons.css
+ * - JS: your-theme/js/affiliate-copy-buttons.js
+ *
+ * The template override adds 3 copy buttons to each creative:
+ * - Copy Image URL: banner image address for social media
+ * - Copy My Link: personal affiliate referral URL
+ * - Copy for Email: ready-to-paste HTML for Gmail
+ */
+add_action('wp_enqueue_scripts', 'microdos_enqueue_creative_copy_assets', 20);
+
+function microdos_enqueue_creative_copy_assets() {
+
+    // Check if we're on an AffiliateWP page
+    $is_affwp_page = false;
+
+    // Method 1: Affiliate Portal
+    if (function_exists('affwp_is_affiliate_portal') && affwp_is_affiliate_portal()) {
+        $is_affwp_page = true;
+    }
+
+    // Method 2: Affiliate area page
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    if (strpos($uri, '/affiliate-area') !== false ||
+        strpos($uri, '/affiliate-portal') !== false) {
+        $is_affwp_page = true;
+    }
+
+    // Method 3: Shortcode detection
+    if (!$is_affwp_page) {
+        global $post;
+        if (is_a($post, 'WP_Post')) {
+            $content = $post->post_content;
+            if (has_shortcode($content, 'affiliate_area') ||
+                has_shortcode($content, 'affiliate_creatives') ||
+                has_shortcode($content, 'affiliate_portal')) {
+                $is_affwp_page = true;
+            }
+        }
+    }
+
+    // Method 4: Affiliate area query var
+    if (!$is_affwp_page && get_query_var('affiliate-area')) {
+        $is_affwp_page = true;
+    }
+
+    // Method 5: Page template
+    if (!$is_affwp_page) {
+        $template = get_page_template_slug();
+        if (strpos($template, 'affiliate') !== false) {
+            $is_affwp_page = true;
+        }
+    }
+
+    // Allow customization
+    $is_affwp_page = apply_filters('microdos_load_creative_assets', $is_affwp_page);
+
+    if (!$is_affwp_page) {
+        return;
+    }
+
+    $theme_uri = get_stylesheet_directory_uri();
+    $theme_dir = get_stylesheet_directory();
+
+    // Enqueue CSS
+    $css_file = '/css/affiliate-copy-buttons.css';
+    if (file_exists($theme_dir . $css_file)) {
+        wp_enqueue_style(
+            'microdos-creative-copy-buttons',
+            $theme_uri . $css_file,
+            array(),
+            MICRODOS_VERSION,
+            'all'
+        );
+    }
+
+    // Enqueue JS (vanilla JS, no jQuery dependency)
+    $js_file = '/js/affiliate-copy-buttons.js';
+    if (file_exists($theme_dir . $js_file)) {
         wp_enqueue_script(
-            'microdos-creative-copy',
-            get_template_directory_uri() . '/js/affiliate-creative-copy-buttons.js',
+            'microdos-creative-copy-buttons',
+            $theme_uri . $js_file,
             array(),
             MICRODOS_VERSION,
             true
         );
     }
-}
-
-// Creative copy buttons - separate enqueue that always loads on affiliate pages
-add_action('wp_enqueue_scripts', 'microdos_enqueue_creative_buttons', 102);
-
-function microdos_enqueue_creative_buttons() {
-    $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
-    $is_affiliate_page = (
-        strpos($uri, '/affiliate-area') !== false ||
-        strpos($uri, '/affiliate-dashboard-guide') !== false ||
-        strpos($uri, '/affiliate-portal') !== false
-    );
-
-    if (!$is_affiliate_page) return;
-
-    wp_enqueue_script(
-        'microdos-creative-copy',
-        get_template_directory_uri() . '/js/affiliate-creative-copy-buttons.js',
-        array(),
-        MICRODOS_VERSION,
-        true
-    );
 }
 
 /**
@@ -2235,3 +2299,4 @@ function microdos_admin_portal_notice() {
     </div>
     <?php
 }
+
