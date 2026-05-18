@@ -1176,13 +1176,7 @@ add_filter('affwp_email_logo', 'microdos_fix_affiliate_email_logo');
 
 function microdos_fix_affiliate_email_logo($logo) {
     if (empty($logo)) return $logo;
-
-    // Remove any existing width/height attributes to prevent override
-    $logo = preg_replace('/\swidth=["'][^"']*["']/', '', $logo);
-    $logo = preg_replace('/\sheight=["'][^"']*["']/', '', $logo);
-
-    // Force small display size with inline CSS
-    return str_replace('<img', '<img style="max-width:180px;width:180px;height:auto;display:block;margin:0 auto;" ', $logo);
+    return str_replace('<img', '<img style="max-width:180px;height:auto;display:block;margin:0 auto;" ', $logo);
 }
 
 // ============================================
