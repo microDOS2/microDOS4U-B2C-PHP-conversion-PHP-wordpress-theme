@@ -147,6 +147,28 @@ function microdos_create_required_pages() {
         }
     }
 
+    // --- Quick Copy Creatives page ---
+    if (empty($pages_created['creatives_easy'])) {
+        $existing = get_page_by_path('creatives-easy');
+        if (!$existing) {
+            $page_id = wp_insert_post(array(
+                'post_title'     => 'Quick Copy Creatives',
+                'post_name'      => 'creatives-easy',
+                'post_content'   => '',
+                'post_status'    => 'publish',
+                'post_type'      => 'page',
+                'page_template'  => 'page-creatives-easy.php',
+                'comment_status' => 'closed',
+                'ping_status'    => 'closed',
+            ));
+            if (!is_wp_error($page_id) && $page_id > 0) {
+                $pages_created['creatives_easy'] = $page_id;
+            }
+        } else {
+            $pages_created['creatives_easy'] = $existing->ID;
+        }
+    }
+
     update_option('microdos_pages_created', $pages_created);
 }
 
