@@ -103,8 +103,6 @@ add_action('woocommerce_before_cart', 'microdos_block_affiliate_cart');
 function microdos_block_affiliate_purchases() {
     if (current_user_can('affiliate')) {
         wc_add_notice('Affiliate accounts cannot make purchases. Please create a separate customer account to buy products.', 'error');
-        // Prevent checkout from completing
-        remove_action('woocommerce_checkout_order_processed', 'WC_Checkout::process_checkout', 10);
     }
 }
 
