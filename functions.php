@@ -67,6 +67,54 @@ function microdos4u_setup() {
         'after_title'   => '</h4>',
     ));
 }
+
+
+// ============================================
+// AFFILIATE ROLE & ACCESS CONTROL
+n// ============================================
+
+// 1. Create 'Affiliate' WordPress role on theme setup
+add_action('after_setup_theme', 'microdos_create_affiliate_role');
+function microdos_create_affiliate_role() {
+    // Only add if it doesn't already exist
+    if (!get_role('affiliate')) {
+        add_role('affiliate', 'Affiliate', array(
+            'read' => true,                       // Can log in
+            'read_affiliate_portal' => true,      // Custom capability for portal access
+        ));
+    }
+}
+
+// 2. Auto-assign 'Affiliate' role when AffiliateWP registers a new affiliate
+add_action('affwp_insert_affiliate', 'microdos_set_affiliate_role', 10, 2);
+function microdos_set_affiliate_role($affiliate_id, $data) {
+    if (!empty($data['user_id'])) {
+        $user = get_userdata($data['user_id']);
+        if ($user) {
+            $user->set_role('affiliate'); // Replace default role with Affiliate
+        }
+    }
+}
+
+// 3. Block affiliates from WooCommerce checkout (cannot purchase products)
+add_action('woocommerce_checkout_process', 'microdos_block_affiliate_purchases');
+add_action('woocommerce_before_cart', 'microdos_block_affiliate_cart');
+
+function microdos_block_affiliate_purchases() {
+    if (current_user_can('affiliate')) {
+        wc_add_notice('Affiliate accounts cannot make purchases. Please create a separate customer account to buy products.', 'error');
+        // Prevent checkout from completing
+        remove_action('woocommerce_checkout_order_processed', 'WC_Checkout::process_checkout', 10);
+    }
+}
+
+function microdos_block_affiliate_cart() {
+    if (current_user_can('affiliate') && !is_admin()) {
+        // Show notice on cart page
+        wc_add_notice('Affiliate accounts cannot make purchases. Please create a separate customer account to buy products.', 'notice');
+    }
+}
+
 add_action('after_setup_theme', 'microdos4u_setup');
 
 // ============================================
