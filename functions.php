@@ -2288,7 +2288,7 @@ function microdos_enqueue_creative_copy_assets() {
 /**
  * 3. Affiliate Portal Menu Links
  */
-add_filter('affwp_portal_menu_links', 'microdos_add_portal_menu_links', 20);
+add_filter('affwp_affiliate_portal_menu_items', 'microdos_add_portal_menu_links', 20);
 
 function microdos_add_portal_menu_links($menu_items) {
     $guide_page = get_page_by_path('affiliate-dashboard-guide');
