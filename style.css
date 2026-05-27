@@ -4039,3 +4039,22 @@ body .gform_wrapper .gfield .ginput_container_name label {
         display: flex !important;
     }
 }
+
+/* ============================================
+   FORCE HIDE DESKTOP NAV ON MOBILE - v1.4.3
+   ============================================ */
+@media screen and (max-width: 1023px) {
+    header.site-header nav.main-navigation,
+    .site-header nav.main-navigation,
+    body header nav.main-navigation,
+    html body header.site-header nav.main-navigation {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
+}
