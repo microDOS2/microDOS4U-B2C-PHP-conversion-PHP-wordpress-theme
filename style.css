@@ -3957,3 +3957,85 @@ body .gform_wrapper .gfield .ginput_container_name label {
         padding: 4px 6px !important;
     }
 }
+
+/* ============================================
+   HAMBURGER MENU FIX - v1.4.2
+   Ensures mobile menu button shows and works
+   ============================================ */
+
+/* Show hamburger button on mobile */
+@media screen and (max-width: 767px) {
+    #mobile-menu-button {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background: #1a1329;
+        border: 1px solid #2a2344;
+        border-radius: 8px;
+        cursor: pointer;
+        color: #fff;
+    }
+    
+    #mobile-menu-button svg {
+        color: #fff;
+        stroke: #fff;
+    }
+    
+    /* Mobile menu panel */
+    #mobile-menu {
+        background: #0a0514;
+        border-top: 1px solid #1f2b47;
+        padding: 16px 24px;
+    }
+    
+    #mobile-menu a {
+        display: block;
+        padding: 12px 0;
+        color: #d1d5db;
+        font-size: 16px;
+        border-bottom: 1px solid #1a1329;
+        text-decoration: none;
+    }
+    
+    #mobile-menu a:hover {
+        color: #fff;
+    }
+    
+    #mobile-menu .btn-primary {
+        background: linear-gradient(135deg, #44f80c, #9a02d0);
+        color: #000;
+        border-radius: 8px;
+        margin-top: 16px;
+        font-weight: 700;
+    }
+    
+    /* Header actions - position right */
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+    }
+    
+    /* Hide desktop nav on mobile */
+    .main-navigation {
+        display: none !important;
+    }
+}
+
+/* Hide hamburger on desktop */
+@media screen and (min-width: 768px) {
+    #mobile-menu-button {
+        display: none !important;
+    }
+    
+    #mobile-menu {
+        display: none !important;
+    }
+    
+    .main-navigation {
+        display: flex !important;
+    }
+}
