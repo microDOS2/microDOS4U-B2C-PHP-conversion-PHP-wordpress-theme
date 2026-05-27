@@ -237,7 +237,7 @@ input::placeholder, textarea::placeholder {
 
 .main-navigation {
   flex: 1 1 auto !important;
-  display: flex !important;
+  display: flex;
   justify-content: center !important;
   align-items: center !important;
   gap: 2rem !important;
