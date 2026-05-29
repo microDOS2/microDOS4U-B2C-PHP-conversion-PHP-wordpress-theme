@@ -2256,9 +2256,8 @@ function microdos_enqueue_creative_copy_assets() {
         global $post;
         if (is_a($post, 'WP_Post')) {
             $content = $post->post_content;
-            if (has_shortcode($content, 'affiliate_area') ||
-                has_shortcode($content, 'affiliate_creatives') ||
-                has_shortcode($content, 'affiliate_portal')) {
+            if (has_shortcode($content, 'affiliate_portal') ||
+                has_shortcode($content, 'affiliate_creatives')) {
                 $is_affwp_page = true;
             }
         }
