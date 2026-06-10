@@ -3284,17 +3284,17 @@ body .gform_wrapper textarea::placeholder {
 
 /* --- Select Dropdown (CRITICAL FIX) --- */
 body .gform_wrapper select {
-    color: #e2e8f0 !important;
-    background-color: #150f24 !important;
+    color: #000000 !important;
+    background-color: #ffffff !important;
     min-height: 2.75rem !important;
     line-height: 1.5 !important;
-    /* CRITICAL: Ensure selected text is visible in Chrome */
-    -webkit-text-fill-color: #e2e8f0 !important;
+    /* FIXED: Text now black to match other form fields */
+    -webkit-text-fill-color: #000000 !important;
 }
 
 body .gform_wrapper select option {
-    background-color: #150f24 !important;
-    color: #e2e8f0 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
 }
 
 /* Focus state for select */
