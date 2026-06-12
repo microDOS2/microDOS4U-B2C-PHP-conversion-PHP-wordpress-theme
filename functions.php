@@ -732,7 +732,7 @@ function microdos4u_auto_create_account($order) {
         return;
     }
 
-    $username = sanitize_user(current(explode('@', $billing_email)), true);
+    $username = sanitize_user((function($e) { $p = explode('@', $e); return $p[0] ?? ''; })($billing_email), true);
     $original_username = $username;
     $counter = 1;
     while (username_exists($username)) {
@@ -1232,7 +1232,7 @@ function microdos_create_affiliate_from_form($entry, $form) {
     $tax_id      = rgar($entry, '15');
 
     if (empty($username)) {
-        $username = sanitize_user(current(explode('@', $email)), true);
+        $username = sanitize_user((function($v) { $p = explode('@', $v); return $p[0] ?? ''; })($email), true);
     }
     $original = $username;
     $suffix = 1;
@@ -1617,7 +1617,10 @@ function microdos_thankyou_shipping_notice($order_id) {
 // SHIPPING DASHBOARD ADMIN PAGE
 // ============================================
 
-require_once get_template_directory() . '/admin-shipping.php';
+// Only load admin shipping on admin pages — not on front-end
+if (is_admin()) {
+    require_once get_template_directory() . '/admin-shipping.php';
+}
 
 // ============================================
 // AUTO-CREATE SHIPPING PORTAL PAGE
