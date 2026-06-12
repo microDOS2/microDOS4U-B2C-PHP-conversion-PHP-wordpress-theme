@@ -306,14 +306,14 @@ function microdos4u_scripts() {
 
     wp_enqueue_style(
         'microdos4u-fonts',
-        'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
+        get_template_directory_uri() . '/css/inter-font.css',
         array(),
         null
     );
 
     wp_enqueue_script(
         'tailwind-cdn',
-        'https://cdn.tailwindcss.com',
+        get_template_directory_uri() . '/js/tailwindcss.min.js',
         array(),
         null,
         false
@@ -321,7 +321,7 @@ function microdos4u_scripts() {
 
     wp_enqueue_script(
         'imask',
-        'https://unpkg.com/imask',
+        get_template_directory_uri() . '/js/imask.min.js',
         array(),
         null,
         true
@@ -1734,8 +1734,8 @@ function microdos_enqueue_affiliate_assets() {
     if (!function_exists('affwp_is_affiliate') || !affwp_is_affiliate()) return;
 
     // Shepherd.js from CDN
-    wp_enqueue_script('shepherd-js', 'https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js', array(), '11.2.0', true);
-    wp_enqueue_style('shepherd-css', 'https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css', array(), '11.2.0');
+    wp_enqueue_script('shepherd-js', get_template_directory_uri() . '/js/shepherd.min.js', array(), '11.2.0', true);
+    wp_enqueue_style('shepherd-css', get_template_directory_uri() . '/css/shepherd.css', array(), '11.2.0');
 
     // Data for JS
     $guide_page = get_page_by_path('affiliate-dashboard-guide');
