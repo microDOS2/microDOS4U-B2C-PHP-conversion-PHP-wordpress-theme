@@ -48,6 +48,11 @@
                 <a href="<?php echo esc_url(home_url('/')); ?>" class="text-slate-300 hover:text-white transition">Home</a>
                 <a href="#dosage-section" class="text-slate-300 hover:text-white transition">Dosage Guide</a>
                 <a href="#safety" class="text-slate-300 hover:text-white transition">Safety Notes</a>
+            <?php elseif (is_page('dosage-guide') || is_page_template('page-dosage.php')) : ?>
+                <a href="<?php echo esc_url(home_url('/articles-studies')); ?>" class="text-slate-300 hover:text-white transition">Articles & Studies</a>
+                <a href="<?php echo esc_url(home_url('/')); ?>" class="text-slate-300 hover:text-white transition">Home</a>
+                <a href="#visual-guide" class="text-slate-300 hover:text-white transition">Dosage Guide</a>
+                <a href="#safety" class="text-slate-300 hover:text-white transition">Safety Notes</a>
             <?php else : ?>
                 <a href="<?php echo esc_url(home_url('/')); ?>" class="text-slate-300 hover:text-white transition">Home</a>
                 <a href="<?php echo esc_url(home_url('/articles-studies')); ?>" class="text-slate-300 hover:text-white transition">Articles & Studies</a>
