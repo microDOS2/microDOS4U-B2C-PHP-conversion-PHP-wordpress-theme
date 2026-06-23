@@ -3060,3 +3060,243 @@ add_action('wp_footer', function() {
     </script>
     <?php
 });
+
+// ============================================
+// GETTING STARTED PAGE — AUTO-CREATE + SHORTCODE
+// ============================================
+
+/**
+ * [affiliate_rate] shortcode — returns the live commission rate from AffiliateWP
+ * Usage: [affiliate_rate] on the Getting Started page
+ */
+add_shortcode('affiliate_rate', function() {
+    $rate = 30;
+    if (function_exists('affiliate_wp')) {
+        $settings = affiliate_wp()->settings;
+        if ($settings && method_exists($settings, 'get')) {
+            $rate = floatval($settings->get('referral_rate', 30));
+        }
+    }
+    return ($rate == intval($rate)) ? intval($rate) : number_format($rate, 1);
+});
+
+/**
+ * Auto-create the Getting Started page if it doesn't exist
+ * Runs on admin_init to ensure it only executes in wp-admin
+ */
+add_action('admin_init', function() {
+    // Check if page already exists by slug
+    $page = get_page_by_path('getting-started');
+    if ($page) {
+        return;
+    }
+
+    // Also check by title to be safe
+    $existing = get_posts(array(
+        'post_type'      => 'page',
+        'title'          => 'Getting Started',
+        'post_status'    => 'publish',
+        'posts_per_page' => 1,
+        'fields'         => 'ids',
+    ));
+    if (!empty($existing)) {
+        return;
+    }
+
+    // Build full page content with all sections
+    $content = '<!-- wp:html -->
+<div style="max-width:800px;">
+
+<!-- REFERRAL LINK BOX -->
+<div style="background:linear-gradient(135deg,#1e3a5f,#0f1d3a);border:1px solid #3b82f6;border-radius:8px;padding:20px;margin-bottom:24px;">
+<strong style="color:#60a5fa;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;">Your Unique Referral Link</strong>
+<p style="color:#c7d2e8;font-size:14px;margin:8px 0;">Copy this link and share it everywhere. When someone clicks and buys, you earn [affiliate_rate]%.</p>
+<p style="background:rgba(59,130,246,0.15);color:#93bbfc;padding:10px 14px;border-radius:6px;font-size:14px;word-break:break-all;margin:8px 0;">[affiliate_referral_url]</p>
+</div>
+
+<!-- HOW IT WORKS -->
+<div style="background:#150f24;border:1px solid #1f2b47;border-radius:8px;padding:20px;margin-bottom:24px;">
+<h3 style="color:#fff;font-size:18px;font-weight:700;margin:0 0 16px;display:flex;align-items:center;gap:8px;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+How It Works
+</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+<div style="background:#0a0514;padding:14px;border-radius:6px;">
+<strong style="color:#44f80c;font-size:13px;">1. Share Your Link</strong>
+<p style="color:#94a3b8;font-size:13px;margin:6px 0 0;line-height:1.5;">Post your unique referral link on social media, email, blogs, or QR codes.</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;">
+<strong style="color:#44f80c;font-size:13px;">2. Someone Clicks</strong>
+<p style="color:#94a3b8;font-size:13px;margin:6px 0 0;line-height:1.5;">A 45-day tracking cookie is placed on their device automatically.</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;">
+<strong style="color:#44f80c;font-size:13px;">3. They Buy</strong>
+<p style="color:#94a3b8;font-size:13px;margin:6px 0 0;line-height:1.5;">If they purchase within 45 days, the sale is credited to you.</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;">
+<strong style="color:#44f80c;font-size:13px;">4. You Earn [affiliate_rate]%</strong>
+<p style="color:#94a3b8;font-size:13px;margin:6px 0 0;line-height:1.5;">Commission is added to your dashboard and paid out monthly.</p>
+</div>
+</div>
+</div>
+
+<!-- DASHBOARD TABS -->
+<div style="background:#150f24;border:1px solid #1f2b47;border-radius:8px;padding:20px;margin-bottom:24px;">
+<h3 style="color:#fff;font-size:18px;font-weight:700;margin:0 0 16px;display:flex;align-items:center;gap:8px;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff66c4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+Your Dashboard Tabs
+</h3>
+<p style="color:#94a3b8;font-size:14px;margin:0 0 12px;line-height:1.6;">Your affiliate dashboard has everything you need to track performance and get paid. Here is what each tab does:</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+<div style="background:#0a0514;padding:12px;border-radius:6px;border-left:3px solid #44f80c;">
+<strong style="color:#e2e8f0;font-size:13px;">Dashboard</strong>
+<p style="color:#94a3b8;font-size:12px;margin:4px 0 0;">Overview of earnings, referrals, and conversion rate.</p>
+</div>
+<div style="background:#0a0514;padding:12px;border-radius:6px;border-left:3px solid #38bdf8;">
+<strong style="color:#e2e8f0;font-size:13px;">Affiliate URLs</strong>
+<p style="color:#94a3b8;font-size:12px;margin:4px 0 0;">Your referral link, QR code, and custom URL generator.</p>
+</div>
+<div style="background:#0a0514;padding:12px;border-radius:6px;border-left:3px solid #9a02d0;">
+<strong style="color:#e2e8f0;font-size:13px;">Statistics</strong>
+<p style="color:#94a3b8;font-size:12px;margin:4px 0 0;">Detailed numbers on clicks, conversions, and revenue.</p>
+</div>
+<div style="background:#0a0514;padding:12px;border-radius:6px;border-left:3px solid #ff66c4;">
+<strong style="color:#e2e8f0;font-size:13px;">Graphs</strong>
+<p style="color:#94a3b8;font-size:12px;margin:4px 0 0;">Visual charts showing trends over time.</p>
+</div>
+<div style="background:#0a0514;padding:12px;border-radius:6px;border-left:3px solid #ffaa00;">
+<strong style="color:#e2e8f0;font-size:13px;">Referrals</strong>
+<p style="color:#94a3b8;font-size:12px;margin:4px 0 0;">List of every sale with status: Pending, Unpaid, Paid, Rejected.</p>
+</div>
+<div style="background:#0a0514;padding:12px;border-radius:6px;border-left:3px solid #60a5fa;">
+<strong style="color:#e2e8f0;font-size:13px;">Visits</strong>
+<p style="color:#94a3b8;font-size:12px;margin:4px 0 0;">Every click tracked with source, landing page, and conversion.</p>
+</div>
+<div style="background:#0a0514;padding:12px;border-radius:6px;border-left:3px solid #22c55e;">
+<strong style="color:#e2e8f0;font-size:13px;">Payouts</strong>
+<p style="color:#94a3b8;font-size:12px;margin:4px 0 0;">Payment history and next payout estimate.</p>
+</div>
+<div style="background:#0a0514;padding:12px;border-radius:6px;border-left:3px solid #64748b;">
+<strong style="color:#e2e8f0;font-size:13px;">Settings</strong>
+<p style="color:#94a3b8;font-size:12px;margin:4px 0 0;">Update your payment email and profile information.</p>
+</div>
+</div>
+</div>
+
+<!-- WHERE TO SHARE -->
+<div style="background:#150f24;border:1px solid #1f2b47;border-radius:8px;padding:20px;margin-bottom:24px;">
+<h3 style="color:#fff;font-size:18px;font-weight:700;margin:0 0 16px;display:flex;align-items:center;gap:8px;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+Where to Share
+</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+<div style="background:#0a0514;padding:14px;border-radius:6px;text-align:center;">
+<strong style="color:#e2e8f0;font-size:13px;display:block;margin-bottom:6px;">Social Media</strong>
+<p style="color:#94a3b8;font-size:12px;margin:0;line-height:1.5;">Instagram, TikTok, X/Twitter, Facebook Groups</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;text-align:center;">
+<strong style="color:#e2e8f0;font-size:13px;display:block;margin-bottom:6px;">Email &amp; Newsletter</strong>
+<p style="color:#94a3b8;font-size:12px;margin:0;line-height:1.5;">Highest conversion — your audience already trusts you</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;text-align:center;">
+<strong style="color:#e2e8f0;font-size:13px;display:block;margin-bottom:6px;">Blog &amp; Website</strong>
+<p style="color:#94a3b8;font-size:12px;margin:0;line-height:1.5;">Write reviews, add banners, or embed your link</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;text-align:center;">
+<strong style="color:#e2e8f0;font-size:13px;display:block;margin-bottom:6px;">QR Code</strong>
+<p style="color:#94a3b8;font-size:12px;margin:0;line-height:1.5;">Print on flyers, business cards, or posters</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;text-align:center;">
+<strong style="color:#e2e8f0;font-size:13px;display:block;margin-bottom:6px;">Forums &amp; Communities</strong>
+<p style="color:#94a3b8;font-size:12px;margin:0;line-height:1.5;">Reddit, Discord, niche health communities</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;text-align:center;">
+<strong style="color:#e2e8f0;font-size:13px;display:block;margin-bottom:6px;">YouTube &amp; Podcasts</strong>
+<p style="color:#94a3b8;font-size:12px;margin:0;line-height:1.5;">Mention in videos or show notes with your link</p>
+</div>
+</div>
+</div>
+
+<!-- QUICK START -->
+<div style="background:#150f24;border:1px solid #1f2b47;border-radius:8px;padding:20px;margin-bottom:24px;">
+<h3 style="color:#fff;font-size:18px;font-weight:700;margin:0 0 16px;display:flex;align-items:center;gap:8px;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+Quick Start
+</h3>
+<ol style="color:#94a3b8;font-size:14px;line-height:1.7;padding-left:20px;margin:0;">
+<li><strong style="color:#e2e8f0;">Copy your link</strong> — Find your referral URL on the Affiliate Area page or above.</li>
+<li><strong style="color:#e2e8f0;">Grab a banner</strong> — Visit the <a href="/affiliate-creatives" style="color:#44f80c;text-decoration:none;">Creatives</a> tab to download pre-made banners with your link built in.</li>
+<li><strong style="color:#e2e8f0;">Post with a recommendation</strong> — Write 1-2 sentences about why you recommend microDOS(2). Personal endorsements convert 3-5x better than plain links.</li>
+<li><strong style="color:#e2e8f0;">Check your stats tomorrow</strong> — Log into your dashboard and check the Visits tab to see your clicks. Most affiliates see their first visits within 24 hours.</li>
+</ol>
+</div>
+
+<!-- WHEN YOU GET PAID -->
+<div style="background:#150f24;border:1px solid #1f2b47;border-radius:8px;padding:20px;margin-bottom:24px;">
+<h3 style="color:#fff;font-size:18px;font-weight:700;margin:0 0 16px;display:flex;align-items:center;gap:8px;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#44f80c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+When You Get Paid
+</h3>
+<div style="background:#0a0514;padding:16px;border-radius:6px;">
+<p style="color:#94a3b8;font-size:14px;margin:0 0 10px;line-height:1.6;"><strong style="color:#e2e8f0;">Payout schedule:</strong> Commissions are sent automatically on the <strong style="color:#44f80c;">15th of every month</strong> via PayPal. There is no need to request a payout.</p>
+<p style="color:#94a3b8;font-size:14px;margin:0 0 10px;line-height:1.6;"><strong style="color:#e2e8f0;">Minimum threshold:</strong> You must have at least <strong style="color:#44f80c;">$50</strong> in unpaid earnings to trigger a payout. If you are below $50, your balance rolls over to the next month.</p>
+<p style="color:#94a3b8;font-size:14px;margin:0 0 10px;line-height:1.6;"><strong style="color:#e2e8f0;">Commission rate:</strong> You earn <strong style="color:#44f80c;">[affiliate_rate]%</strong> on every first-time purchase made by your referral.</p>
+<p style="color:#94a3b8;font-size:14px;margin:0;line-height:1.6;"><strong style="color:#e2e8f0;">W-9 Requirement:</strong> US-based affiliates must submit a completed <a href="/affiliate-w9" style="color:#44f80c;text-decoration:none;">W-9 form</a> before receiving payouts. You will see an alert on your dashboard if this is needed.</p>
+</div>
+</div>
+
+<!-- BEST PRACTICES -->
+<div style="background:#150f24;border:1px solid #1f2b47;border-radius:8px;padding:20px;margin-bottom:24px;">
+<h3 style="color:#fff;font-size:18px;font-weight:700;margin:0 0 16px;display:flex;align-items:center;gap:8px;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9a02d0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+Best Practices
+</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+<div style="background:#0a0514;padding:14px;border-radius:6px;">
+<strong style="color:#44f80c;font-size:13px;">Be Authentic</strong>
+<p style="color:#94a3b8;font-size:12px;margin:6px 0 0;line-height:1.5;">Share your real experience. Honest recommendations convert far better than generic ads.</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;">
+<strong style="color:#44f80c;font-size:13px;">Use Custom URLs</strong>
+<p style="color:#94a3b8;font-size:12px;margin:6px 0 0;line-height:1.5;">Link directly to product pages instead of just the homepage. Direct links convert 2-3x better.</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;">
+<strong style="color:#44f80c;font-size:13px;">Add Value First</strong>
+<p style="color:#94a3b8;font-size:12px;margin:6px 0 0;line-height:1.5;">Explain how the product helped you before asking for a click. Education builds trust.</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;">
+<strong style="color:#44f80c;font-size:13px;">Track and Optimize</strong>
+<p style="color:#94a3b8;font-size:12px;margin:6px 0 0;line-height:1.5;">Check your Visits tab to see which platforms drive the most clicks and conversions.</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;">
+<strong style="color:#44f80c;font-size:13px;">Post Consistently</strong>
+<p style="color:#94a3b8;font-size:12px;margin:6px 0 0;line-height:1.5;">One post is rarely enough. Share weekly reminders and updates to stay top of mind.</p>
+</div>
+<div style="background:#0a0514;padding:14px;border-radius:6px;">
+<strong style="color:#44f80c;font-size:13px;">Follow the Rules</strong>
+<p style="color:#94a3b8;font-size:12px;margin:6px 0 0;line-height:1.5;">No spam, no self-referrals, no misleading claims. Read the <a href="/affiliate-terms" style="color:#ff66c4;text-decoration:none;">Affiliate Terms</a>.</p>
+</div>
+</div>
+</div>
+
+<!-- CTA -->
+<div style="background:linear-gradient(135deg,#1e3a5f,#0f1d3a);border:1px solid #3b82f6;border-radius:8px;padding:24px;text-align:center;">
+<h3 style="color:#fff;font-size:20px;font-weight:700;margin:0 0 10px;">Ready to Start Earning?</h3>
+<p style="color:#c7d2e8;font-size:14px;margin:0 0 16px;">Copy your link, pick a platform, and make your first post. Your dashboard is waiting.</p>
+<a href="/affiliate-area" style="display:inline-block;padding:12px 28px;background:#44f80c;color:#0a0514;font-weight:700;font-size:14px;border-radius:8px;text-decoration:none;">Go to My Dashboard →</a>
+</div>
+
+</div>
+<!-- /wp:html -->';
+
+    // Create the page
+    wp_insert_post(array(
+        'post_title'    => 'Getting Started',
+        'post_name'     => 'getting-started',
+        'post_content'  => $content,
+        'post_status'   => 'publish',
+        'post_type'     => 'page',
+        'post_author'   => 1,
+        'page_template' => 'page-getting-started.php',
+    ));
+});
