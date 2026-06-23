@@ -3000,76 +3000,67 @@ add_action('woocommerce_before_checkout_form', function() {
 
 
 /**
- * Getting Started page text fixes
- * Auto-corrects content on the Getting Started page
+ * Getting Started page text fixes — OUTPUT BUFFERING approach
+ * Captures ALL HTML output and replaces text before sending to browser
+ * This catches content regardless of how it's generated (shortcodes, page builders, etc.)
  */
-add_filter('the_content', function($content) {
-    // Detect Getting Started page by URL (more reliable than is_page)
-    $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-    $is_getting_started = (strpos($request_uri, 'getting-started') !== false);
-
-    // Also try is_page as backup
-    if (!$is_getting_started && function_exists('is_page')) {
-        $is_getting_started = is_page('getting-started') || is_page(409) || is_page(408) || is_page(407);
+add_action('template_redirect', function() {
+    // Only run on the Getting Started page
+    if (!is_page("getting-started") && !is_page(409) && !is_page(408) && !is_page(407)) {
+        return;
     }
 
-    if (!$is_getting_started) {
-        return $content;
-    }
-
-    // Get the LIVE commission rate from AffiliateWP
-    $live_rate = 30; // default fallback
-    if (function_exists('affiliate_wp')) {
-        $affwp = affiliate_wp();
-        if ($affwp && method_exists($affwp, 'settings')) {
-            $settings = $affwp->settings;
-            if ($settings && method_exists($settings, 'get')) {
-                $rate = $settings->get('referral_rate', 30);
-                $live_rate = floatval($rate) > 0 ? floatval($rate) : 30;
+    // Start output buffering
+    ob_start(function($buffer) {
+        // Get the LIVE commission rate from AffiliateWP
+        $live_rate = 30;
+        if (function_exists("affiliate_wp")) {
+            $affwp = affiliate_wp();
+            if ($affwp && method_exists($affwp, "settings")) {
+                $settings = $affwp->settings;
+                if ($settings && method_exists($settings, "get")) {
+                    $rate = $settings->get("referral_rate", 30);
+                    $live_rate = floatval($rate) > 0 ? floatval($rate) : 30;
+                }
             }
         }
-    }
-    // Clean display: strip decimals for whole numbers
-    $rate_display = ($live_rate == intval($live_rate)) ? intval($live_rate) : number_format($live_rate, 1);
+        $rate_display = ($live_rate == intval($live_rate)) ? intval($live_rate) : number_format($live_rate, 1);
 
-    // DEBUG: Uncomment to see the detected rate
-    // $content = '<!-- DEBUG: Rate=' . $rate_display . ' -->' . $content;
+        // Replace hardcoded "30%" with live rate (but not in CSS/JS)
+        // Only replace in visible text content
+        $buffer = str_replace(
+            array(
+                "you earn 30%",
+                "you earn 30 %",
+                "30% commission",
+                "30% —",
+                ", 30%.",
+                ">30%<",
+            ),
+            array(
+                "you earn " . $rate_display . "%",
+                "you earn " . $rate_display . "%",
+                $rate_display . "% commission",
+                $rate_display . "% —",
+                ", " . $rate_display . "%.",
+                ">" . $rate_display . "%<",
+            ),
+            $buffer
+        );
 
-    // Replace hardcoded commission rates with live rate
-    // Pattern: any number followed by % near commission-related words
-    $content = preg_replace('/you earn\s+\d+(?:\.\d+)?\s*(?:%|percent)/i', 'you earn ' . $rate_display . '%', $content);
-    $content = preg_replace('/(\d+(?:\.\d+)?)\s*(%|percent)\s*commission/i', $rate_display . '$2 commission', $content);
-    $content = preg_replace('/(\d+(?:\.\d+)?)\s*(%|percent)\s*—/i', $rate_display . '$2 —', $content);
+        // Fix payment date
+        $buffer = str_replace(
+            array(
+                "on the 1st of each month",
+                "on the 1st of each month.",
+            ),
+            array(
+                "on the 15th of each month",
+                "on the 15th of each month.",
+            ),
+            $buffer
+        );
 
-    // Fix payout text
-    $content = str_replace(
-        array(
-            'Once you hit $50, we pay you on the 1st of each month',
-            'Once you hit $50, we pay you on the 1st of each month.',
-        ),
-        array(
-            'Once you hit $50',
-            'Once you hit $50.',
-        ),
-        $content
-    );
-
-    // Fix payment date: 1st → 15th
-    $content = str_replace(
-        array(
-            'Paid on the 1st of each month',
-            'Paid on the 1st of each month.',
-            'on the 1st of each month',
-            'on the 1st of each month.',
-        ),
-        array(
-            'Paid on the 15th of each month',
-            'Paid on the 15th of each month.',
-            'on the 15th of each month',
-            'on the 15th of each month.',
-        ),
-        $content
-    );
-
-    return $content;
-}, 21);
+        return $buffer;
+    });
+}, 0);
