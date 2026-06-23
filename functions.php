@@ -2526,9 +2526,6 @@ function microdos_admin_portal_notice() {
 }
 
 
-
-
-
 // ============================================
 // CART SYNC: Custom JS Cart ↔ WooCommerce Bridge
 // ============================================
