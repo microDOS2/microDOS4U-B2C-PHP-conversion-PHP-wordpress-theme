@@ -3362,3 +3362,58 @@ add_action('gform_after_submission', function($entry, $form) {
         }
     }
 }, 10, 2);
+
+
+
+/**
+ * Add Phone field to Affiliate Application form (ID: 2) if it doesn't exist
+ * Runs once on admin page load
+ */
+add_action('admin_init', function() {
+    // Only run if Gravity Forms is active
+    if (!class_exists('GFAPI')) {
+        return;
+    }
+
+    $form_id = 2; // Affiliate Application form
+    $form = GFAPI::get_form($form_id);
+
+    if (!$form || is_wp_error($form)) {
+        return;
+    }
+
+    // Check if phone field already exists
+    $has_phone = false;
+    foreach ($form['fields'] as $field) {
+        if ($field->type === 'phone' || strtolower($field->label) === 'phone') {
+            $has_phone = true;
+            break;
+        }
+    }
+
+    if ($has_phone) {
+        return; // Phone field already exists
+    }
+
+    // Create phone field
+    $phone_field = new GF_Field_Phone();
+    $phone_field->label = 'Phone Number';
+    $phone_field->id = 20; // Use a high ID to avoid conflicts
+    $phone_field->isRequired = true;
+    $phone_field->description = 'Your phone number for affiliate communications';
+    $phone_field->descriptionPlacement = 'below';
+    $phone_field->inputMask = true;
+    $phone_field->inputMaskValue = '(999) 999-9999';
+    $phone_field->placeholder = '(555) 123-4567';
+
+    // Add field to form
+    $form['fields'][] = $phone_field;
+
+    // Update form
+    $result = GFAPI::update_form($form, $form_id);
+
+    if (!is_wp_error($result)) {
+        // Log success (visible in error log)
+        error_log('microDOS4U: Phone field added to Affiliate Application form (ID: 2)');
+    }
+});
