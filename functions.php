@@ -3298,3 +3298,68 @@ add_shortcode('affiliate_commission_rate', function($atts) {
 add_shortcode('affiliate_rate', function($atts) {
     return do_shortcode('[affiliate_commission_rate]');
 });
+
+
+
+/**
+ * FIX #1: Copy Gravity Forms W-9 data to WooCommerce billing address
+ * When a user submits the W-9 form, copy company/address/city/state/zip/phone to their profile
+ */
+add_action('gform_after_submission', function($entry, $form) {
+    // Check if this is the W-9 form (adjust form ID if needed)
+    // Common W-9 field IDs: company=1, address=2, city=3, state=4, zip=5, phone=6
+    // You may need to adjust these field IDs to match your actual Gravity Form
+
+    $user_id = get_current_user_id();
+    if (!$user_id) {
+        return; // Not logged in
+    }
+
+    // Map Gravity Forms fields to WooCommerce billing fields
+    // Adjust the field IDs (the numbers) to match your actual W-9 form field IDs
+    $field_map = array(
+        'billing_company'  => rgar($entry, '1'),   // W-9 Company Name field ID
+        'billing_address_1'=> rgar($entry, '2'),   // W-9 Address field ID
+        'billing_city'     => rgar($entry, '3'),   // W-9 City field ID
+        'billing_state'    => rgar($entry, '4'),   // W-9 State field ID
+        'billing_postcode' => rgar($entry, '5'),   // W-9 ZIP field ID
+        'billing_phone'    => rgar($entry, '6'),   // W-9 Phone field ID
+    );
+
+    // Only update fields that have values
+    foreach ($field_map as $meta_key => $value) {
+        if (!empty($value)) {
+            update_user_meta($user_id, $meta_key, sanitize_text_field($value));
+        }
+    }
+}, 10, 2);
+
+/**
+ * FIX #2: Affiliate users should only have "affiliate" role, not "subscriber"
+ * When a user is assigned the affiliate role, remove subscriber
+ */
+add_action('set_user_role', function($user_id, $new_role, $old_roles) {
+    // Only process when affiliate role is added
+    if ($new_role === 'affiliate' || in_array('affiliate', (array)$new_role)) {
+        $user = new WP_User($user_id);
+
+        // Remove subscriber role if present
+        if (in_array('subscriber', $user->roles)) {
+            $user->remove_role('subscriber');
+        }
+
+        // Remove customer role if present (WooCommerce)
+        if (in_array('customer', $user->roles)) {
+            $user->remove_role('customer');
+        }
+    }
+}, 10, 3);
+
+// Also handle when user is created with affiliate role
+add_action('user_register', function($user_id) {
+    $user = new WP_User($user_id);
+    if (in_array('affiliate', $user->roles)) {
+        $user->remove_role('subscriber');
+        $user->remove_role('customer');
+    }
+});
