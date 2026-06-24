@@ -138,11 +138,23 @@ get_header();
                     ?>
 
             </div>
-            <?php elseif (function_exists('affwp_is_affiliate') && affwp_is_affiliate()) : ?>
-                    <!-- LOGGED IN AS AFFILIATE: Show dashboard -->
+            <?php elseif (function_exists('affwp_is_affiliate') && affwp_is_affiliate()) : 
+                    $affiliate_id = affwp_get_affiliate_id();
+                    $affiliate_status = affwp_get_affiliate_status($affiliate_id);
+                    if ($affiliate_status === 'active') : 
+                ?>
+                    <!-- LOGGED IN AS ACTIVE AFFILIATE: Show dashboard -->
 
                     <h2 class="text-xl font-bold text-white mb-4">Affiliate Dashboard</h2>
                     <?php echo do_shortcode('[affiliate_area]'); ?>
+                <?php else : ?>
+                    <!-- AFFILIATE PENDING APPROVAL -->
+                    <div style="text-align:center;padding:40px 20px;background:rgba(255,255,255,0.05);border-radius:8px;margin:20px 0;">
+                        <h3 style="color:#44f80c;margin-bottom:15px;">Account Status: Pending Approval</h3>
+                        <p style="color:#9ca3af;margin-bottom:10px;">Your affiliate application is being reviewed.</p>
+                        <p style="color:#9ca3af;">You will receive an email once your account is approved.</p>
+                    </div>
+                <?php endif; ?>
 
                 <?php else : ?>
                     <!-- LOGGED IN BUT NOT AFFILIATE: Show registration -->
