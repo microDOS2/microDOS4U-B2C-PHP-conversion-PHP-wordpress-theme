@@ -3417,3 +3417,59 @@ add_action('admin_init', function() {
         error_log('microDOS4U: Phone field added to Affiliate Application form (ID: 2)');
     }
 });
+
+
+
+/**
+ * FIX: Remove Username field and fix Website field from Affiliate Application form
+ * Runs once on admin page load
+ */
+add_action('admin_init', function() {
+    if (!class_exists('GFAPI')) {
+        return;
+    }
+
+    $form_id = 2; // Affiliate Application form
+    $form = GFAPI::get_form($form_id);
+
+    if (!$form || is_wp_error($form)) {
+        return;
+    }
+
+    $modified = false;
+    $new_fields = array();
+
+    foreach ($form['fields'] as $field) {
+        $field_id = $field->id;
+
+        // REMOVE field 4 (Username) — auto-generated from email in processing code
+        if ($field_id == 4) {
+            $modified = true;
+            continue; // Skip this field — removes it from form
+        }
+
+        // FIX field 5 (Website / Social Media) — ensure it has proper input
+        if ($field_id == 5) {
+            // Make sure it has input type set
+            if (empty($field->type) || $field->type === 'hidden') {
+                $field->type = 'text';
+                $field->inputType = 'text';
+                $modified = true;
+            }
+            // Ensure it's visible (not admin-only)
+            $field->visibility = 'visible';
+            $field->adminOnly = false;
+            $modified = true;
+        }
+
+        $new_fields[] = $field;
+    }
+
+    if ($modified) {
+        $form['fields'] = $new_fields;
+        $result = GFAPI::update_form($form, $form_id);
+        if (!is_wp_error($result)) {
+            error_log('microDOS4U: Form 2 fixed — removed Username field, fixed Website field');
+        }
+    }
+});
