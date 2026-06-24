@@ -68,7 +68,6 @@ function microdos4u_setup() {
     ));
 }
 
-
 // ============================================
 // AFFILIATE ROLE & ACCESS CONTROL
 // ============================================
@@ -2535,7 +2534,6 @@ function microdos_admin_portal_notice() {
     <?php
 }
 
-
 // ============================================
 // CART SYNC: Custom JS Cart ↔ WooCommerce Bridge
 // ============================================
@@ -2747,7 +2745,6 @@ function microdos_ajax_get_cart() {
     ));
 }
 
-
 // ============================================
 // AUTHORIZE.NET CLIENT KEY FIX
 // Injects the Client Key for Accept.js tokenization.
@@ -2812,39 +2809,6 @@ add_filter('rest_endpoints', function($endpoints) {
         }
     }
     return $endpoints;
-});
-
-/**
- * #2, #3, #7 - Lock down REST API to authenticated users only
- * Prevents public access to pages, media, plugins, and AI Studio capabilities
- * Exception: WooCommerce Store API (needed for cart functionality)
- */
-add_filter('rest_authentication_errors', function($result) {
-    if (!empty($result)) return $result;
-    if (is_user_logged_in()) return $result; // Logged-in users pass through
-
-    $uri = $_SERVER['REQUEST_URI'] ?? '';
-
-    // Allow AffiliateWP endpoints (registration, portal, auth, legacy)
-    $allowed = array('affwp/v1', 'affwp/v2', 'wc/store', 'oembed', 'wp/v2/namespaces', 'gravityforms');
-    foreach ($allowed as $path) {
-        if (strpos($uri, $path) !== false) return $result;
-    }
-
-    // Allow WordPress core namespace listing (needed for some plugins)
-    if ($uri === '/wp-json/' || $uri === '/wp-json') {
-        return $result;
-    }
-
-    // Block sensitive endpoints for guests
-    $blocked = array('wp/v2/users', 'wp/v2/pages', 'wp/v2/media', 'wp/v2/posts', 'wp/v2/comments', 'wp/v2/types', 'wp/v2/taxonomies', 'wp/v2/categories', 'wp/v2/tags');
-    foreach ($blocked as $path) {
-        if (strpos($uri, $path) !== false) {
-            return new WP_Error('rest_not_logged_in', 'Authentication required.', array('status' => 401));
-        }
-    }
-
-    return $result; // Allow everything else
 });
 
 /**
@@ -2997,7 +2961,6 @@ add_action('woocommerce_before_checkout_form', function() {
     
     echo '</div>';
 }, 5);
-
 
 /**
  * Getting Started page text fixes — JavaScript injection
@@ -3286,7 +3249,6 @@ Best Practices
     ));
 });
 
-
 /**
  * #14 - Dynamic commission rate shortcode
  * Reads live rate from AffiliateWP settings
@@ -3308,10 +3270,6 @@ add_shortcode('affiliate_commission_rate', function($atts) {
 add_shortcode('affiliate_rate', function($atts) {
     return do_shortcode('[affiliate_commission_rate]');
 });
-
-
-
-
 
 /**
  * FIX #2: Affiliate users should only have "affiliate" role, not "subscriber"
@@ -3342,7 +3300,6 @@ add_action('user_register', function($user_id) {
         $user->remove_role('customer');
     }
 });
-
 
 /**
  * FIX #1: Smart Gravity Forms W-9 → WooCommerce billing address mapping
