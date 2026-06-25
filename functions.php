@@ -3429,7 +3429,7 @@ add_shortcode('affiliate_rate', function($atts) {
  * Uses init priority 20 (after GF loads) — theme runs after plugins so gform_loaded already fired
  */
 add_action('init', function() {
-    // Only run once (delete the option to force re-run after code changes)
+    // GFAPI loads at init priority 10; we run at 20 to guarantee it's ready
     if (get_option('microdos_gf_confirmation_v2')) {
         return;
     }
