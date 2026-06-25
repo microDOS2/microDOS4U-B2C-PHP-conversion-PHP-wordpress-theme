@@ -1908,7 +1908,7 @@ style.textContent =
 document.head.appendChild(style);
 document.body.appendChild(wrapper);
 document.getElementById('microdos-help-btn').addEventListener('click', function() {
-launchTour(true);
+launchMcdTour(true);
 });
 document.getElementById('microdos-help-close').addEventListener('click', function(e) {
 e.stopPropagation();
@@ -2173,7 +2173,7 @@ if (!isAffiliateDashboard()) return;
 injectFloatingHelpButton();
 if (shouldAutoLaunch() && isMainDashboardTab()) {
 setTimeout(function() {
-if (isMainDashboardTab()) launchTour(false);
+if (isMainDashboardTab()) launchMcdTour(false);
 }, CONFIG.AUTO_LAUNCH_DELAY);
 }
 }
@@ -2196,12 +2196,16 @@ var DATA = window.microDOSPortalData || {};
 var GUIDE_URL = DATA.guideUrl || '/affiliate-dashboard-guide/';
 var MG_URL = DATA.mgUrl || '/marketing-guide/';
 var REFERRAL_URL = DATA.referralUrl || '';
+var _sidebarRetryCount = 0;
+var _sidebarMaxRetries = 5;
 function injectSidebarLinks() {
 if (document.getElementById('microdos-sidebar-links')) return;
 var sidebar = findSidebarNav();
 if (!sidebar) {
-console.log('[microDOS] Sidebar nav not found, retrying...');
+_sidebarRetryCount++;
+if (_sidebarRetryCount <= _sidebarMaxRetries) {
 setTimeout(injectSidebarLinks, 500);
+}
 return;
 }
 var container = document.createElement('div');
