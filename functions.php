@@ -1333,9 +1333,14 @@ add_filter('gform_confirmation', function($confirmation, $form, $entry, $ajax) {
     if ($form['id'] != 2) {
         return $confirmation;
     }
+    $email = rgar($entry, '2');
+    $user = get_user_by('email', $email);
+    $username = $user ? $user->user_login : '';
+    $username_line = $username ? '<p style="color:#9ca3af;margin-bottom:8px;">Your login username: <strong style="color:#44f80c;">' . esc_html($username) . '</strong></p>' : '';
     return '<div style="text-align:center;padding:48px 24px;background:linear-gradient(135deg,rgba(68,248,12,0.1),rgba(154,2,208,0.1));border:1px solid #44f80c40;border-radius:12px;margin:20px 0;">
     <h2 style="color:#44f80c;margin-bottom:12px;font-size:22px;">&#10003; Application Submitted Successfully</h2>
     <p style="color:#e2e8f0;margin-bottom:8px;font-size:15px;">Thank you for applying to the microDOS(2) Affiliate Program!</p>
+    ' . $username_line . '
     <p style="color:#9ca3af;margin-bottom:8px;">Your application is <strong style="color:#ffaa00;">pending review</strong>.</p>
     <p style="color:#9ca3af;margin-bottom:16px;">You will receive an email once your account is approved (usually within 24-48 hours).</p>
     <p style="color:#64748b;font-size:13px;">If you have questions, contact us at <a href="mailto:lynn@microdos4u.com" style="color:#44f80c;">lynn@microdos4u.com</a></p>
@@ -1350,6 +1355,8 @@ function microdos_send_affiliate_pending_email($user_id, $email, $first_name, $l
     $site_url    = home_url('/');
     $affiliate_area = get_permalink(get_page_by_path('affiliate-area')) ?: home_url('/affiliate-area/');
     $admin_email = get_option('admin_email');
+    $user        = get_userdata($user_id);
+    $username    = $user ? $user->user_login : '';
 
     $subject = "Your {$site_name} Affiliate Application Received";
     $display_name = $first_name ?: $last_name ?: 'Affiliate';
@@ -1364,6 +1371,9 @@ function microdos_send_affiliate_pending_email($user_id, $email, $first_name, $l
     $message .= '<tr><td style="padding:30px;">';
     $message .= '<h2 style="margin:0 0 16px;font-size:20px;color:#ffffff;">Hello ' . esc_html($display_name) . ',</h2>';
     $message .= '<p style="color:#94a3b8;font-size:15px;line-height:1.6;">Thank you for applying to the <strong class="microdos-text-white">' . esc_html($site_name) . ' Affiliate Program</strong>. Your application has been received and is now <strong class="microdos-text-green">pending review</strong>.</p>';
+    if ($username) {
+        $message .= '<p style="color:#94a3b8;font-size:15px;line-height:1.6;"><strong class="microdos-text-white">Your login username:</strong> <span style="color:#44f80c;font-weight:bold;">' . esc_html($username) . '</span></p>';
+    }
     $message .= '<p style="color:#94a3b8;font-size:15px;line-height:1.6;">What happens next:</p>';
     $message .= '<ul style="color:#94a3b8;font-size:15px;line-height:1.6;padding-left:20px;">';
     $message .= '<li>Our team will review your application within <strong class="microdos-text-white">24-48 hours</strong>.</li>';
@@ -3692,13 +3702,6 @@ add_action('admin_init', function() {
 
     foreach ($form['fields'] as $field) {
         $label = strtolower($field->label);
-
-        // REMOVE Username field (by label or ID 4)
-        if ($field->id == 4 || strpos($label, 'username') !== false) {
-            $has_username = true;
-            $modified = true;
-            continue; // Skip — removes field
-        }
 
         // REMOVE broken Website field (by label — any field with "website" or "social")
         if (strpos($label, 'website') !== false || strpos($label, 'social') !== false) {
