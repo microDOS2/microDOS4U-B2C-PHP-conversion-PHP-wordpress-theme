@@ -3669,10 +3669,62 @@ add_action('init', function() {
     }
 });
 
+/**
+ * RESTORE Username field to Affiliate Application form (ID: 2)
+ * The field was removed by earlier code — this re-adds it
+ */
+add_action('init', function() {
+    if (get_option('microdos_username_restored')) {
+        return;
+    }
+    if (!class_exists('GFAPI')) {
+        return;
+    }
+
+    $form = GFAPI::get_form(2);
+    if (!$form || is_wp_error($form)) {
+        return;
+    }
+
+    // Check if username field already exists
+    foreach ($form['fields'] as $field) {
+        $label = strtolower($field->label);
+        if (strpos($label, 'username') !== false || $field->id == 4) {
+            update_option('microdos_username_restored', true);
+            return;
+        }
+    }
+
+    // Create username field
+    $username_field = new GF_Field_Text();
+    $username_field->label = 'Username';
+    $username_field->id = 4;
+    $username_field->isRequired = true;
+    $username_field->description = 'Choose a username for your affiliate account';
+    $username_field->descriptionPlacement = 'below';
+    $username_field->placeholder = 'yourname';
+    $username_field->adminLabel = 'Username';
+
+    // Insert after password field (ID 3)
+    $new_fields = array();
+    foreach ($form['fields'] as $field) {
+        $new_fields[] = $field;
+        if ($field->id == 3) {
+            $new_fields[] = $username_field;
+        }
+    }
+    $form['fields'] = $new_fields;
+
+    $result = GFAPI::update_form($form, 2);
+    if (!is_wp_error($result)) {
+        update_option('microdos_username_restored', true);
+        error_log('microDOS4U: Username field restored to Affiliate Application form (ID: 2)');
+    }
+}, 20);
 
 /**
  * FIX: Remove broken Website field and create new proper one
- * Also removes Username field
+ * Note: Username field removal removed — affiliates need to know their username
  */
 add_action('admin_init', function() {
     if (!class_exists('GFAPI')) {
