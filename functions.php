@@ -189,7 +189,7 @@ add_action('wp_head', function() {
     $desc = '';
 
     if (is_front_page() || is_home()) {
-        $desc = 'microDOS4U - Premium research compound subscriptions. Join our affiliate program and earn 45% commission on every referral. Secure, trusted, science-backed.';
+        $desc = 'microDOS4U - Premium research compound subscriptions. Science-backed quality, secure monthly delivery. Unlock creative flow with microDOS(2).';
     } elseif (is_page('affiliate-area') || is_page('affiliate')) {
         $desc = 'Join the microDOS4U affiliate program. Earn 45% commission on initial purchases and 10% on subscription renewals. Apply today and start earning.';
     } elseif (is_page('getting-started')) {
@@ -213,7 +213,7 @@ add_action('wp_head', function() {
 
     // Fallback default
     if (empty($desc)) {
-        $desc = 'microDOS4U - Premium research compound subscriptions. Join our affiliate program and earn commissions on every referral.';
+        $desc = 'microDOS4U - Premium research compound subscriptions. Science-backed quality, secure monthly delivery.';
     }
 
     // Ensure max 160 chars for SEO
@@ -230,7 +230,7 @@ add_action('wp_head', function() {
     // Site defaults
     $site_name = get_bloginfo('name');
     $og_title = $site_name;
-    $og_desc = 'microDOS4U - Premium research compound subscriptions. Join our affiliate program and earn commissions on every referral.';
+    $og_desc = 'microDOS4U - Premium research compound subscriptions. Science-backed quality, secure monthly delivery.';
     $og_type = 'website';
     $og_url = home_url($_SERVER['REQUEST_URI'] ?? '/');
     $og_image = '';
@@ -238,7 +238,7 @@ add_action('wp_head', function() {
     // Page-specific overrides
     if (is_front_page() || is_home()) {
         $og_title = $site_name;
-        $og_desc = 'Premium research compound subscriptions. Join our affiliate program and earn 45% commission on every referral.';
+        $og_desc = 'Premium research compound subscriptions. Science-backed quality, secure monthly delivery.';
         $og_type = 'website';
     } elseif (is_page('affiliate-area') || is_page('affiliate')) {
         $og_title = 'Affiliate Program | ' . $site_name;
@@ -266,7 +266,7 @@ add_action('wp_head', function() {
 
     // Fallback description if empty
     if (empty($og_desc)) {
-        $og_desc = 'Premium research compound subscriptions. Join our affiliate program and earn commissions.';
+        $og_desc = 'Premium research compound subscriptions. Science-backed quality, secure monthly delivery.';
     }
 
     // Output OG tags
