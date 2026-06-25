@@ -3560,3 +3560,216 @@ add_action('admin_init', function() {
         }
     }
 });
+
+
+
+/**
+ * AffiliateWP 1099 Tax Data Admin Page
+ * Lists all approved affiliates with decrypted tax info for 1099 reporting
+ * Accessible only to admins under AffiliateWP → 1099 Tax Data
+ */
+add_action('admin_menu', function() {
+    add_submenu_page(
+        'affiliate-wp',
+        '1099 Tax Data',
+        '1099 Tax Data',
+        'manage_options',
+        'affwp-1099-tax-data',
+        'microdos_render_1099_page'
+    );
+});
+
+function microdos_render_1099_page() {
+    if (!current_user_can('manage_options')) {
+        wp_die('Access denied');
+    }
+
+    // Handle CSV export
+    if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+        microdos_export_1099_csv();
+        return;
+    }
+
+    // Get all approved affiliates
+    $affiliates = affiliate_wp()->affiliates->get_affiliates(array(
+        'status' => 'active',
+        'number' => -1,
+    ));
+
+    ?>
+    <div class="wrap">
+        <h1 style="color:#23282d;">1099 Tax Data Report</h1>
+        <p style="color:#666;">Decrypted tax information for approved affiliates. Use this data to file 1099 forms at year-end.</p>
+
+        <a href="<?php echo admin_url('admin.php?page=affwp-1099-tax-data&export=csv'); ?>" 
+           class="button button-primary" 
+           style="margin:10px 0;">
+            Download CSV for 1099
+        </a>
+
+        <table class="wp-list-table widefat fixed striped" style="margin-top:15px;">
+            <thead>
+                <tr style="background:#f0f0f0;">
+                    <th style="font-weight:bold;">Affiliate Name</th>
+                    <th style="font-weight:bold;">Legal Name (W-9)</th>
+                    <th style="font-weight:bold;">Business Name</th>
+                    <th style="font-weight:bold;">Tax Classification</th>
+                    <th style="font-weight:bold;">SSN / EIN</th>
+                    <th style="font-weight:bold;">Address</th>
+                    <th style="font-weight:bold;">City, State ZIP</th>
+                    <th style="font-weight:bold;">Total Earnings</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($affiliates)) : ?>
+                    <tr><td colspan="8" style="text-align:center;color:#999;">No approved affiliates found.</td></tr>
+                <?php else : ?>
+                    <?php foreach ($affiliates as $affiliate) : 
+                        $user_id = $affiliate->user_id;
+                        $user = get_userdata($user_id);
+
+                        // Get W-9 data
+                        $w9_data = get_user_meta($user_id, 'microdos_w9_data', true);
+
+                        $legal_name = '';
+                        $business_name = '';
+                        $tax_class = '';
+                        $tax_id_display = '<span style="color:#999;">Not submitted</span>';
+                        $address = '';
+                        $city_state_zip = '';
+
+                        if (!empty($w9_data) && is_array($w9_data)) {
+                            $legal_name = esc_html($w9_data['legal_name'] ?? '');
+                            $business_name = esc_html($w9_data['business_name'] ?? '');
+                            $tax_class = esc_html($w9_data['tax_classification'] ?? '');
+
+                            // Decrypt SSN/EIN
+                            $encrypted_tax_id = $w9_data['tax_id'] ?? '';
+                            if (!empty($encrypted_tax_id)) {
+                                $decrypted = microdos_decrypt_tax_id($encrypted_tax_id);
+                                if (!empty($decrypted)) {
+                                    $tax_id_display = esc_html($decrypted);
+                                }
+                            }
+
+                            // Build address
+                            $address = esc_html($w9_data['address'] ?? '');
+                            if (!empty($w9_data['address2'] ?? '')) {
+                                $address .= '<br>' . esc_html($w9_data['address2']);
+                            }
+
+                            $city = esc_html($w9_data['city'] ?? '');
+                            $state = esc_html($w9_data['state'] ?? '');
+                            $zip = esc_html($w9_data['zip'] ?? '');
+                            $city_state_zip = $city . ($city && $state ? ', ' : '') . $state . ' ' . $zip;
+                        }
+
+                        // Get total earnings from AffiliateWP
+                        $earnings = affwp_get_affiliate_earnings($affiliate->affiliate_id);
+                        ?>
+                        <tr>
+                            <td><?php echo esc_html($user ? $user->display_name : 'Unknown'); ?></td>
+                            <td><?php echo $legal_name; ?></td>
+                            <td><?php echo $business_name; ?></td>
+                            <td><?php echo $tax_class; ?></td>
+                            <td style="font-family:monospace;background:#fff3cd;"><?php echo $tax_id_display; ?></td>
+                            <td><?php echo $address; ?></td>
+                            <td><?php echo $city_state_zip; ?></td>
+                            <td style="font-weight:bold;">$<?php echo number_format($earnings, 2); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+
+        <p style="margin-top:20px;color:#999;font-size:12px;">
+            <strong>Security:</strong> This page is only visible to administrators. SSN/EIN data is decrypted in memory and never stored unencrypted.
+        </p>
+    </div>
+    <?php
+}
+
+function microdos_export_1099_csv() {
+    if (!current_user_can('manage_options')) {
+        wp_die('Access denied');
+    }
+
+    $affiliates = affiliate_wp()->affiliates->get_affiliates(array(
+        'status' => 'active',
+        'number' => -1,
+    ));
+
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="1099-tax-data-' . date('Y-m-d') . '.csv"');
+
+    $output = fopen('php://output', 'w');
+
+    // CSV header
+    fputcsv($output, array(
+        'Affiliate Name',
+        'Legal Name',
+        'Business Name', 
+        'Tax Classification',
+        'SSN_EIN',
+        'Address Line 1',
+        'Address Line 2',
+        'City',
+        'State',
+        'ZIP',
+        'Total Earnings',
+        'Year'
+    ));
+
+    foreach ($affiliates as $affiliate) {
+        $user_id = $affiliate->user_id;
+        $user = get_userdata($user_id);
+        $w9_data = get_user_meta($user_id, 'microdos_w9_data', true);
+
+        $legal_name = '';
+        $business_name = '';
+        $tax_class = '';
+        $tax_id = '';
+        $address1 = '';
+        $address2 = '';
+        $city = '';
+        $state = '';
+        $zip = '';
+
+        if (!empty($w9_data) && is_array($w9_data)) {
+            $legal_name = $w9_data['legal_name'] ?? '';
+            $business_name = $w9_data['business_name'] ?? '';
+            $tax_class = $w9_data['tax_classification'] ?? '';
+
+            $encrypted_tax_id = $w9_data['tax_id'] ?? '';
+            if (!empty($encrypted_tax_id)) {
+                $tax_id = microdos_decrypt_tax_id($encrypted_tax_id);
+            }
+
+            $address1 = $w9_data['address'] ?? '';
+            $address2 = $w9_data['address2'] ?? '';
+            $city = $w9_data['city'] ?? '';
+            $state = $w9_data['state'] ?? '';
+            $zip = $w9_data['zip'] ?? '';
+        }
+
+        $earnings = affwp_get_affiliate_earnings($affiliate->affiliate_id);
+
+        fputcsv($output, array(
+            $user ? $user->display_name : 'Unknown',
+            $legal_name,
+            $business_name,
+            $tax_class,
+            $tax_id,
+            $address1,
+            $address2,
+            $city,
+            $state,
+            $zip,
+            number_format($earnings, 2),
+            date('Y')
+        ));
+    }
+
+    fclose($output);
+    exit;
+}
