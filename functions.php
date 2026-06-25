@@ -122,7 +122,7 @@ add_action('init', function() {
 <!-- wp:column -->
 <div class="wp-block-column">
 <!-- wp:heading {"level":3,"style":{"color":{"text":"#9a02d0"},"typography":{"fontSize":"20px"}}} -->
-<h3 class="has-text-color" style="color:#9a02d0;font-size:20px">Subscription Renewals</h3>
+<h3 class="has-text-color" style="color:#9a02d0;font-size:20px">Monthly Renewals</h3>
 <!-- /wp:heading -->
 <!-- wp:paragraph {"style":{"color":{"text":"#ffffff"},"typography":{"fontSize":"36px","fontWeight":"700"}}} -->
 <p class="has-text-color" style="color:#ffffff;font-size:36px;font-weight:700">10%</p>
@@ -189,22 +189,22 @@ add_action('wp_head', function() {
     $desc = '';
 
     if (is_front_page() || is_home()) {
-        $desc = 'microDOS4U - Premium research compound subscriptions. Science-backed quality, secure monthly delivery. Unlock creative flow with microDOS(2).';
+        $desc = 'microDOS4U - Premium research compounds. Science-backed quality, secure monthly delivery. Unlock creative flow with microDOS(2).';
     } elseif (is_page('affiliate-area') || is_page('affiliate')) {
         $desc = 'Join the microDOS4U affiliate program. Earn 45% commission on initial purchases and 10% on subscription renewals. Apply today and start earning.';
     } elseif (is_page('getting-started')) {
         $desc = 'Getting started with the microDOS4U affiliate program. Learn how to earn commissions by sharing your unique referral link.';
     } elseif (is_page('checkout')) {
-        $desc = 'Secure checkout for microDOS4U research compound subscriptions. SSL encrypted payment processing via Authorize.Net.';
+        $desc = 'Secure checkout for microDOS4U research compounds. SSL encrypted payment processing via Authorize.Net.';
     } elseif (is_page('cart')) {
         $desc = 'Your microDOS4U shopping cart. Review your items and proceed to secure checkout.';
     } elseif (is_product()) {
         $desc = wp_trim_words(get_the_excerpt(), 30, '...');
         if (empty($desc)) {
-            $desc = 'Premium research compounds from microDOS4U. Science-backed quality, secure subscription delivery.';
+            $desc = 'Premium research compounds from microDOS4U. Science-backed quality, secure delivery.';
         }
     } elseif (is_shop()) {
-        $desc = 'Browse microDOS4U premium research compound subscriptions. Science-backed quality with secure monthly delivery.';
+        $desc = 'Browse microDOS4U premium research compounds. Science-backed quality with secure monthly delivery.';
     } elseif (is_singular('post')) {
         $desc = wp_trim_words(get_the_excerpt(), 30, '...');
     } elseif (is_category() || is_tag() || is_archive()) {
@@ -213,7 +213,7 @@ add_action('wp_head', function() {
 
     // Fallback default
     if (empty($desc)) {
-        $desc = 'microDOS4U - Premium research compound subscriptions. Science-backed quality, secure monthly delivery.';
+        $desc = 'microDOS4U - Premium research compounds. Science-backed quality, secure monthly delivery.';
     }
 
     // Ensure max 160 chars for SEO
@@ -230,7 +230,7 @@ add_action('wp_head', function() {
     // Site defaults
     $site_name = get_bloginfo('name');
     $og_title = $site_name;
-    $og_desc = 'microDOS4U - Premium research compound subscriptions. Science-backed quality, secure monthly delivery.';
+    $og_desc = 'microDOS4U - Premium research compounds. Science-backed quality, secure monthly delivery.';
     $og_type = 'website';
     $og_url = home_url($_SERVER['REQUEST_URI'] ?? '/');
     $og_image = '';
@@ -238,7 +238,7 @@ add_action('wp_head', function() {
     // Page-specific overrides
     if (is_front_page() || is_home()) {
         $og_title = $site_name;
-        $og_desc = 'Premium research compound subscriptions. Science-backed quality, secure monthly delivery.';
+        $og_desc = 'Premium research compounds. Science-backed quality, secure monthly delivery.';
         $og_type = 'website';
     } elseif (is_page('affiliate-area') || is_page('affiliate')) {
         $og_title = 'Affiliate Program | ' . $site_name;
@@ -266,7 +266,7 @@ add_action('wp_head', function() {
 
     // Fallback description if empty
     if (empty($og_desc)) {
-        $og_desc = 'Premium research compound subscriptions. Science-backed quality, secure monthly delivery.';
+        $og_desc = 'Premium research compounds. Science-backed quality, secure monthly delivery.';
     }
 
     // Output OG tags
@@ -303,7 +303,7 @@ add_action('wp_head', function() {
         'name'        => 'microDOS(2)',
         'url'         => home_url('/'),
         'logo'        => get_site_icon_url(),
-        'description' => 'Premium research compound subscriptions. Science-backed quality, secure monthly delivery.',
+        'description' => 'Premium research compounds. Science-backed quality, secure monthly delivery.',
         'sameAs'      => array(), // Add social URLs here if available
     );
 
@@ -411,6 +411,64 @@ add_action('wp_head', function() {
         echo '<script type="application/ld+json">' . wp_json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . '</script>' . "\n";
     }
 }, 7);
+
+/**
+ * P5 #32: Add H1 headings to key pages for SEO
+ * Ensures every page has a single, descriptive H1 tag.
+ */
+add_action('wp_head', function() {
+    $h1 = '';
+
+    if (is_front_page() || is_home()) {
+        $h1 = 'microDOS(2) — Premium Research Compounds';
+    } elseif (is_page('affiliate-area') || is_page('affiliate')) {
+        $h1 = 'microDOS(2) Affiliate Program';
+    } elseif (is_page('getting-started')) {
+        $h1 = 'Getting Started with microDOS(2)';
+    } elseif (is_page('checkout')) {
+        $h1 = 'Secure Checkout';
+    } elseif (is_page('cart')) {
+        $h1 = 'Your Cart';
+    } elseif (is_page('about')) {
+        $h1 = 'About microDOS(2)';
+    } elseif (is_page('contact')) {
+        $h1 = 'Contact microDOS(2)';
+    } elseif (is_page('faq')) {
+        $h1 = 'Frequently Asked Questions';
+    } elseif (is_product()) {
+        $h1 = get_the_title();
+    } elseif (is_shop()) {
+        $h1 = 'Research Compounds';
+    } elseif (is_singular('post')) {
+        $h1 = get_the_title();
+    } elseif (is_404()) {
+        $h1 = 'Page Not Found';
+    }
+
+    if (!empty($h1)) {
+        // Only output if no H1 exists in the page content
+        echo '<!-- H1 for SEO -->' . "\n";
+        echo '<h1 class="microdos-h1" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">' . esc_html($h1) . '</h1>' . "\n";
+    }
+}, 8);
+
+/**
+ * P5 #32b: Set One-Time Purchase as default toggle on product pages
+ */
+add_filter('wcsatt_default_subscription_scheme', function($default_scheme, $schemes, $product) {
+    // Return the one-time (non-subscription) scheme as default
+    foreach ($schemes as $scheme) {
+        if ($scheme->is_synced() === false && empty($scheme->get_period())) {
+            return $scheme;
+        }
+    }
+    return $default_scheme;
+}, 10, 3);
+
+add_filter('wcsatt_force_subscription', function($force, $product) {
+    // Never force subscription — always allow one-time
+    return false;
+}, 10, 2);
 
 // ============================================
 // AFFILIATE ROLE & ACCESS CONTROL
