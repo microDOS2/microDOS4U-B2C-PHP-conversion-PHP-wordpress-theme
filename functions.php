@@ -3424,12 +3424,13 @@ add_shortcode('affiliate_rate', function($atts) {
  * Shows styled success message inline when form is submitted via AJAX
  * Runs once on admin page load, then sets flag to prevent re-running
  */
-add_action('admin_init', function() {
+/**
+ * Create GF confirmation for affiliate application (Form ID 2)
+ * Uses gform_loaded hook to ensure GFAPI is available
+ */
+add_action('gform_loaded', function() {
     // Only run once
     if (get_option('microdos_gf_confirmation_created')) {
-        return;
-    }
-    if (!class_exists('GFAPI')) {
         return;
     }
 
@@ -3452,8 +3453,8 @@ add_action('admin_init', function() {
     }
 
     // Create new text confirmation - displays inline for AJAX forms
-    $new_confirmation = array(
-        'id'          => 'app_submitted_' . wp_generate_password(6, false),
+    $form['confirmations']['app_submitted_1'] = array(
+        'id'          => 'app_submitted_1',
         'name'        => $confirmation_name,
         'isDefault'   => true,
         'type'        => 'text',
@@ -3469,11 +3470,11 @@ add_action('admin_init', function() {
     // Make all other confirmations non-default
     if (!empty($form['confirmations'])) {
         foreach ($form['confirmations'] as $id => &$conf) {
-            $conf['isDefault'] = false;
+            if ($id !== 'app_submitted_1') {
+                $conf['isDefault'] = false;
+            }
         }
     }
-
-    $form['confirmations'][$new_confirmation['id']] = $new_confirmation;
 
     $result = GFAPI::update_form($form, $form_id);
     if (!is_wp_error($result)) {
