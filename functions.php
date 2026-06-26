@@ -3115,12 +3115,12 @@ function microdos_get_product_mapping() {
             // Also try by product title matching
             $title_map = array(
                 'trial'       => array('trial pack'),
-                'protocol_10' => array('explorer', '10 pills/mo'),
-                'protocol_30' => array('optimizer', '30 pills/mo'),
-                'protocol_60' => array('master', '60 pills/mo'),
-                'onetime_10'  => array('10 pills', 'one-time'),
-                'onetime_30'  => array('30 pills', 'one-time'),
-                'onetime_60'  => array('60 pills', 'one-time'),
+                'protocol_10' => array('explorer', '10 tablets/mo'),
+                'protocol_30' => array('optimizer', '30 tablets/mo'),
+                'protocol_60' => array('master', '60 tablets/mo'),
+                'onetime_10'  => array('10 tablets', 'one-time'),
+                'onetime_30'  => array('30 tablets', 'one-time'),
+                'onetime_60'  => array('60 tablets', 'one-time'),
             );
             $query = new WC_Product_Query(array(
                 'limit'   => 100,
