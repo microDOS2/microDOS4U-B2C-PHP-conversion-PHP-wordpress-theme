@@ -39,11 +39,12 @@ do_action('woocommerce_before_cart');
                                 <td class="product-remove">
                                     <?php
                                     echo apply_filters('woocommerce_cart_item_remove_link', sprintf(
-                                        '<a href="%s" class="remove" aria-label="%s" data-product_id="%s" data-product_sku="%s">&times;</a>',
+                                        '<a href="%s" class="remove" aria-label="%s" data-product_id="%s" data-product_sku="%s" data-cart_item_key="%s">&times;</a>',
                                         esc_url(wc_get_cart_remove_url($cart_item_key)),
                                         esc_html__('Remove this item', 'microdos4u'),
                                         esc_attr($product_id),
-                                        esc_attr($_product->get_sku())
+                                        esc_attr($_product->get_sku()),
+                                        esc_attr($cart_item_key)
                                     ), $cart_item_key);
                                     ?>
                                 </td>
