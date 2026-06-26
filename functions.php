@@ -3556,39 +3556,6 @@ add_filter('woocommerce_return_to_shop_redirect', function() {
 });
 
 /**
- * Auto-update cart quantities on change — adds inline onchange to quantity inputs
- * WooCommerce filter approach — no JavaScript events, no interference with remove buttons
- */
-add_filter('woocommerce_cart_item_quantity', function($product_quantity, $cart_item_key, $cart_item) {
-    if (!is_cart()) return $product_quantity;
-    $product_quantity = str_replace(
-        '<input ',
-        '<input onchange="this.form.querySelector(\'button[name=update_cart]\').click();" ',
-        $product_quantity
-    );
-    return $product_quantity;
-}, 10, 3);
-
-/**
- * Force fresh cart page when cached content is stale
- * Compares cart table items to header cart count — self-healing approach
- */
-add_action('wp_footer', function() {
-    if (!is_cart()) return;
-    ?>
-    <script>
-    jQuery(function($) {
-        var cartItems = $('.woocommerce-cart-form tbody tr.cart_item, .woocommerce-cart-form .cart_item').length;
-        var headerCount = parseInt($('.cart-count').first().text()) || 0;
-        if (cartItems > 0 && cartItems !== headerCount && location.search.indexOf('ts=') === -1) {
-            location.href = location.pathname + '?ts=' + Date.now();
-        }
-    });
-    </script>
-    <?php
-});
-
-/**
  * #14 AUTO-INJECTION: Replace hardcoded commission rate on Getting Started page
  * Automatically finds and replaces "20%", "earn 20", etc. with the live rate from AffiliateWP
  * Targets: /getting-started/ page
@@ -4124,7 +4091,6 @@ add_action('gform_after_submission', function($entry, $form) {
 }, 10, 2);
 
 
-
 /**
  * Add Phone field to Affiliate Application form (ID: 2) if it doesn't exist
  * Runs once on admin page load
@@ -4311,7 +4277,6 @@ add_action('admin_init', function() {
 });
 
 
-
 /**
  * Move Phone Number field to just below ZIP Code in Affiliate Application form
  */
@@ -4365,7 +4330,6 @@ add_action('admin_init', function() {
         }
     }
 });
-
 
 
 /**
