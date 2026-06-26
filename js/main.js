@@ -23,12 +23,12 @@ const stateTaxRates = {
 // Products
 const products = {
     trial: { name: 'Trial Pack', price: 12.95 },
-    protocol_10: { name: 'Explorer Box Protocol (10 Pills/mo)', price: 47.56 },
-    protocol_30: { name: 'Optimizer Box Protocol (30 Pills/mo)', price: 128.31 },
-    protocol_60: { name: 'Master Box Protocol (60 Pills/mo)', price: 217.56 },
-    onetime_10: { name: '10 Pills (One-Time)', price: 55.95 },
-    onetime_30: { name: '30 Pills (One-Time)', price: 150.95 },
-    onetime_60: { name: '60 Pills (One-Time)', price: 255.95 }
+    protocol_10: { name: 'Explorer Box Protocol (10 Tablets/mo)', price: 47.56 },
+    protocol_30: { name: 'Optimizer Box Protocol (30 Tablets/mo)', price: 128.31 },
+    protocol_60: { name: 'Master Box Protocol (60 Tablets/mo)', price: 217.56 },
+    onetime_10: { name: '10 Tablets (One-Time)', price: 55.95 },
+    onetime_30: { name: '30 Tablets (One-Time)', price: 150.95 },
+    onetime_60: { name: '60 Tablets (One-Time)', price: 255.95 }
 };
 
 // Cart
@@ -223,13 +223,13 @@ function adjustQuantity(planId, change) {
 // Video Rotator
 function initVideoRotator() {
     const videoData = [
-        { src: '/videos/microDOS2%20video%201.mp4', title: 'One Pill. One Dose. <span class="gradient-text">Pure Clarity.</span>', subtitle: 'Legal, fast-acting psychedelic exploration.' },
+        { src: '/videos/microDOS2%20video%201.mp4', title: 'One Tablet. One Dose. <span class="gradient-text">Pure Clarity.</span>', subtitle: 'Legal, fast-acting psychedelic exploration.' },
         { src: '/videos/microDOS2%20video%202.mp4', title: 'Unlock Creative Flow. <span class="gradient-text">Elevate Your Senses.</span>', subtitle: 'Tap into a higher state of focus and inspiration.' },
         { src: '/videos/microDOS2%20video%203.mp4', title: 'Expand Your Mind. <span class="gradient-text">Discover New Worlds.</span>', subtitle: 'Journey through vibrant landscapes of thought.' },
-        { src: '/videos/microDOS2%20video%204.mp4', title: 'One Pill. One Dose. <span class="gradient-text">Pure Clarity.</span>', subtitle: 'Legal, fast-acting psychedelic exploration.' },
+        { src: '/videos/microDOS2%20video%204.mp4', title: 'One Tablet. One Dose. <span class="gradient-text">Pure Clarity.</span>', subtitle: 'Legal, fast-acting psychedelic exploration.' },
         { src: '/videos/microDOS2%20video%205.mp4', title: 'Unlock Creative Flow. <span class="gradient-text">Elevate Your Senses.</span>', subtitle: 'Tap into a higher state of focus and inspiration.' },
         { src: '/videos/microDOS2%20video%206.mp4', title: 'Expand Your Mind. <span class="gradient-text">Discover New Worlds.</span>', subtitle: 'Journey through vibrant landscapes of thought.' },
-        { src: '/videos/microDOS2%20video%207.mp4', title: 'One Pill. One Dose. <span class="gradient-text">Pure Clarity.</span>', subtitle: 'Legal, fast-acting psychedelic exploration.' },
+        { src: '/videos/microDOS2%20video%207.mp4', title: 'One Tablet. One Dose. <span class="gradient-text">Pure Clarity.</span>', subtitle: 'Legal, fast-acting psychedelic exploration.' },
         { src: '/videos/microDOS(2)%20video%208.mp4', title: 'Unlock Creative Flow. <span class="gradient-text">Elevate Your Senses.</span>', subtitle: 'Tap into a higher state of focus and inspiration.' },
         { src: '/videos/microDOS(2)%20video%209.mp4', title: 'Expand Your Mind. <span class="gradient-text">Discover New Worlds.</span>', subtitle: 'Journey through vibrant landscapes of thought.' }
     ];
@@ -699,3 +699,4 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
