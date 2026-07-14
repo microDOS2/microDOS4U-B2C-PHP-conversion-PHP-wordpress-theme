@@ -4808,3 +4808,20 @@ add_action('woocommerce_thankyou', function($order_id) {
     }
 }, 30);
 
+/**
+ * Remove ?v= query parameter from all page URLs
+ * This is added by SiteGround cache or plugins and is not needed
+ */
+add_action('init', function() {
+    if (isset($_GET['v']) && !is_admin()) {
+        // Remove the ?v= parameter from URL via redirect
+        $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") 
+            . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        $clean_url = remove_query_arg('v', $current_url);
+
+        if ($clean_url !== $current_url) {
+            wp_safe_redirect($clean_url, 301);
+            exit;
+        }
+    }
+}, 1);
