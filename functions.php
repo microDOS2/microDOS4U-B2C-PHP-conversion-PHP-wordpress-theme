@@ -4810,18 +4810,31 @@ add_action('woocommerce_thankyou', function($order_id) {
 
 /**
  * Remove ?v= query parameter from all page URLs
- * This is added by SiteGround cache or plugins and is not needed
+ * Uses template_redirect hook (fires after WordPress init but before output)
+ * 302 redirect to avoid cache issues with 301
  */
-add_action('init', function() {
+add_action('template_redirect', function() {
     if (isset($_GET['v']) && !is_admin()) {
-        // Remove the ?v= parameter from URL via redirect
-        $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") 
-            . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-        $clean_url = remove_query_arg('v', $current_url);
+        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+        $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
+        $uri = $_SERVER['REQUEST_URI'];
 
-        if ($clean_url !== $current_url) {
-            wp_safe_redirect($clean_url, 301);
-            exit;
+        // Parse URL and remove 'v' parameter
+        $parsed = parse_url($uri);
+        if (isset($parsed['query'])) {
+            parse_str($parsed['query'], $params);
+            if (isset($params['v'])) {
+                unset($params['v']);
+                $new_query = http_build_query($params);
+                $clean_uri = $parsed['path'];
+                if ($new_query) {
+                    $clean_uri .= '?' . $new_query;
+                }
+                $clean_url = $protocol . '://' . $host . $clean_uri;
+
+                wp_redirect($clean_url, 302);
+                exit;
+            }
         }
     }
 }, 1);
