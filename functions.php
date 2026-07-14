@@ -3182,6 +3182,7 @@ function microdos_enqueue_cart_bridge() {
 add_action('wp_ajax_microdos_add_to_cart', 'microdos_ajax_add_to_cart');
 add_action('wp_ajax_nopriv_microdos_add_to_cart', 'microdos_ajax_add_to_cart');
 function microdos_ajax_add_to_cart() {
+    nocache_headers();
     check_ajax_referer('microdos_cart_nonce', 'nonce');
 
     $product_key = sanitize_text_field($_POST['product_key'] ?? '');
@@ -3214,6 +3215,7 @@ function microdos_ajax_add_to_cart() {
 add_action('wp_ajax_microdos_remove_cart_item', 'microdos_ajax_remove_cart_item');
 add_action('wp_ajax_nopriv_microdos_remove_cart_item', 'microdos_ajax_remove_cart_item');
 function microdos_ajax_remove_cart_item() {
+    nocache_headers();
     check_ajax_referer('microdos_cart_nonce', 'nonce');
 
     $cart_item_key = sanitize_text_field($_POST['cart_item_key'] ?? '');
@@ -3236,6 +3238,7 @@ function microdos_ajax_remove_cart_item() {
 add_action('wp_ajax_microdos_update_cart_qty', 'microdos_ajax_update_cart_qty');
 add_action('wp_ajax_nopriv_microdos_update_cart_qty', 'microdos_ajax_update_cart_qty');
 function microdos_ajax_update_cart_qty() {
+    nocache_headers();
     check_ajax_referer('microdos_cart_nonce', 'nonce');
 
     $cart_item_key = sanitize_text_field($_POST['cart_item_key'] ?? '');
@@ -3260,6 +3263,7 @@ function microdos_ajax_update_cart_qty() {
 add_action('wp_ajax_microdos_get_cart', 'microdos_ajax_get_cart');
 add_action('wp_ajax_nopriv_microdos_get_cart', 'microdos_ajax_get_cart');
 function microdos_ajax_get_cart() {
+    nocache_headers();
     check_ajax_referer('microdos_cart_nonce', 'nonce');
 
     $items = array();
