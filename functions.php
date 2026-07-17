@@ -4823,8 +4823,9 @@ add_action('woocommerce_thankyou', function($order_id) {
  */
 add_action('woocommerce_checkout_subscription_created', function($subscription) {
     // Activate immediately upon subscription creation at checkout
-    if ($subscription->has_status('pending')) {
+    // Priority 999 ensures this runs AFTER WooCommerce Subscriptions' internal status-setting logic
+    if ($subscription->has_status('pending') || $subscription->has_status('on-hold')) {
         $subscription->update_status('active', 'Activated immediately upon subscription creation at checkout.');
         $subscription->save();
     }
-});
+}, 999, 1);
