@@ -4812,4 +4812,34 @@ add_action('woocommerce_thankyou', function($order_id) {
     }
 }, 30);
 
+/**
+ * FORCE SUBSCRIPTION ACTIVATION ON ORDER CREATION
+ * Activates subscriptions immediately when the order is created,
+ * BEFORE payment is processed. WooCommerce Subscriptions will
+ * automatically handle payment failures by setting status to "On Hold".
+ * 
+ * This ensures customers see their subscription as "Active" immediately.
+ * Shipping is still gated by payment status in the fulfillment process.
+ */
+add_action('woocommerce_new_order', function($order_id) {
+    // Only run for subscription orders
+    if (!function_exists('wcs_get_subscriptions_for_order')) {
+        return;
+    }
 
+    $order = wc_get_order($order_id);
+    if (!$order) {
+        return;
+    }
+
+    // Get subscriptions linked to this order
+    $subscriptions = wcs_get_subscriptions_for_order($order_id);
+
+    foreach ($subscriptions as $subscription) {
+        // Activate immediately if still pending
+        if ($subscription->has_status('pending')) {
+            $subscription->update_status('active', 'Activated on order creation.');
+            $subscription->save();
+        }
+    }
+});
