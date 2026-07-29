@@ -3299,11 +3299,9 @@ add_action('wp_enqueue_scripts', 'microdos_authorize_net_client_key_js', 999);
 function microdos_authorize_net_client_key_js() {
     if (!is_checkout()) return;
 
-    // Client key lives in wp-config.php (MICRODOS_AUTHNET_CLIENT_KEY) — never commit it to the repo.
-    $client_key = defined('MICRODOS_AUTHNET_CLIENT_KEY') ? MICRODOS_AUTHNET_CLIENT_KEY : '';
-
-    // Degrade gracefully: if the constant is not defined, don't inject empty values.
-    if ($client_key === '') return;
+    // Public Accept.js client key (safe to embed — it is exposed in checkout page source by design).
+    // The "By Easy Payment" plugin has no settings field for it, so we inject it here.
+    $client_key = '4CYALuym6ej7ZFK5W3v7wKpDb5Bw9QLzj8nzvhms3R3x22U8kx8sk3nCMw79GA9w';
 
     // Inject the client key as JavaScript before the plugin loads
     wp_register_script('microdos-anet-fix', '', array(), null, false);
@@ -3333,7 +3331,7 @@ function microdos_authorize_net_client_key_js() {
 // Also keep PHP filters as backup
 add_filter('woocommerce_authorize_net_cim_credit_card_client_key', 'microdos_anet_client_key_php');
 function microdos_anet_client_key_php($key) {
-    return defined('MICRODOS_AUTHNET_CLIENT_KEY') ? MICRODOS_AUTHNET_CLIENT_KEY : '';
+    return '4CYALuym6ej7ZFK5W3v7wKpDb5Bw9QLzj8nzvhms3R3x22U8kx8sk3nCMw79GA9w';
 }
 
 // ============================================
