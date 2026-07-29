@@ -50,6 +50,15 @@ if (!isset($order) || !is_object($order) || !($order instanceof WC_Order)) {
         <?php do_action('woocommerce_before_thankyou', $order->get_id()); ?>
 
 
+        <?php if ($order->has_status('failed')) : ?>
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background-color: #ff444420;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2"><?php esc_html_e('Payment Didn\'t Go Through', 'microdos4u'); ?></h1>
+            <p class="text-slate-400"><?php esc_html_e('Your card was NOT charged and your order was not placed.', 'microdos4u'); ?></p>
+        </div>
+        <?php else : ?>
         <div class="text-center mb-8">
             <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background-color: #44f80c20;">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#44f80c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -57,6 +66,7 @@ if (!isset($order) || !is_object($order) || !($order instanceof WC_Order)) {
             <h1 class="text-3xl font-bold text-white mb-2"><?php esc_html_e('Thank You for Your Order!', 'microdos4u'); ?></h1>
             <p class="text-slate-400"><?php esc_html_e('Your order has been received and is being processed.', 'microdos4u'); ?></p>
         </div>
+        <?php endif; ?>
 
         <!-- Order Summary Card -->
         <div class="p-6 rounded-lg mb-6" style="background-color: #150f24; border: 1px solid #1f2b47;">
@@ -96,6 +106,45 @@ if (!isset($order) || !is_object($order) || !($order instanceof WC_Order)) {
             <?php do_action('woocommerce_thankyou_' . $order->get_payment_method(), $order->get_id()); ?>
         </div>
 
+        <?php if ($order->has_status('failed')) : ?>
+        <!-- Payment Failed — Retry / Contact -->
+        <div class="p-6 rounded-lg mb-6" style="background-color: #150f24; border: 1px solid #ff4444;">
+            <h3 class="text-lg font-bold text-white mb-4"><?php esc_html_e('What Can You Do?', 'microdos4u'); ?></h3>
+            <div class="space-y-3 mb-6">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background-color: #ff444420; color: #ff4444;">1</div>
+                    <div>
+                        <p class="text-white font-medium"><?php esc_html_e('Try Payment Again', 'microdos4u'); ?></p>
+                        <p class="text-slate-400 text-sm"><?php esc_html_e('The payment was declined or could not be completed. No charge was made to your card. You can retry with the same or a different payment method.', 'microdos4u'); ?></p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background-color: #9a02d020; color: #9a02d0;">2</div>
+                    <div>
+                        <p class="text-white font-medium"><?php esc_html_e('Contact Us', 'microdos4u'); ?></p>
+                        <p class="text-slate-400 text-sm">
+                            <?php esc_html_e('If the problem persists, email us at', 'microdos4u'); ?>
+                            <a href="mailto:Info@microdos4u.com" style="color: #44f80c;">Info@microdos4u.com</a>
+                            <?php esc_html_e('and we\'ll help you complete your order.', 'microdos4u'); ?>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="<?php echo esc_url($order->get_checkout_payment_url()); ?>"
+                   class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300"
+                   style="background-color: #ff4444; color: #fff;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    <?php esc_html_e('Try Payment Again', 'microdos4u'); ?>
+                </a>
+                <a href="<?php echo esc_url(home_url()); ?>"
+                   class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300"
+                   style="background-color: #9a02d0; color: #fff;">
+                    <?php esc_html_e('Back to Home', 'microdos4u'); ?>
+                </a>
+            </div>
+        </div>
+        <?php else : ?>
         <!-- Next Steps -->
         <div class="p-6 rounded-lg mb-6" style="background-color: #150f24; border: 1px solid #1f2b47;">
             <h3 class="text-lg font-bold text-white mb-4"><?php esc_html_e('What Happens Next?', 'microdos4u'); ?></h3>
@@ -139,6 +188,7 @@ if (!isset($order) || !is_object($order) || !($order instanceof WC_Order)) {
                 <?php esc_html_e('My Account Dashboard', 'microdos4u'); ?>
             </a>
         </div>
+        <?php endif; ?>
 
         <?php do_action('woocommerce_thankyou', $order->get_id()); ?>
 

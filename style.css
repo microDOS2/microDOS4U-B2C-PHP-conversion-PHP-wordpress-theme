@@ -1330,6 +1330,14 @@ input::placeholder, textarea::placeholder {
   color: var(--text-primary);
 }
 
+/* Hide the dead Google Pay radio in the payment-methods list.
+   The gateway renders no button/fields when selected; the separate
+   express "Pay with G Pay" button (easyauthnet-gpay-express-wrap) is
+   unaffected by this selector and keeps working. */
+.woocommerce-checkout #payment ul.payment_methods li.wc_payment_method.payment_method_easyauthnet_authorizenet_googlepay {
+  display: none !important;
+}
+
 /* --- Order Confirmation --- */
 .woocommerce-order {
   background: var(--bg-card);
