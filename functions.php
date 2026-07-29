@@ -3289,6 +3289,30 @@ function microdos_ajax_get_cart() {
 }
 
 // ============================================
+// DEFAULT PAYMENT GATEWAY: CREDIT CARD FIRST
+// The dead Google Pay radio renders first in the DOM, so WooCommerce
+// default-checked it — leaving a "Pay with Google Pay" button label and
+// no visible card fields until the customer clicked Credit card twice.
+// Reordering puts the credit card gateway first so it is pre-selected
+// and its card form is visible on page load.
+// ============================================
+add_filter('woocommerce_available_payment_gateways', 'microdos_default_gateway_first');
+function microdos_default_gateway_first($gateways) {
+    if (!is_checkout()) return $gateways;
+
+    // Preferred gateway order: first available one becomes the default selection.
+    $preferred = array('authnet', 'easyauthnet_authorizenet');
+    foreach ($preferred as $id) {
+        if (isset($gateways[$id])) {
+            $first = array($id => $gateways[$id]);
+            unset($gateways[$id]);
+            return $first + $gateways;
+        }
+    }
+    return $gateways;
+}
+
+// ============================================
 // AUTHORIZE.NET CLIENT KEY FIX
 // Injects the Client Key for Accept.js tokenization.
 // The "By Easy Payment" plugin lacks a Client Key input field.
