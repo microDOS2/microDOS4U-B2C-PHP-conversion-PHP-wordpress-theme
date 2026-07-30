@@ -22,7 +22,7 @@
         $is_story = (strpos($template, 'story') !== false);
         ?>
         <?php if (!$is_story) : ?>
-        <nav class="main-navigation hidden md:flex items-center space-x-8">
+        <nav class="main-navigation hidden lg:flex items-center space-x-8">
             <?php if (is_front_page() || is_page_template('page-home.php') || (!is_page() && !is_singular())) : ?>
                 <a href="#benefits" class="text-slate-300 hover:text-white transition">Benefits</a>
                 <a href="#reviews" class="text-slate-300 hover:text-white transition">Reviews</a>
@@ -79,7 +79,7 @@
             </button>
             <?php endif; ?>
             
-            <button id="mobile-menu-button" class="md:hidden p-2 rounded-md text-slate-400 hover:text-white" aria-label="Toggle Menu" style="background-color: #1a1329 !important;">
+            <button id="mobile-menu-button" class="lg:hidden p-2 rounded-md text-slate-400 hover:text-white" aria-label="Toggle Menu" style="background-color: #1a1329 !important;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="4" x2="20" y1="12" y2="12"></line>
                     <line x1="4" x2="20" y1="6" y2="6"></line>
@@ -90,7 +90,7 @@
     </div>
     <!-- Mobile Menu -->
     <?php $microdos_anchor_base = (is_front_page() || is_page_template('page-home.php') || (!is_page() && !is_singular())) ? '' : esc_url(home_url('/')); ?>
-    <div id="mobile-menu" class="hidden md:hidden px-6 pb-4 space-y-2" style="background-color: #0a0514 !important;">
+    <div id="mobile-menu" class="hidden lg:hidden px-6 pb-4 space-y-2" style="background-color: #0a0514 !important;">
         <a href="<?php echo $microdos_anchor_base; ?>#benefits" class="block text-slate-300 hover:text-white py-2">Benefits</a>
         <a href="<?php echo $microdos_anchor_base; ?>#pricing" class="block text-slate-300 hover:text-white py-2">Pricing</a>
         <a href="<?php echo $microdos_anchor_base; ?>#how-it-works" class="block text-slate-300 hover:text-white py-2">How It Works</a>
