@@ -4855,3 +4855,96 @@ add_action('woocommerce_checkout_subscription_created', function($subscription) 
         $subscription->save();
     }
 }, 999, 1);
+
+
+// ============================================
+// PHASE 2: AFFILIATE CONTENT GATING
+// Restricts affiliate-only content pages to ACTIVE affiliates.
+// Previously these templates had no gate at all (any visitor could
+// view the Marketing Guide, Creatives, Dashboard Guide and W-9 pages).
+// Non-approved visitors are redirected to /affiliate-area/, which
+// shows the right state for each case (login form / apply form /
+// pending-approval message / dashboard).
+// ============================================
+add_action('template_redirect', 'microdos_gate_affiliate_content');
+function microdos_gate_affiliate_content() {
+    if (!is_page()) return;
+
+    $gated_templates = array(
+        'page-affiliate-marketing-guide.php',
+        'page-affiliate-creatives.php',
+        'page-affiliate-dashboard-guide.php',
+        'page-affiliate-w9.php',
+    );
+    $template = get_page_template_slug();
+    if (!in_array($template, $gated_templates, true)) return;
+
+    // Admins can always view (for management/preview).
+    if (current_user_can('manage_options')) return;
+
+    $allowed = false;
+    if (is_user_logged_in() && function_exists('affwp_is_affiliate') && affwp_is_affiliate()) {
+        if (function_exists('affwp_get_affiliate_status') && function_exists('affwp_get_affiliate_id')) {
+            $allowed = (affwp_get_affiliate_status(affwp_get_affiliate_id()) === 'active');
+        }
+    }
+
+    if (!$allowed) {
+        wp_safe_redirect(home_url('/affiliate-area/'));
+        exit;
+    }
+}
+
+// ============================================
+// PHASE 2: NOINDEX AFFILIATE PAGES
+// Invitation-only program — affiliate pages should not appear in
+// search results (user-approved 2026-07-30).
+// ============================================
+add_action('wp_head', 'microdos_noindex_affiliate_pages', 1);
+function microdos_noindex_affiliate_pages() {
+    if (!is_page()) return;
+
+    $templates = array(
+        'page-affiliate-area.php',
+        'page-affiliate-marketing-guide.php',
+        'page-affiliate-creatives.php',
+        'page-affiliate-dashboard-guide.php',
+        'page-affiliate-w9.php',
+    );
+    $slugs = array('affiliate-area', 'affiliate-creatives', 'affiliate-dashboard-guide', 'affiliate-w9', 'marketing-guide');
+
+    if (in_array(get_page_template_slug(), $templates, true) || is_page($slugs)) {
+        echo "<meta name='robots' content='noindex, nofollow' />\n";
+    }
+}
+
+// ============================================
+// PHASE 2: W-9 APPLICATION FORM VALIDATION (Gravity Forms #2)
+// Server-side format checks that did not exist before:
+//  - SSN/EIN must be 9 digits (SSN XXX-XX-XXXX or EIN XX-XXXXXXX)
+//  - Password must be at least 8 characters
+// ============================================
+add_filter('gform_field_validation', 'microdos_validate_affiliate_application', 10, 4);
+function microdos_validate_affiliate_application($result, $value, $form, $field) {
+    if (empty($form['id']) || (int) $form['id'] !== 2) return $result;
+
+    $label = strtolower($field->label ?? '');
+
+    // SSN or EIN field
+    if (strpos($label, 'ssn') !== false || strpos($label, 'ein') !== false) {
+        $digits = preg_replace('/\D/', '', (string) $value);
+        if (!preg_match('/^\d{9}$/', $digits)) {
+            $result['is_valid'] = false;
+            $result['message']  = 'Please enter a valid 9-digit SSN (XXX-XX-XXXX) or EIN (XX-XXXXXXX).';
+        }
+        return $result;
+    }
+
+    // Password field — minimum 8 characters
+    if ($field->type === 'password' && !empty($value) && strlen($value) < 8) {
+        $result['is_valid'] = false;
+        $result['message']  = 'Password must be at least 8 characters long.';
+    }
+
+    return $result;
+}
