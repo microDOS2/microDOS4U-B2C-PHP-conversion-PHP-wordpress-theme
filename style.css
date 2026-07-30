@@ -3753,3 +3753,11 @@ body .gform_wrapper .gfield .ginput_container_name label {
 }
 /* Build: 20260515-125953 */
 
+/* Mobile: stack checkout name/field columns (Phase 3) */
+@media (max-width: 640px) {
+    .woocommerce-checkout .woocommerce .form-row-first,
+    .woocommerce-checkout .woocommerce .form-row-last {
+        width: 100% !important;
+        float: none !important;
+    }
+}
